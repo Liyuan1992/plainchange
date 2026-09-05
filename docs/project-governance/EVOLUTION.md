@@ -207,3 +207,14 @@ Impact / tradeoff: The offline report now reuses evidence it already owns and st
 Verification: The formal DigitalSelf sample exposes one user and one AI evidence item, retains 8/0/0 claim validation and the unchanged architecture snapshot identity/hash, passes 44 tests, compileall, JavaScript syntax, desktop expand/Escape behavior, 390 px no-overflow, safe embedding, and zero console warnings/errors.
 Links: `docs/project-governance/tasks/TASK-20260905-008-intent-context-recovery.md`, `BUG-20260905-012`, `src/change_passport/review_model.py`, `design/ui-flows/intent-context-recovery-agent-20260905/current-after.png`, `D:\Dev\Projects\DigitalSelf\design\ui-flows\ai-coding-session-review\01-prd\prd-v1.4-intent-context-draft.md`
 Needs curation: yes
+
+ID: EVO-20260905-018
+Date: 2026-09-05
+Domain: project-governance
+Type: operations
+What changed: Froze further UI work, preserved the previously untracked spike in local commit `a4576ec`, and moved the active gate back to factual-fidelity evaluation after correcting retained-edge classification.
+Why now: The owner supplied an independent review showing that presentation work had outrun the PRD's first evidence gate and that the entire implementation had no Git baseline. A read-only audit confirmed both the preservation risk and the modified-edge defect; the owner approved the two-local-commit sequence.
+Impact / tradeoff: The implementation and its design evidence are now recoverable, and the formal delta distinguishes commit-only reverification from a real source-line move. Product polish, profile extraction, provider integration, and architecture refactoring remain deliberately deferred until three samples and independent retelling establish usefulness.
+Verification: Baseline commit `a4576ec` contains 97 files and passed 44 tests before preservation. The correction passes 45 tests and regenerates the immutable DigitalSelf sample at 14 added, 1 removed, and 1 modified edge with 8/0/0 claim validation and an unchanged target-worktree fingerprint.
+Links: `docs/project-governance/tasks/TASK-20260905-009-preserve-and-fix-edge-delta.md`, `BUG-20260905-013`, `src/change_passport/architecture.py`, `tests/test_architecture.py`
+Needs curation: yes

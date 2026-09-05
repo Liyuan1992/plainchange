@@ -1,6 +1,6 @@
 # Change Passport Spike
 
-Status: Phase 0-M1 and M1.5 core implemented; beginner-first local JSON/HTML generator and complete supported-code system architecture tab are implemented and browser verified; independent human retelling evaluation remains pending
+Status: Local baseline committed; UI work frozen; factual-fidelity evaluation, independent retelling, and the architecture-baseline decision remain pending
 
 ## Purpose
 

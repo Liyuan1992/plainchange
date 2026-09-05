@@ -191,3 +191,17 @@ Change made: Pass packet task evidence into the derived review; add ready/availa
 Verification: The frozen sample now shows `已有对话线索`; user and AI roles, sources, warning and order rule render correctly; 44 tests, compileall, JavaScript syntax, desktop and 390 px browser checks, Escape focus return, script escaping, and zero console warnings/errors passed. Validated claims and the architecture snapshot hash remain unchanged.
 Links: `src/change_passport/review_model.py`, `src/change_passport/pipeline.py`, `src/change_passport/templates/review.js`, `tests/test_review_model.py`, `design/ui-flows/intent-context-recovery-agent-20260905/`, `TASK-20260905-008`
 Follow-up: Implement the connected `从任务窗口提炼` action only when the host can bind an exact task slice to the change identity and can disclose Token/privacy cost before the user clicks.
+
+ID: BUG-20260905-013
+Date: 2026-09-05
+Status: fixed
+Domain: architecture-evidence
+Severity: high
+Symptom fingerprint: Every retained import edge reverified at a new Head commit was classified as modified because its evidence ref contained a different commit hash.
+Trigger / reproduction: Rebuild the immutable DigitalSelf range `d78f78b..430c342`; 1,754 edge identities exist in both trees, and the old comparison marks all 1,754 modified even though only one source location moves. The bounded displayed artifact exposed the same defect as 95 modified edge IDs.
+Impact: `architecture-delta.json`, the declared structured fact authority, overstated relationship change even though current UI code did not display the field.
+Root cause: Retained-edge comparison used the complete `evidence_refs` string, conflating reverification identity with source-location identity.
+Change made: Mask only the 40-character Git commit component when comparing retained-edge evidence locations. Keep source path and line in the signature so real movement remains visible.
+Verification: The full reconstruction now finds exactly one differing retained edge, `edge.305a63dbc617414072cb`, whose `registry.py` import moves from line 8 to line 10. Formal output changed from 95 to 1 modified edge while added/removed stayed 14/1; 45 tests, compileall, JavaScript syntax, and target-worktree preservation passed.
+Links: `src/change_passport/architecture.py`, `tests/test_architecture.py`, `artifacts/digitalself-430c342-m15/architecture-delta.json`, `TASK-20260905-009`
+Follow-up: Treat verification provenance and structural identity as separate comparison dimensions in future architecture contracts.

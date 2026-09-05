@@ -99,6 +99,61 @@ def test_bootstrap_emits_one_validated_graph_and_separate_pending_proposal(
     assert _git(repo, "status", "--porcelain") == before
 
 
+def test_retained_edge_ignores_commit_only_reverification_but_tracks_line_move(
+    manifest_factory, tmp_path: Path
+):
+    repo = tmp_path / "edge-repo"
+    repo.mkdir()
+    _git(repo, "init", "-b", "main")
+    _git(repo, "config", "user.email", "tests@example.invalid")
+    _git(repo, "config", "user.name", "Change Passport Tests")
+    (repo / "a.py").write_text(
+        "from b import VALUE\n\ndef read():\n    return VALUE\n",
+        encoding="utf-8",
+    )
+    (repo / "b.py").write_text("VALUE = 1\n", encoding="utf-8")
+    _git(repo, "add", "a.py", "b.py")
+    _git(repo, "commit", "-m", "initial import")
+    base = _git(repo, "rev-parse", "HEAD")
+
+    (repo / "b.py").write_text("VALUE = 2\n", encoding="utf-8")
+    _git(repo, "add", "b.py")
+    _git(repo, "commit", "-m", "change imported value")
+    head = _git(repo, "rev-parse", "HEAD")
+    first_output = tmp_path / "commit-only"
+    prepare_sample(
+        manifest_factory(tmp_path / "commit-only.json", repo, base, head),
+        first_output,
+    )
+    first_delta = json.loads(
+        (first_output / "architecture-delta.json").read_text(encoding="utf-8")
+    )
+
+    assert first_delta["added_edge_ids"] == []
+    assert first_delta["removed_edge_ids"] == []
+    assert first_delta["modified_edge_ids"] == []
+
+    (repo / "a.py").write_text(
+        "# Import kept, source line moved.\nfrom b import VALUE\n\ndef read():\n    return VALUE\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", "a.py")
+    _git(repo, "commit", "-m", "move import evidence line")
+    next_head = _git(repo, "rev-parse", "HEAD")
+    second_output = tmp_path / "line-move"
+    prepare_sample(
+        manifest_factory(tmp_path / "line-move.json", repo, head, next_head),
+        second_output,
+    )
+    second_delta = json.loads(
+        (second_output / "architecture-delta.json").read_text(encoding="utf-8")
+    )
+
+    assert second_delta["added_edge_ids"] == []
+    assert second_delta["removed_edge_ids"] == []
+    assert len(second_delta["modified_edge_ids"]) == 1
+
+
 def test_system_architecture_identity_fails_closed_after_tampering(
     sample_repo, manifest_factory, tmp_path: Path
 ):

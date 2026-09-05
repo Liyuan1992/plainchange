@@ -9,6 +9,7 @@
 - A verified user-behavior claim requires both `original_task` and `git_fact`; test status requires `actual_test_receipt`; a history relation requires both `approved_history` and `git_fact`. Source: ADR-0001, EVO-20260904-003.
 - `finalize` and `score` may write only inside the prepared artifact directory. Source: EVO-20260904-003.
 - M1.5 architecture facts come from immutable Git tree/blob identities and supported Python/JavaScript static imports. The model may explain them but cannot add a verified node, edge, or impact path. Source: ADR-0002, EVO-20260904-008.
+- `modified_edge_ids` compares retained-edge evidence locations after masking only the Git commit component. A new verification commit alone is not a topology change; source-path or line movement still is. Source: BUG-20260905-013, TASK-20260905-009.
 - An approved baseline requires matching repository/base commit/schema/tracked blob identities plus an attributable approval decision bound to the exact proposal SHA-256. Candidate, tampered, or stale baselines fail closed. Source: ADR-0002, BUG-20260904-006, EVO-20260904-008.
 - Mermaid and the graph-first Markdown section render from the same validated delta JSON. Display folding is explicit and retains omitted IDs in JSON. Source: ADR-0002, BUG-20260904-004, EVO-20260904-008.
 - `beginner-review.json` and `review.html` are deterministic derived views over the validated brief and the same `ArchitectureDelta`. They preserve claim/node/evidence identity, may only maintain or lower truth state, retain every folded ID, and cannot write view state back into evidence or baseline authority. Source: TASK-20260904-004, BUG-20260904-009.
@@ -22,7 +23,7 @@
 - Evidence-ID, authority, section/scope, and safe-unknown validation: `tests/test_validator.py`.
 - File-bridge end to end and artifact-path containment: `tests/test_pipeline.py`.
 - Precision, recall, unsupported, authority, and leakage metrics: `tests/test_scoring.py`.
-- Baseline approval/hash binding/staleness, incremental reuse, Python/JavaScript import impact, graph parity, display folding, and target-repository preservation: `tests/test_architecture.py`.
+- Baseline approval/hash binding/staleness, incremental reuse, Python/JavaScript import impact, retained-edge reverification versus source-line movement, graph parity, display folding, and target-repository preservation: `tests/test_architecture.py`.
 - Batched immutable Git blob reads: `tests/test_git_evidence.py`.
 - Beginner-summary truth/identity/omission checks: `tests/test_review_model.py`.
 - Single-file HTML escaping, no-network, theme, and embedded-identity checks: `tests/test_html_renderer.py`.

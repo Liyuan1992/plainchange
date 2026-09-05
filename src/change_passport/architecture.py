@@ -934,6 +934,19 @@ def _node_changed(before: ArchitectureNode, after: ArchitectureNode) -> bool:
     )
 
 
+def _edge_evidence_location_signature(edge: ArchitectureEdge) -> tuple[str, ...]:
+    """Compare retained-edge evidence locations without treating revalidation as change."""
+
+    return tuple(
+        re.sub(
+            r"^git:[0-9a-fA-F]{40}:",
+            "git:<commit>:",
+            evidence_ref,
+        )
+        for evidence_ref in edge.evidence_refs
+    )
+
+
 def _build_delta(
     git: GitEvidence,
     baseline_status: str,
@@ -962,7 +975,8 @@ def _build_delta(
     modified_edges = {
         edge_id
         for edge_id in set(before_edges) & set(after_edges)
-        if before_edges[edge_id].evidence_refs != after_edges[edge_id].evidence_refs
+        if _edge_evidence_location_signature(before_edges[edge_id])
+        != _edge_evidence_location_signature(after_edges[edge_id])
     }
 
     impacted: set[str] = set()

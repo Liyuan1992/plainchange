@@ -1,0 +1,28 @@
+{
+  "schema_version": "change-passport.review-theme.v1",
+  "source_design_tokens_sha256": "3C14725FC63A06CD32820F9B734E570B02075E72D60D8FEB96581BC3AC869D40",
+  "custom_properties": {
+    "--amber": "#a76500",
+    "--amber-line": "#e9be70",
+    "--amber-soft": "#fff6e5",
+    "--blue": "#315a8b",
+    "--blue-line": "#b9cbe0",
+    "--blue-soft": "#eef4fa",
+    "--danger": "#9e3b3b",
+    "--focus": "0 0 0 3px rgba(49, 90, 139, .2)",
+    "--green": "#2d7b46",
+    "--green-line": "#9bc5a4",
+    "--green-soft": "#edf7ee",
+    "--grey-soft": "#f0f3f4",
+    "--ink": "#10203d",
+    "--line": "#dfe5e3",
+    "--line-strong": "#cdd7d2",
+    "--muted": "#657187",
+    "--page": "#f6f8f7",
+    "--panel": "#ffffff",
+    "--panel-soft": "#fbfcfb",
+    "--radius-lg": "18px",
+    "--radius-md": "14px",
+    "--shadow": "0 10px 30px rgba(21, 42, 34, .055)"
+  }
+}

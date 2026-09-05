@@ -1,0 +1,22 @@
+{
+  "total_score": 9.4,
+  "delivery_allowed": true,
+  "regions": {
+    "progressive_header": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["Three numbered stages", "Technical layer marked optional", "Path-derived scope note visible"]
+    },
+    "area_overview": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["Seven Chinese areas", "227 of 227 modules covered once", "No raw identifier or path by default"]
+    },
+    "technical_drilldown": {
+      "result": "pass",
+      "score": 9.2,
+      "notes": ["Explicit second reveal", "18-item initial bound", "Inspector and Escape chain preserved"]
+    }
+  },
+  "next_round_fixes": []
+}

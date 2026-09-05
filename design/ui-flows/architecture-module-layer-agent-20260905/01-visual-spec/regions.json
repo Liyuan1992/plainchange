@@ -1,0 +1,17 @@
+{
+  "progressive_header": {
+    "target": "three-step beginner reading rail",
+    "must_match": ["section context", "active step", "optional technical-step label", "scope note"],
+    "allowed_deviation_px": 10
+  },
+  "area_overview": {
+    "target": "Chinese reading-area overview",
+    "must_match": ["4-8 bounded areas", "plain-language purpose", "module count", "selected state", "no raw identifiers by default"],
+    "allowed_deviation_px": 10
+  },
+  "technical_drilldown": {
+    "target": "optional area summary and technical module list",
+    "must_match": ["explicit reveal action", "bounded list", "secondary source path", "module inspector continuity"],
+    "allowed_deviation_px": 8
+  }
+}

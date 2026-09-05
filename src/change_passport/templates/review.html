@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>AI 变化说明</title>
+  <style>
+{{THEME_CSS}}
+{{APP_CSS}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">D</span><span>DigitalSelf · Change Passport</span></div>
+    <div id="top-status" class="top-status" aria-label="本次变化状态"></div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p id="eyebrow" class="eyebrow"></p>
+        <h1 id="page-title"></h1>
+        <p id="subtitle" class="subtitle"></p>
+      </div>
+      <div id="scope-note" class="scope-note"></div>
+    </section>
+
+    <nav id="primary-tabs" class="primary-tabs" role="tablist" aria-label="查看方式">
+      <button id="change-tab" class="primary-tab" role="tab" type="button" data-page="change" aria-controls="change-page">变化解读</button>
+      <button id="architecture-tab" class="primary-tab" role="tab" type="button" data-page="architecture" aria-controls="architecture-page">整体架构</button>
+    </nav>
+
+    <section id="change-page" class="page-panel" role="tabpanel" aria-labelledby="change-tab">
+      <section id="summary-grid" class="summary-grid" aria-label="四个关键问题"></section>
+
+      <section class="workspace" aria-label="变化路径与节点说明">
+        <article class="map-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">中文变化影响图</p>
+              <h2>改变从哪里发生，又关联到哪里</h2>
+              <p id="view-description">默认显示变更后的确定性代码关联；点击节点查看证据边界。</p>
+            </div>
+            <div id="view-tabs" class="view-tabs" role="tablist" aria-label="变化视图">
+              <button class="view-tab" role="tab" type="button" data-view="before">变更前</button>
+              <button class="view-tab" role="tab" type="button" data-view="after">变更后</button>
+              <button class="view-tab" role="tab" type="button" data-view="diff">只看差异</button>
+            </div>
+          </div>
+          <div id="graph" class="graph" tabindex="-1" aria-label="代码变化关联路径"></div>
+          <div id="branch-zone" class="branch-zone"></div>
+          <div class="flow-caption"><span aria-hidden="true">ⓘ</span><span>这里只证明代码关联，不证明这些功能都在运行时受到影响。</span></div>
+        </article>
+
+        <aside id="inspector" class="inspector" aria-label="当前节点说明">
+          <div class="inspector-head">
+            <div>
+              <p class="eyebrow">当前查看</p>
+              <h2 id="inspector-title">请选择一个职责节点</h2>
+              <p id="inspector-tech" class="tech-name"></p>
+            </div>
+            <button id="close-inspector" class="icon-button" type="button" aria-label="关闭节点说明">×</button>
+          </div>
+          <div id="inspector-body" class="inspector-body"></div>
+        </aside>
+      </section>
+
+      <section class="technical-drawer" aria-label="技术依据">
+        <button id="technical-toggle" class="technical-toggle" type="button" aria-expanded="false" aria-controls="technical-content">
+          <span>查看技术依据</span><span class="chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div id="technical-content" class="technical-content" hidden></div>
+      </section>
+    </section>
+
+    <section id="architecture-page" class="page-panel" role="tabpanel" aria-labelledby="architecture-tab" hidden>
+      <article class="architecture-card">
+        <div class="architecture-heading">
+          <div>
+            <p class="eyebrow">整体系统结构图</p>
+            <h2>先看系统分区，再按需下钻模块</h2>
+            <p id="architecture-description" class="architecture-description"></p>
+          </div>
+          <div id="architecture-stats" class="architecture-stats" aria-label="结构覆盖"></div>
+        </div>
+        <div id="architecture-scope" class="architecture-scope"></div>
+        <div class="architecture-workspace">
+          <div id="architecture-canvas" class="architecture-canvas" tabindex="-1" aria-label="系统分区关系图">
+            <svg id="architecture-links" class="architecture-links" aria-hidden="true"></svg>
+            <div id="architecture-groups" class="architecture-groups"></div>
+          </div>
+          <aside id="architecture-inspector" class="architecture-inspector" aria-label="系统分区说明"></aside>
+        </div>
+        <div id="architecture-relations" class="architecture-relations" aria-label="分区关系说明"></div>
+        <div id="architecture-modules" class="architecture-modules" hidden></div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>本地单文件 · 只读 · 无网络请求</span>
+      <span id="review-identity"></span>
+    </footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script id="review-data" type="application/json">{{REVIEW_JSON}}</script>
+  <script>
+{{APP_JS}}
+  </script>
+</body>
+</html>

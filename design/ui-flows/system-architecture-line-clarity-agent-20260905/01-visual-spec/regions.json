@@ -1,0 +1,22 @@
+{
+  "architecture_canvas": {
+    "target": "clear selected-section relationship graph",
+    "must_match": ["boundary endpoints", "visible arrowheads", "stable ports", "direction colors", "line-label pills", "no card-center occlusion"],
+    "allowed_deviation_px": 6
+  },
+  "section_cards": {
+    "target": "selected, related, and unrelated visual hierarchy",
+    "must_match": ["selected focus", "related outline", "unrelated dimming", "changed state preserved"],
+    "allowed_deviation_px": 4
+  },
+  "relationship_inspector": {
+    "target": "named incoming/outgoing direct relations and isolation controls",
+    "must_match": ["Chinese direction legend", "other-section names", "edge counts", "selected relation state", "static-import limitation"],
+    "allowed_deviation_px": 8
+  },
+  "responsive_fallback": {
+    "target": "390px text-first complete relationship access",
+    "must_match": ["no horizontal overflow", "SVG hidden", "relation buttons visible", "module controls preserved"],
+    "allowed_deviation_px": 0
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "change-passport.sample.v1",
+  "sample_id": "replace-with-real-sample-id",
+  "repository": {
+    "path": "D:\\path\\to\\target-repository",
+    "base": "BASE_COMMIT",
+    "head": "HEAD_COMMIT"
+  },
+  "evidence_inputs": [
+    {
+      "id": "task.original",
+      "kind": "task",
+      "authority": "original_task",
+      "source": {
+        "type": "inline",
+        "text": "Replace this placeholder with the original task text."
+      }
+    },
+    {
+      "id": "test.receipt",
+      "kind": "test",
+      "authority": "actual_test_receipt",
+      "source": {
+        "type": "file",
+        "path": "receipts\\test-result.json"
+      }
+    }
+  ],
+  "hidden_ground_truth": [
+    {
+      "id": "ground.truth",
+      "source": {
+        "type": "file",
+        "path": "ground-truth\\after-the-fact.md"
+      }
+    }
+  ],
+  "limits": {
+    "max_patch_bytes": 200000,
+    "max_input_bytes": 64000,
+    "git_timeout_seconds": 15
+  }
+}

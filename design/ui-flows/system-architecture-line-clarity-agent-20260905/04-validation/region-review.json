@@ -1,0 +1,22 @@
+{
+  "total_score": 9.3,
+  "delivery_allowed": true,
+  "regions": {
+    "architecture_header": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["Coverage counts and static-snapshot scope remain explicit."]
+    },
+    "focus_relationship_map": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["3 incoming and 6 outgoing edges render as nine named, non-crossing relations.", "Line endpoints and arrowheads are visible at card boundaries."]
+    },
+    "right_inspector": {
+      "result": "pass",
+      "score": 8.9,
+      "notes": ["All direct relations are named and individually isolatable.", "The relation list scrolls below the first fold for a nine-edge section."]
+    }
+  },
+  "next_round_fixes": []
+}

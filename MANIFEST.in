@@ -1,6 +1,7 @@
 include README.md
 include CHANGELOG.md
 include SECURITY.md
+include LICENSE
 include start-change-passport.cmd
 include docs/INSTALL.md
 include docs/RELEASE_CHECKLIST.md

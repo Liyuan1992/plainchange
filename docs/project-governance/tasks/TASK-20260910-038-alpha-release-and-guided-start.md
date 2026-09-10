@@ -13,9 +13,11 @@ tag, local package builds, documentation, and the guided local UI. It does not
 authorize a remote, push, deployment, account/cloud service, telemetry, automatic
 model request, target-repository write, or public release.
 
-The permanent license grant is intentionally unresolved: the owner must choose MIT
-or invitation-only evaluation terms before the final release commit/tag. Work that
-does not grant redistribution rights may proceed first.
+The owner subsequently chose direct open source distribution. The project now uses
+the OSI-approved MIT license. The product name must change before the final release
+because `Change Passport` is already occupied; the replacement name remains an
+explicit owner decision because it changes the product, package, CLI, documentation,
+and tag identity together.
 
 ## Baseline facts
 
@@ -93,8 +95,8 @@ progress, and open the result without authoring JSON.
   report directory and retain the existing pipeline containment validation.
 - A package install can omit templates. Clean-install verification must start the
   guided entry and load all three bundled assets before tagging.
-- A license cannot be guessed. Stop before the final release commit/tag if the owner
-  has not selected the grant.
+- A product identity cannot be guessed into a public release. Stop before the final
+  release commit/tag until the replacement name is explicitly selected.
 - Existing working-tree content belongs to the owner. Review the staged file list and
   secret/path scan before committing; do not clean or discard anything.
 
@@ -151,5 +153,5 @@ decision.
   runtime/documentation material rather than internal governance and design evidence.
 
 The final package hashes, release commit, `DONE` state, and annotated tag remain
-blocked only on the explicit license choice recorded above. Current build hashes are
-provisional because adding a license changes distribution bytes.
+blocked only on the replacement product/package/CLI name. Current build hashes are
+provisional because the rename changes distribution bytes.

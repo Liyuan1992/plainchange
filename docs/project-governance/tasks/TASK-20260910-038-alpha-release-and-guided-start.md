@@ -1,6 +1,6 @@
 # TASK-20260910-038: Freeze the first Alpha and add a guided local start
 
-State: APPROVED
+State: IMPLEMENTING
 Tier: high-risk
 
 ## Trigger and authority
@@ -121,3 +121,35 @@ without resetting or deleting owner files. Stop before tagging if tests, clean-w
 installation, source privacy review, license choice, or guided end-to-end analysis
 fails. Stop after the local Alpha tag; remote publication remains a separate owner
 decision.
+
+## Implementation evidence so far
+
+- Created local release branch `release/alpha-0.1.0a1` and froze the previously
+  approved implementation at commit `c09652efb34f` after 82 tests, compileall,
+  report JavaScript syntax, credential-signature, and staged-diff checks passed.
+- Added `change-passport start`, a dependency-free loopback onboarding server and
+  packaged Chinese HTML/CSS/JS. The page selects a Git directory, defaults to the
+  newest commit and its predecessor, accepts optional task context, writes a managed
+  manifest outside the target, follows `run-receipt.json`, and serves only the
+  report registered by that process.
+- Added session-token, origin, content-type, request-size, revision, output ownership,
+  and loopback-bind validation. The beginner entry deliberately uses deterministic
+  local generation and exposes no model request control.
+- Added six focused tests. The complete suite now passes 88 tests, including an HTTP
+  journey that generates and opens a report from a two-commit fixture while the
+  target Git status remains unchanged.
+- Real browser inspection passes at 1280 px and emulated 390 px with no horizontal
+  overflow or console warnings/errors. After repository selection, the page shows
+  dated commit messages, short identities, the external output path, and an enabled
+  generation action.
+- Built wheel and sdist, verified all four onboarding resources in the wheel, and
+  installed it into a new Python 3.12 virtual environment. The installed console
+  script reports `0.1.0a1`, starts on an ephemeral loopback port, and returns the
+  protected Chinese page over HTTP 200.
+- Added installation, changelog, security, release-checklist, Windows source launcher,
+  and reproducible SHA-256 build script. The sdist manifest was narrowed to public
+  runtime/documentation material rather than internal governance and design evidence.
+
+The final package hashes, release commit, `DONE` state, and annotated tag remain
+blocked only on the explicit license choice recorded above. Current build hashes are
+provisional because adding a license changes distribution bytes.

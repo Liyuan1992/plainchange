@@ -1,0 +1,22 @@
+include README.md
+include CHANGELOG.md
+include SECURITY.md
+include start-change-passport.cmd
+include docs/INSTALL.md
+include docs/RELEASE_CHECKLIST.md
+include examples/model-provider.template.json
+include examples/sample-manifest.json
+recursive-include src/change_passport/templates *.html *.css *.js
+recursive-include src/change_passport/assets *.json
+prune artifacts
+prune build
+prune design
+prune tests
+prune docs/experiments
+prune docs/product
+prune docs/project-governance
+prune docs/showcase
+prune examples/showcase
+prune examples/target-profiles
+global-exclude *.py[cod]
+global-exclude __pycache__

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="change-passport-session" content="__SESSION_TOKEN__">
+  <title>开始使用 · Change Passport</title>
+  <link rel="stylesheet" href="/onboarding.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Change Passport 首页">
+      <span class="brand-mark" aria-hidden="true">CP</span>
+      <span>Change Passport</span>
+    </a>
+    <span class="version">Alpha __APP_VERSION__</span>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">第一次使用，只需三步</p>
+      <h1>选一个项目，看看 AI 到底改了什么</h1>
+      <p>Change Passport 只读取你选定的两个版本，不修改项目，也不会默认上传源码。</p>
+    </section>
+
+    <section class="workspace" aria-label="生成报告">
+      <ol class="steps" aria-label="操作步骤">
+        <li class="step active" data-step="1"><span>1</span><strong>选择项目</strong></li>
+        <li class="step" data-step="2"><span>2</span><strong>选择前后版本</strong></li>
+        <li class="step" data-step="3"><span>3</span><strong>生成说明</strong></li>
+      </ol>
+
+      <div class="panel">
+        <section class="section" aria-labelledby="project-title">
+          <div class="section-heading">
+            <div><span class="number">01</span><h2 id="project-title">你想理解哪个软件？</h2></div>
+            <span class="safe-chip">只读项目</span>
+          </div>
+          <p class="hint">选择电脑上的 Git 项目文件夹。你也可以直接粘贴路径。</p>
+          <div class="path-row">
+            <input id="repository-path" type="text" autocomplete="off" placeholder="例如：D:\Dev\Projects\my-app">
+            <button id="pick-button" class="secondary" type="button">选择文件夹</button>
+            <button id="inspect-button" class="primary" type="button">读取项目</button>
+          </div>
+          <p id="project-message" class="message" role="status"></p>
+        </section>
+
+        <section id="versions-section" class="section locked" aria-labelledby="versions-title">
+          <div class="section-heading">
+            <div><span class="number">02</span><h2 id="versions-title">比较哪一次变化？</h2></div>
+            <span id="branch-chip" class="neutral-chip">等待选择项目</span>
+          </div>
+          <p class="hint">我们已默认选择最近一次改动。较早版本是改动前，较新版本是改动后。</p>
+          <div class="version-grid">
+            <label>较早版本 <small>改动前</small><select id="base-select" disabled></select></label>
+            <span class="arrow" aria-hidden="true">→</span>
+            <label>较新版本 <small>改动后</small><select id="head-select" disabled></select></label>
+          </div>
+          <label class="task-label" for="task-input">这次原本想让 AI 做什么？ <small>可不填；填写后判断会更有上下文</small></label>
+          <textarea id="task-input" rows="3" maxlength="12000" placeholder="例如：修复导出视频偶尔失败的问题"></textarea>
+          <div class="output-note"><strong>报告会保存在项目外：</strong><span id="output-path">—</span></div>
+        </section>
+
+        <section id="generate-section" class="section locked" aria-labelledby="generate-title">
+          <div class="section-heading">
+            <div><span class="number">03</span><h2 id="generate-title">生成一份看得懂的变化说明</h2></div>
+            <span class="local-chip">本机分析</span>
+          </div>
+          <div class="promise-grid">
+            <div><strong>你会看到</strong><span>AI 改了什么、可能影响谁、该检查什么</span></div>
+            <div><strong>你不会被要求</strong><span>阅读所有代码、手写配置文件或理解 Git 命令</span></div>
+          </div>
+          <button id="analyze-button" class="primary large" type="button" disabled>生成变化说明</button>
+          <div id="progress-box" class="progress-box" hidden>
+            <div class="progress-head"><strong id="progress-label">正在准备…</strong><span id="progress-percent">0%</span></div>
+            <div class="progress-track"><span id="progress-bar"></span></div>
+            <p id="progress-detail">正在固定项目版本，不会修改目标项目。</p>
+          </div>
+          <div id="result-box" class="result-box" hidden>
+            <span class="result-icon">✓</span>
+            <div><strong>报告已生成</strong><p>先看结论，再按需查看软件流程和代码依据。</p></div>
+            <a id="open-report" class="primary link-button" href="#">打开变化说明</a>
+          </div>
+          <p id="error-message" class="message error" role="alert"></p>
+        </section>
+      </div>
+    </section>
+
+    <aside class="boundary">
+      <strong>这一步不调用大模型</strong>
+      <p>Alpha 首次使用流程先用本地、可复核的规则生成候选说明。需要模型增强时，可在高级命令中配置任意兼容接口。</p>
+    </aside>
+  </main>
+  <script src="/onboarding.js"></script>
+</body>
+</html>

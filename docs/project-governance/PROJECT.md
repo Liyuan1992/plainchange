@@ -1,5 +1,7 @@
 # Project facts
 
+Current Alpha delivery: TASK-20260910-038 freezes the approved core at `c09652efb34f` and adds a packaged, loopback-only three-step start: choose a local Git project, confirm earlier/newer versions, and generate/open the existing evidence-bound report without hand-writing JSON. The 88-test suite, clean-wheel install, HTTP smoke, and desktop/390 px browser checks pass; target fixtures remain unchanged. The final release commit and local `v0.1.0-alpha.1` tag wait on the owner's explicit MIT-versus-invitation-only license choice. No remote, push, deployment, public release, telemetry, or automatic model request is authorized.
+
 Current behavior-semantic result: TASK-20260910-037 adds conservative, source-bound diff signals for newly added raises, explicit non-zero returns, and callable-signature changes. The no-model owner draft now says `还没判断` instead of presenting unperformed semantic analysis as `目前没发现`, maps only the primary source path when unique, and recommends separate normal and stop/failure checks. The fixed VideoFactory report now locates the change at `检查视频质量`; static signals still do not prove reachability, runtime, breaking impact, or user impact.
 
 Current model status (supersedes the older no-provider sentence below): TASK-20260910-033 replaces the Ollama-specific experiment with a user-configured OpenAI-compatible Chat Completions boundary. Deterministic generation remains the default; no real model call, remote source upload, account integration, or production connection was performed in this task.

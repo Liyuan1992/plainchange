@@ -7,6 +7,7 @@ from typing import Sequence
 
 from .git_evidence import GitEvidenceError
 from .models import ManifestError
+from .onboarding import OnboardingError, serve_onboarding
 from .pipeline import (
     analyze_sample,
     approve_baseline_proposal,
@@ -22,6 +23,11 @@ def _parser() -> argparse.ArgumentParser:
         description="Evidence-bound change brief experiment",
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
+
+    start = subcommands.add_parser("start", help="open the guided local first-run experience")
+    start.add_argument("--host", default="127.0.0.1")
+    start.add_argument("--port", type=int, default=8765)
+    start.add_argument("--no-open", action="store_true", help="do not open the browser automatically")
 
     prepare = subcommands.add_parser("prepare", help="collect evidence and write a generator packet")
     prepare.add_argument("manifest")
@@ -72,6 +78,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     try:
+        if args.command == "start":
+            serve_onboarding(args.host, args.port, open_browser=not args.no_open)
+            return 0
         if args.command == "analyze":
             result = analyze_sample(
                 args.manifest,
@@ -94,7 +103,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = approve_baseline_proposal(
                 args.proposal, args.decision, args.output
             )
-    except (ManifestError, GitEvidenceError, OSError) as exc:
+    except (ManifestError, GitEvidenceError, OnboardingError, OSError) as exc:
         print(
             json.dumps(
                 {"ok": False, "error_type": type(exc).__name__, "error": str(exc)},

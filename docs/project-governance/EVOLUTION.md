@@ -548,3 +548,14 @@ Impact / tradeoff: Owners receive a more useful warning without requiring a mode
 Verification: 82 tests, compileall, JavaScript syntax, diff checks, generic known-answer fixtures, and the regenerated fixed VideoFactory report pass. The real report now maps the primary signal to `检查视频质量`, says `还没判断`, and recommends normal plus stop-condition checks in 0.784 seconds with warm cache.
 Links: `src/change_passport/behavior_signals.py`, `src/change_passport/auto_draft.py`, `tests/test_behavior_signals.py`, `TASK-20260910-037`, `BUG-20260910-021`
 Needs curation: yes
+
+ID: EVO-20260910-021
+Date: 2026-09-10
+Domain: distribution
+Type: guided-alpha-entry
+What changed: Added a packaged, dependency-free local first-run page that turns repository path, two human-readable commit choices, and optional task context into the existing deterministic report without requiring a hand-authored manifest. It includes durable progress, registered report access, a Windows source launcher, build checksums, and clean-wheel installation guidance.
+Why now: The current report had become useful enough for invited evaluation, but installation and manifest/Git terminology still prevented the intended software-owner audience from reaching it independently.
+Impact / tradeoff: The product now has a real entry experience while preserving target read-only and evidence authority. The Alpha deliberately stays loopback-only and model-free on the beginner path; native installers, automatic updates, cloud collaboration, and public distribution remain out of scope.
+Verification: 88 tests pass, including token/origin/output guards and a complete HTTP analysis journey. The wheel contains all onboarding assets, a clean Python 3.12 environment starts it successfully, and real browser checks at 1280 px and 390 px show no horizontal overflow or console errors.
+Links: `src/change_passport/onboarding.py`, `src/change_passport/templates/onboarding.html`, `docs/INSTALL.md`, `TASK-20260910-038`
+Needs curation: yes

@@ -1,6 +1,6 @@
 # Task records
 
-Current Alpha release task: `TASK-20260910-038-alpha-release-and-guided-start.md` is APPROVED by the owner's “好的，你先把123做好”. It will freeze the approved working implementation, package a local `0.1.0a1` Alpha, and add a loopback-only guided project/version/report entry. The permanent license choice is pending; no remote, push, deployment, or public release is authorized.
+Current Alpha release task: `TASK-20260910-038-alpha-release-and-guided-start.md` is IMPLEMENTING under the owner's “好的，你先把123做好”. Baseline `c09652efb34f`, the loopback-only three-step entry, 88-test suite, wheel/sdist build, clean-wheel install, and desktop/390 px browser checks pass. Final package hashes, release commit, `DONE` state, and local tag wait only for the permanent license choice; no remote, push, deployment, or public release is authorized.
 
 Current behavior-semantic coverage task: `TASK-20260910-037-behavior-semantic-coverage.md` is DONE. The deterministic fallback now surfaces conservative conditional stop/failure signals, distinguishes `还没判断` from `目前没发现`, supplies normal-versus-stop owner checks, and passes a generic known-answer regression plus the fixed VideoFactory sample without target-specific branches.
 

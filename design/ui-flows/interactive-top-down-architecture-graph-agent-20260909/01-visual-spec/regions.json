@@ -1,0 +1,22 @@
+{
+  "concept_graph": {
+    "target": "interactive top-to-bottom node-and-edge architecture graph",
+    "must_match": ["topology ranks progress downward", "same-rank branches share a row", "every safe configured relationship has one visible arrow", "zero connector intersections with unrelated nodes", "selected node is visibly focused"],
+    "allowed_deviation_px": 12
+  },
+  "inline_implementation": {
+    "target": "selected implementation expansion inside the same canvas",
+    "must_match": ["opens below conceptual graph", "second node click collapses direct mapping", "subdomains and static boundary remain unchanged"],
+    "allowed_deviation_px": 12
+  },
+  "right_inspector": {
+    "target": "selection-synchronized explanation panel",
+    "must_match": ["selected workflow or static group context", "facts and evidence boundary", "no responsibility for primary graph reading order"],
+    "allowed_deviation_px": 10
+  },
+  "narrow_fallback": {
+    "target": "clickable ordered fallback without horizontal overflow",
+    "must_match": ["one-column cards", "arrows hidden", "complete relationship prose retained", "interaction retained"],
+    "allowed_deviation_px": 8
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "architecture_canvas": {
+    "target": "single expandable architecture canvas",
+    "must_match": ["workflow cards read top-to-bottom in one column", "workflow overview visible first", "selected workflow card expands mapped static section below the workflow map in the same canvas", "no separate first-or-second layer page", "no card-obscuring connector", "complete textual relationship list remains visible"],
+    "allowed_deviation_px": 12
+  },
+  "inline_static_section": {
+    "target": "selected static section and implementation subdomains",
+    "must_match": ["parent workflow remains visible", "configured subdomains stay explicit", "static-import aggregates are labelled", "unmatched fallback remains visible"],
+    "allowed_deviation_px": 12
+  },
+  "right_inspector": {
+    "target": "persistent explanation panel",
+    "must_match": ["current focus label", "facts", "evidence boundary", "relationship prose", "optional source-module reveal"],
+    "allowed_deviation_px": 10
+  }
+}

@@ -4,6 +4,7 @@ import copy
 from typing import Any, Mapping
 
 from .architecture import DELTA_SCHEMA, architecture_evidence_entries
+from .behavior_signals import behavior_signal_evidence
 from .git_evidence import GitEvidence
 from .models import ManifestError, SampleManifest, canonical_json_bytes, sha256_bytes
 
@@ -74,6 +75,13 @@ def _git_evidence_entries(git: GitEvidence) -> list[dict[str, Any]]:
             "limitations": ["patch_truncated"] if git.patch_truncated else [],
         }
     )
+    entries.extend(
+        behavior_signal_evidence(
+            git.patch_excerpt,
+            patch_sha256=git.patch_sha256,
+            patch_truncated=git.patch_truncated,
+        )
+    )
     return entries
 
 
@@ -81,6 +89,7 @@ def build_generator_packet(
     manifest: SampleManifest,
     git: GitEvidence,
     architecture_delta: Mapping[str, Any] | None = None,
+    system_snapshot_identity: str | None = None,
 ) -> dict[str, Any]:
     evidence = _git_evidence_entries(git)
     if architecture_delta is not None:
@@ -125,7 +134,11 @@ def build_generator_packet(
         ],
         "output_contract": {
             "schema_version": RAW_BRIEF_SCHEMA,
-            "root": {"schema_version": RAW_BRIEF_SCHEMA, "claims": "array"},
+            "root": {
+                "schema_version": RAW_BRIEF_SCHEMA,
+                "claims": "array",
+                "generator_metadata": "optional self-reported object: provider, model, mode, generated_at",
+            },
             "claim": {
                 "required": [
                     "id",
@@ -155,6 +168,8 @@ def build_generator_packet(
     }
     if architecture_delta is not None:
         packet["architecture_delta"] = copy.deepcopy(dict(architecture_delta))
+    if system_snapshot_identity is not None:
+        packet["system_snapshot_identity"] = system_snapshot_identity
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
     return packet
 

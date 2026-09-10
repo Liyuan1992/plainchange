@@ -1,0 +1,35 @@
+{
+  "schema_version": "change-passport.human-comprehension-observation.v1",
+  "evaluation_id": "change-passport-self-688fc5f.participant-pending",
+  "source_control_identity": "979031ea971f7dc2dab79cd2d2f60b443eba455170cd2d6e4be4dbfee4bfaf22",
+  "status": "not_run",
+  "participant": {
+    "anonymous_id": null,
+    "prior_project_knowledge": null,
+    "technical_familiarity": null,
+    "responsibility_fit": null
+  },
+  "protocol": {
+    "target_read_seconds": 60,
+    "actual_read_seconds": null,
+    "hints_given": false,
+    "hint_notes": null,
+    "participant_materials": [
+      "participant-card.md"
+    ]
+  },
+  "answers": [
+    {"id": "software_operation", "verbatim_answer": null, "score": null, "score_reason": null},
+    {"id": "current_change", "verbatim_answer": null, "score": null, "score_reason": null},
+    {"id": "affected_people", "verbatim_answer": null, "score": null, "score_reason": null},
+    {"id": "unknowns", "verbatim_answer": null, "score": null, "score_reason": null},
+    {"id": "next_verification", "verbatim_answer": null, "score": null, "score_reason": null}
+  ],
+  "critical_misunderstandings": [],
+  "result": {
+    "points": null,
+    "passed": null,
+    "evaluator_notes": null
+  },
+  "recorded_at": null
+}

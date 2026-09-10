@@ -1,0 +1,38 @@
+{
+  "schema_version": "change-passport.sample.v1",
+  "sample_id": "change-passport-688fc5f-retained-edge",
+  "repository": {
+    "path": "REPLACE_WITH_ABSOLUTE_PATH_TO_ISOLATED_CHANGE_PASSPORT_CLONE",
+    "base": "a4576ec",
+    "head": "688fc5f"
+  },
+  "target_profile": {
+    "path": "../target-profiles/change-passport.v1.json"
+  },
+  "evidence_inputs": [
+    {
+      "id": "task.original",
+      "kind": "task",
+      "authority": "original_task",
+      "source": {
+        "type": "inline",
+        "text": "用户审查指出 retained import edge 的 evidence_refs 包含 commit hash，导致跨 base/head 保留的边被误标为 modified；要求先建立本地基线，再只修复这一事实错误，并保留真实路径或行号变化。"
+      }
+    },
+    {
+      "id": "test.receipt",
+      "kind": "test",
+      "authority": "actual_test_receipt",
+      "source": {
+        "type": "inline",
+        "text": "在提交 688fc5f 的验证记录中，命令 uv run pytest -q 报告 45 passed；Python compileall、JavaScript syntax 和 Git diff check 均通过。"
+      }
+    }
+  ],
+  "hidden_ground_truth": [],
+  "limits": {
+    "max_patch_bytes": 200000,
+    "max_input_bytes": 64000,
+    "git_timeout_seconds": 15
+  }
+}

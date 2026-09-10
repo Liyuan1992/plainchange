@@ -1,0 +1,151 @@
+{
+  "schema_version": "change-passport.target-profile.v1",
+  "profile_id": "vllm",
+  "display_name": "vLLM",
+  "brand_mark": "V",
+  "sections": [
+    {
+      "id": "interfaces",
+      "label": "用户与服务入口",
+      "responsibility": "接收离线调用、命令行任务和兼容 API 请求，并把它们交给推理系统。",
+      "lane": "main",
+      "path_prefixes": ["vllm/entrypoints", "vllm/cli"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "input_processing",
+      "label": "输入理解与整理",
+      "responsibility": "整理聊天模板、文本和多模态输入，完成分词与模型输入准备。",
+      "lane": "main",
+      "path_prefixes": ["vllm/inputs", "vllm/renderers", "vllm/tokenizers", "vllm/multimodal", "vllm/transformers_utils"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "engine_control",
+      "label": "请求调度与引擎控制",
+      "responsibility": "管理请求队列、批处理、调度和推理生命周期。",
+      "lane": "main",
+      "path_prefixes": ["vllm/v1/engine", "vllm/v1/core", "vllm/engine", "vllm/core", "vllm/config"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "model_execution",
+      "label": "模型与硬件执行",
+      "responsibility": "加载和运行模型，在不同硬件后端执行计算。",
+      "lane": "main",
+      "path_prefixes": ["vllm/model_executor", "vllm/v1/worker", "vllm/worker", "vllm/attention", "vllm/platforms", "vllm/_custom_ops.py"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "memory_and_scale",
+      "label": "显存、缓存与多机协作",
+      "responsibility": "管理推理缓存、显存使用和跨设备、跨机器协作。",
+      "lane": "main",
+      "path_prefixes": ["vllm/distributed", "vllm/device_allocator", "vllm/v1/kv_offload", "vllm/v1/kv_cache_interface.py", "vllm/compilation"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "extensions",
+      "label": "模型能力与扩展",
+      "responsibility": "提供采样、结构化输出、适配器、插件和其他可选能力。",
+      "lane": "support",
+      "path_prefixes": ["vllm/plugins", "vllm/lora", "vllm/adapters", "vllm/v1/sample", "vllm/v1/spec_decode", "vllm/v1/structured_output", "vllm/third_party"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "other_runtime",
+      "label": "其他运行能力",
+      "responsibility": "承载模型定义、工具解析、运行辅助和尚未单独拆出的核心能力。",
+      "lane": "support",
+      "path_prefixes": ["vllm"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "quality",
+      "label": "测试与质量保障",
+      "responsibility": "验证入口、模型、硬件后端和关键推理行为。",
+      "lane": "support",
+      "path_prefixes": ["tests"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "docs_and_tools",
+      "label": "文档、示例与工程工具",
+      "responsibility": "提供使用说明、示例、性能工具和项目工程支持。",
+      "lane": "support",
+      "path_prefixes": ["docs", "examples", "benchmarks", "tools", "scripts", ".buildkite", ".github", ".agents", "csrc", "cmake"],
+      "exact_paths": ["setup.py", "use_existing_torch.py", "rust/src/engine-core-client/src/tests/python_compat.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "unclassified",
+      "label": "其他尚未细分的实现",
+      "responsibility": "当前配置尚未单独归类，但仍保持可见并等待进一步核对。",
+      "lane": "support",
+      "path_prefixes": [],
+      "exact_paths": [],
+      "basename_prefixes": []
+    }
+  ],
+  "node_label_rules": [
+    {"pattern": "offline_utils", "label": "离线聊天输入准备"},
+    {"pattern": "api_server", "label": "兼容 API 服务"},
+    {"pattern": "chat", "label": "聊天请求处理"},
+    {"pattern": "renderer", "label": "输入模板与渲染"},
+    {"pattern": "tokenizer", "label": "文字切分与标记处理"},
+    {"pattern": "scheduler", "label": "请求排队与调度"},
+    {"pattern": "model_runner", "label": "模型执行"},
+    {"pattern": "kv_cache", "label": "推理缓存管理"},
+    {"pattern": "multimodal", "label": "图片等多模态输入处理"},
+    {"pattern": "test_", "label": "行为回归验证"}
+  ],
+  "module_areas": [
+    {"id": "offline_and_api", "order": 1, "path_prefixes": ["vllm/entrypoints/"], "label": "调用与服务入口", "description": "接收离线聊天、生成任务和兼容 API 请求。"},
+    {"id": "prompt_and_token", "order": 2, "path_prefixes": ["vllm/renderers/", "vllm/tokenizers/", "vllm/inputs/"], "label": "提示词与输入准备", "description": "把用户输入整理成模型可以处理的内容。"},
+    {"id": "multimodal", "order": 3, "path_prefixes": ["vllm/multimodal/"], "label": "多模态输入", "description": "处理图片、视频和其他非纯文本输入。"},
+    {"id": "engine", "order": 4, "path_prefixes": ["vllm/v1/engine/", "vllm/engine/"], "label": "推理引擎", "description": "组织一次推理任务的生命周期和输出。"},
+    {"id": "scheduler", "order": 5, "path_prefixes": ["vllm/v1/core/", "vllm/core/"], "label": "队列与调度", "description": "安排请求批次、资源和执行顺序。"},
+    {"id": "model_runtime", "order": 6, "path_prefixes": ["vllm/model_executor/", "vllm/v1/worker/", "vllm/worker/"], "label": "模型运行", "description": "加载模型并在设备上执行计算。"},
+    {"id": "memory", "order": 7, "path_prefixes": ["vllm/distributed/", "vllm/device_allocator/", "vllm/v1/kv_offload/"], "exact_paths": ["vllm/v1/kv_cache_interface.py"], "basename_prefixes": [], "label": "缓存与扩展运行", "description": "管理缓存、显存和分布式协作。"},
+    {"id": "optional_capabilities", "order": 8, "path_prefixes": ["vllm/plugins/", "vllm/lora/", "vllm/adapters/", "vllm/v1/sample/", "vllm/v1/spec_decode/", "vllm/v1/structured_output/"], "label": "扩展能力", "description": "提供采样、结构化输出、适配器和插件。"},
+    {"id": "tests", "order": 9, "path_prefixes": ["tests/"], "label": "测试与回归", "description": "验证关键行为和不同硬件、模型组合。"},
+    {"id": "other", "order": 99, "path_prefixes": ["vllm/", "docs/", "examples/", "benchmarks/", "tools/", "scripts/"], "label": "其他实现与工程材料", "description": "保留尚未细分的源码、说明和工程支持。"}
+  ],
+  "conceptual_architecture": {
+    "title": "从请求到模型回答",
+    "description": "请求可以由程序直接调用或通过兼容 OpenAI 的接口进入 vLLM；系统整理输入、安排请求和计算资源、运行模型，再一次性或逐步返回结果。",
+    "boundary_note": "这是根据 vLLM 项目说明和目标配置整理的产品工作图，用于建立理解；它不证明每次请求都会经过完全相同的运行路径。",
+    "components": [
+      {"id": "client_request", "type": "input", "label": "用户或应用发来请求", "description": "输入文字、对话、图片或其他需要模型处理的内容。", "grid_column": 1, "grid_row": 1, "group_ids": []},
+      {"id": "service_entry", "type": "process", "label": "请求进入 vLLM", "description": "可以由程序直接调用，也可以通过兼容 OpenAI 的接口进入。", "grid_column": 1, "grid_row": 2, "group_ids": ["interfaces"]},
+      {"id": "prepare_input", "type": "process", "label": "整理模型输入", "description": "应用对话模板，处理文字和图片，并把内容转换成模型能读取的标记。", "grid_column": 1, "grid_row": 3, "group_ids": ["interfaces", "input_processing"]},
+      {"id": "queue_requests", "type": "process", "label": "把请求排入处理队列", "description": "收集等待中的任务，并组合适合一起处理的请求。", "grid_column": 1, "grid_row": 4, "group_ids": ["engine_control"]},
+      {"id": "plan_resources", "type": "process", "label": "安排请求和计算资源", "description": "决定哪些请求先计算，管理已处理内容的缓存，并协调计算任务执行。", "grid_column": 1, "grid_row": 5, "group_ids": ["engine_control", "memory_and_scale"]},
+      {"id": "run_model", "type": "process", "label": "运行模型计算", "description": "在 GPU、CPU 或其他支持的硬件上执行模型。", "grid_column": 1, "grid_row": 6, "group_ids": ["model_execution"]},
+      {"id": "prepare_output", "type": "output", "label": "整理生成结果，可边生成边返回", "description": "把模型输出整理成调用方可接收的内容；支持时，可以在生成过程中逐步返回。", "grid_column": 1, "grid_row": 7, "group_ids": ["engine_control", "extensions"]},
+      {"id": "client_response", "type": "output", "label": "让调用方收到结果", "description": "调用方收到完整结果，或在使用流式输出时逐步收到内容。", "grid_column": 1, "grid_row": 8, "group_ids": ["interfaces"]}
+    ],
+    "flows": [
+      {"from": "client_request", "to": "service_entry", "label": "进入系统"},
+      {"from": "service_entry", "to": "prepare_input", "label": "交给输入处理"},
+      {"from": "prepare_input", "to": "queue_requests", "label": "形成模型任务"},
+      {"from": "queue_requests", "to": "plan_resources", "label": "安排先后与缓存"},
+      {"from": "plan_resources", "to": "run_model", "label": "交给计算任务"},
+      {"from": "run_model", "to": "prepare_output", "label": "产生输出"},
+      {"from": "prepare_output", "to": "client_response", "label": "完整或逐步返回"}
+    ]
+  },
+  "term_replacements": [
+    {"from": "BOS", "to": "开头标记"},
+    {"from": "tokenizer", "to": "文字切分处理"},
+    {"from": "multimodal", "to": "多模态输入"}
+  ]
+}

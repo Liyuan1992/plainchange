@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "regions": [
+    {
+      "id": "owner-software-workflow",
+      "goal": "Keep the four-step global map visible while one step expands and collapses inline.",
+      "allowed_files": [
+        "src/change_passport/templates/review.html",
+        "src/change_passport/templates/review.css",
+        "src/change_passport/templates/review.js",
+        "tests/test_html_renderer.py"
+      ],
+      "assets": []
+    }
+  ]
+}

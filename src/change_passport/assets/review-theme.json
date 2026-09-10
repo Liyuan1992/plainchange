@@ -1,6 +1,5 @@
 {
   "schema_version": "change-passport.review-theme.v1",
-  "source_design_tokens_sha256": "3C14725FC63A06CD32820F9B734E570B02075E72D60D8FEB96581BC3AC869D40",
   "custom_properties": {
     "--amber": "#a76500",
     "--amber-line": "#e9be70",

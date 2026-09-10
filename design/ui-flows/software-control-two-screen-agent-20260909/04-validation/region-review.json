@@ -1,0 +1,12 @@
+{
+  "total_score": null,
+  "delivery_allowed": false,
+  "regions": {
+    "change_conclusion": {"result": "structurally_verified", "score": null, "notes": ["result-first ten-second hierarchy tested", "real screenshot blocked by local file URL policy"]},
+    "evidence_states": {"result": "structurally_verified", "score": null, "notes": ["state explanations tested", "not observed is explicitly not proven absent"]},
+    "five_questions": {"result": "structurally_verified", "score": null, "notes": ["complete layer is collapsed by default", "required order and disclosures tested"]},
+    "working_map": {"result": "structurally_verified", "score": null, "notes": ["4 overview nodes exactly cover 8 detail nodes", "same-canvas expansion and back controls tested", "responsive fallback retained"]},
+    "owner_inspector": {"result": "structurally_verified", "score": null, "notes": ["owner language precedes technical implementation"]}
+  },
+  "next_round_fixes": ["capture real desktop and narrow screenshots", "fix only observed visual overlap, density, connector routing, or focus issues"]
+}

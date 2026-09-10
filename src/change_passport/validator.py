@@ -73,6 +73,30 @@ def validate_raw_brief(packet_value: Any, raw_value: Any) -> dict[str, Any]:
     raw = copy.deepcopy(dict(raw_value))
     if raw.get("schema_version") != RAW_BRIEF_SCHEMA:
         raise ManifestError(f"raw brief schema must be {RAW_BRIEF_SCHEMA}")
+    metadata_value = raw.get("generator_metadata")
+    if metadata_value is None:
+        generator_metadata = {
+            "provider": "unspecified",
+            "model": "unspecified",
+            "mode": "legacy_or_manual",
+            "generated_at": None,
+        }
+    else:
+        if not isinstance(metadata_value, Mapping):
+            raise ManifestError("raw brief generator_metadata must be an object")
+        allowed_metadata = {"provider", "model", "mode", "generated_at"}
+        if set(metadata_value) - allowed_metadata:
+            raise ManifestError("raw brief generator_metadata contains unknown fields")
+        generator_metadata = {
+            "provider": _short_string(metadata_value.get("provider"), "generator_metadata.provider", max_length=120),
+            "model": _short_string(metadata_value.get("model"), "generator_metadata.model", max_length=120),
+            "mode": _short_string(metadata_value.get("mode"), "generator_metadata.mode", max_length=120),
+            "generated_at": (
+                _short_string(metadata_value.get("generated_at"), "generator_metadata.generated_at", max_length=120)
+                if metadata_value.get("generated_at") is not None
+                else None
+            ),
+        }
     claims_raw = raw.get("claims")
     if not isinstance(claims_raw, list):
         raise ManifestError("raw brief claims must be an array")
@@ -233,6 +257,7 @@ def validate_raw_brief(packet_value: Any, raw_value: Any) -> dict[str, Any]:
         "brief_identity": brief_identity,
         "packet_sha256": packet["packet_sha256"],
         "raw_brief_sha256": raw_hash,
+        "generator_metadata": generator_metadata,
         "change": packet["change"],
         "claims": claims,
         "rejected_claims": rejected,

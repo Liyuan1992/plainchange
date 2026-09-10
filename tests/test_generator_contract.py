@@ -25,6 +25,10 @@ def test_generator_packet_excludes_hidden_ground_truth(
     assert "feature flag was added" not in serialized
     assert str(manifest_path) not in serialized
     assert str(repo) not in serialized
+    behavior = [item for item in packet["evidence"] if item["kind"] == "behavior_signal"]
+    assert len(behavior) == 1
+    assert "kind=changed_callable_signature" in behavior[0]["content"]
+    assert behavior[0]["id"] in packet["allowed_evidence_ids"]
     assert validate_packet(packet)["packet_sha256"] == packet["packet_sha256"]
 
 

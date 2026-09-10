@@ -1,0 +1,492 @@
+{
+  "schema_version": "change-passport.software-control.v1",
+  "sample_id": "vllm-a69e75b-to-a85d073",
+  "source_identity": {
+    "brief_identity": "8fbd5a84b4ef35582e4e16e6aac679b1b2676e9de03ef536ceef9e62e7525220",
+    "review_identity": "7bae6c75db43f64c92d94ae6cef65b31bff63ab8dad9223919cdd098cfdf1aaf",
+    "change_identity": {
+      "base_commit": "a69e75b9b6d6a26d90b6790e2eb75b3419a47c16",
+      "head_commit": "a85d0738da311ce4ad5814787e61a12826e232df",
+      "patch_sha256": "d9ccf142db871f6980ef53324b1d8126c069539e3c92ef8440a7c4a37058a57d"
+    },
+    "artifacts": [
+      {
+        "role": "validated_brief",
+        "path": "artifacts/vllm-a69e75b-to-a85d073/brief.json",
+        "sha256": "890C81F8C5C3A685208984BB3E6439F17E60DC6B5B4D111EB35D45ADA09BBED9"
+      },
+      {
+        "role": "beginner_review",
+        "path": "artifacts/vllm-a69e75b-to-a85d073/beginner-review.json",
+        "sha256": "E05951CC08104093071FB6BF6BFFFFBF2437F7D695F92696F666C799AB6B2A5E"
+      },
+      {
+        "role": "system_architecture",
+        "path": "artifacts/vllm-a69e75b-to-a85d073/system-architecture.json",
+        "sha256": "F741F1173EACC0B1EDB51366AAD0CB6F1E99F84CDF5C970A1A1D8D8509F4BDDB"
+      },
+      {
+        "role": "target_profile",
+        "path": "examples/target-profiles/vllm.v1.json",
+        "sha256": "22F935B64D107A0CDA146B58F0304353272664A342DD396031C342196E10B41A"
+      }
+    ]
+  },
+  "product": {
+    "name": "vLLM",
+    "purpose": "接收程序直接调用或兼容 OpenAI 接口发来的模型请求，安排请求和计算资源运行大模型，并一次性或逐步返回结果。",
+    "statement_state": "project_declared",
+    "source_refs": [
+      "target-profile:vllm:22f935b64d107a0cda146b58f0304353272664a342dd396031c342196e10b41a",
+      "repository-readme:a85d0738da311ce4ad5814787e61a12826e232df"
+    ]
+  },
+  "first_screen_summary": {
+    "headline": "这次修复了多模态聊天可能在开头多塞一个标记的问题",
+    "internal_concept_label": "离线聊天输入准备",
+    "confirmed_change": {
+      "text": "以前，对话模板已经放入开头标记后，文字切分处理仍可能再放一次。现在离线聊天默认不会重复添加，同时保留调用方主动覆盖这个默认值的能力。",
+      "statement_state": "observed_fact",
+      "state_label": "已确认",
+      "state_explanation": "固定提交中的代码差异直接支持这个结论。",
+      "basis": {
+        "claim_ids": ["function.chat-marker-fix"],
+        "evidence_ids": ["git.file.002", "git.patch"],
+        "component_ids": ["prepare_input"],
+        "source_refs": ["validated-brief:8fbd5a84b4ef35582e4e16e6aac679b1b2676e9de03ef536ceef9e62e7525220"]
+      }
+    },
+    "user_impact": {
+      "text": "最可能受影响的是通过离线聊天方式处理图片等多模态输入的调用方；是否改变某个具体模型的最终回答还没有实际验证。",
+      "statement_state": "supported_interpretation",
+      "state_label": "可能受影响",
+      "state_explanation": "代码位置和修改内容指出了可能受影响的人，但真实结果仍需要运行验证。",
+      "basis": {
+        "claim_ids": ["function.chat-marker-fix", "architecture.input-preparation"],
+        "evidence_ids": ["arch.node.001", "git.patch"],
+        "component_ids": ["prepare_input"],
+        "source_refs": ["limitation:static-change-is-not-runtime-result"]
+      }
+    },
+    "residual_risk": {
+      "text": "本次没有运行 vLLM、没有下载模型，也没有验证不同模型和硬件组合，因此不能把代码修复直接当成实际效果已经通过。",
+      "statement_state": "unknown",
+      "state_label": "还没验证",
+      "state_explanation": "当前只有固定代码和静态关系证据，缺少真实运行结果。",
+      "basis": {
+        "claim_ids": ["attention.runtime-not-verified"],
+        "evidence_ids": [],
+        "component_ids": ["prepare_input", "run_model"],
+        "source_refs": ["limitation:vllm-not-executed", "limitation:model-not-downloaded"]
+      }
+    },
+    "owner_action": {
+      "text": "先确认多模态聊天只保留一个开头标记，再确认普通生成方式和调用方主动设置仍保持原来的行为。",
+      "statement_state": "supported_interpretation",
+      "state_label": "接下来做",
+      "state_explanation": "这是根据代码变化和未验证范围给出的检查建议，不代表这些检查已经完成。",
+      "basis": {
+        "claim_ids": ["architecture.test-coverage-added", "attention.runtime-not-verified"],
+        "evidence_ids": ["arch.node.002", "git.file.001"],
+        "component_ids": ["prepare_input"],
+        "source_refs": ["recommendation:not-run"]
+      }
+    }
+  },
+  "five_questions": [
+    {
+      "id": "software_operation",
+      "question": "这是个什么软件？",
+      "answer": "vLLM 帮助应用高效运行大模型。请求可以由程序直接调用，也可以通过兼容 OpenAI 的接口进入；系统随后整理输入、安排请求和计算资源、运行模型，再一次性或逐步返回结果。",
+      "statement_state": "project_declared",
+      "state_label": "项目说明",
+      "basis": {
+        "claim_ids": [],
+        "evidence_ids": [],
+        "component_ids": ["client_request", "service_entry", "prepare_input", "queue_requests", "plan_resources", "run_model", "prepare_output", "client_response"],
+        "source_refs": ["target-profile:vllm:conceptual_architecture", "repository-readme:a85d0738da311ce4ad5814787e61a12826e232df"]
+      },
+      "details": {
+        "software_steps": [
+          "让程序调用或接口请求进入 vLLM",
+          "整理文字、对话和图片等模型输入",
+          "安排请求先后、缓存和计算任务并运行模型",
+          "整理生成结果，可一次性或边生成边返回"
+        ]
+      }
+    },
+    {
+      "id": "current_change",
+      "question": "AI 这次主要改变了什么？",
+      "answer": "它修复了离线多模态聊天输入可能多出一个开头标记的问题。默认情况下，开头标记现在只由对话模板负责，不再让后续文字切分重复添加。",
+      "statement_state": "observed_fact",
+      "state_label": "已确认",
+      "basis": {
+        "claim_ids": ["function.chat-marker-fix", "architecture.input-preparation"],
+        "evidence_ids": ["git.file.002", "git.patch", "arch.node.001"],
+        "component_ids": ["prepare_input"],
+        "source_refs": ["validated-brief:8fbd5a84b4ef35582e4e16e6aac679b1b2676e9de03ef536ceef9e62e7525220"]
+      },
+      "details": {
+        "change_points": [
+          "离线聊天默认不再重复添加开头标记",
+          "调用方仍可明确要求添加",
+          "普通生成方式的默认处理没有在实现代码中一起修改"
+        ],
+        "comparison_example": {
+          "title": "用一次聊天输入理解",
+          "before": [
+            "对话模板已经加入开头标记",
+            "文字切分处理又加入一次",
+            "模型可能收到两个开头标记"
+          ],
+          "after": [
+            "对话模板加入开头标记",
+            "文字切分处理默认不再重复添加",
+            "模型输入只保留一个开头标记"
+          ]
+        }
+      }
+    },
+    {
+      "id": "affected_people",
+      "question": "谁会感觉到变化？",
+      "answer": "最可能感觉到变化的是使用离线聊天方式处理图片等多模态内容的开发者或应用。在线聊天服务和普通生成方式目前没有发现同一处实现被修改，但这不等于所有组合都已证明不受影响。",
+      "statement_state": "supported_interpretation",
+      "state_label": "范围判断",
+      "basis": {
+        "claim_ids": ["function.chat-marker-fix", "architecture.input-preparation"],
+        "evidence_ids": ["git.file.002", "arch.node.001"],
+        "component_ids": ["service_entry", "prepare_input"],
+        "source_refs": ["limitation:static-change-is-not-runtime-result"]
+      },
+      "details": {
+        "audience_impacts": [
+          {
+            "audience": "离线多模态聊天的调用方",
+            "status": "very_likely",
+            "explanation": "修改直接发生在离线聊天整理输入的步骤。",
+            "source_refs": ["claim:function.chat-marker-fix", "evidence:arch.node.001"]
+          },
+          {
+            "audience": "在线聊天服务的调用方",
+            "status": "not_observed",
+            "explanation": "代码说明这次是在让离线默认行为与在线方式保持一致；本次没有修改在线入口。",
+            "source_refs": ["evidence:git.patch"]
+          },
+          {
+            "audience": "使用普通生成方式的人",
+            "status": "not_observed",
+            "explanation": "实现变化位于聊天预处理，新增测试代码还专门保留普通生成方式的原行为。",
+            "source_refs": ["claim:architecture.test-coverage-added", "evidence:git.patch"]
+          },
+          {
+            "audience": "不同模型与硬件组合",
+            "status": "unknown",
+            "explanation": "本次没有运行模型或硬件测试，无法确认所有组合的实际结果。",
+            "source_refs": ["limitation:vllm-not-executed"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "unknowns",
+      "question": "还有什么不知道？",
+      "answer": "我们还不知道新增测试在这个环境里是否通过，也不知道不同多模态模型、对话模板和硬件组合的实际输出是否都符合预期。静态分析找到的代码关联也不能证明真实请求一定经过它们。",
+      "statement_state": "unknown",
+      "state_label": "还没验证",
+      "basis": {
+        "claim_ids": ["attention.runtime-not-verified", "system.missing.history"],
+        "evidence_ids": [],
+        "component_ids": ["prepare_input", "run_model"],
+        "source_refs": ["limitation:vllm-not-executed", "limitation:no-approved-history", "limitation:static-import-is-not-runtime"]
+      },
+      "details": {
+        "unknowns": [
+          "提交中新增的测试代码没有在本次分析中运行",
+          "没有下载或运行受影响的多模态模型",
+          "没有覆盖不同聊天模板、模型与硬件组合",
+          "没有已批准的历史结论可供比较"
+        ]
+      }
+    },
+    {
+      "id": "next_verification",
+      "question": "我接下来该检查什么？",
+      "answer": "先跑新增的针对性检查，确认离线多模态聊天只保留一个开头标记；再确认调用方主动覆盖默认值仍有效，并确认普通生成方式没有被连带改变。",
+      "statement_state": "supported_interpretation",
+      "state_label": "建议行动",
+      "basis": {
+        "claim_ids": ["architecture.test-coverage-added", "attention.runtime-not-verified"],
+        "evidence_ids": ["git.file.001", "arch.node.002"],
+        "component_ids": ["prepare_input"],
+        "source_refs": ["recommendation:not-run"]
+      },
+      "details": {
+        "owner_checks": [
+          "多模态聊天默认只保留一个开头标记",
+          "调用方主动要求添加时仍能覆盖默认值",
+          "普通生成方式仍保持原来的输入处理"
+        ],
+        "actions": [
+          {
+            "id": "run-targeted-tests",
+            "title": "运行提交中新增的针对性测试",
+            "instructions": "在隔离环境安装该固定版本所需依赖，仅运行多模态聊天输入准备相关测试，记录命令、环境和真实结果。",
+            "basis_type": "verified_change",
+            "completion_status": "recommended_not_run",
+            "source_refs": ["claim:architecture.test-coverage-added", "evidence:git.file.001"]
+          },
+          {
+            "id": "compare-input-markers",
+            "title": "比较修复前后的模型输入",
+            "instructions": "使用一个会在对话模板中主动加入开头标记的多模态模型，对比修复前后实际输入标记数量。",
+            "basis_type": "evidence_gap",
+            "completion_status": "recommended_not_run",
+            "source_refs": ["claim:function.chat-marker-fix", "limitation:vllm-not-executed"]
+          },
+          {
+            "id": "check-unrelated-paths",
+            "title": "确认没有连带改变其他入口",
+            "instructions": "分别检查在线聊天方式、普通生成方式和调用方主动设置，避免把一个默认值修复扩散成其他调用方式的变化。",
+            "basis_type": "project_checklist",
+            "completion_status": "recommended_not_run",
+            "source_refs": ["evidence:git.patch"]
+          }
+        ]
+      }
+    }
+  ],
+  "working_map": {
+    "title": "vLLM 从请求到回答的工作图",
+    "description": "先用四步理解一次模型请求，再点击任一步查看完整八步过程和技术实现。",
+    "screen_summary": {
+      "headline": "vLLM 如何把请求变成模型回答",
+      "overview": "请求由程序直接调用或兼容 OpenAI 的接口进入后，vLLM 会整理输入、安排请求和计算资源、运行模型，再一次性或逐步返回结果。",
+      "boundary_label": "项目说明"
+    },
+    "overview_map": {
+      "title": "4 个关键步骤",
+      "nodes": [
+        {
+          "id": "overview.receive",
+          "label": "请求进入 vLLM",
+          "description": "可以由程序直接调用，也可以通过兼容 OpenAI 的接口进入。",
+          "statement_state": "project_declared",
+          "change_state": "not_observed",
+          "detail_node_ids": ["client_request", "service_entry"]
+        },
+        {
+          "id": "overview.prepare",
+          "label": "准备模型输入",
+          "description": "应用对话模板，整理文字和图片，并转换成模型可读取的内容。",
+          "statement_state": "project_declared",
+          "change_state": "changed",
+          "detail_node_ids": ["prepare_input"]
+        },
+        {
+          "id": "overview.execute",
+          "label": "安排请求并运行模型",
+          "description": "决定哪些请求先计算，管理缓存，协调计算任务并运行模型。",
+          "statement_state": "project_declared",
+          "change_state": "not_observed",
+          "detail_node_ids": ["queue_requests", "plan_resources", "run_model"]
+        },
+        {
+          "id": "overview.return",
+          "label": "整理并返回结果",
+          "description": "整理模型输出；支持时，可以在生成过程中逐步返回。",
+          "statement_state": "project_declared",
+          "change_state": "not_observed",
+          "detail_node_ids": ["prepare_output", "client_response"]
+        }
+      ],
+      "flows": [
+        {"from": "overview.receive", "to": "overview.prepare", "label": "收到内容", "statement_state": "project_declared"},
+        {"from": "overview.prepare", "to": "overview.execute", "label": "形成模型任务", "statement_state": "project_declared"},
+        {"from": "overview.execute", "to": "overview.return", "label": "得到生成内容", "statement_state": "project_declared"}
+      ]
+    },
+    "statement_state": "project_declared",
+    "source": {
+      "profile_id": "vllm",
+      "profile_sha256": "22f935b64d107a0cda146b58f0304353272664a342dd396031c342196e10b41a"
+    },
+    "boundary_note": "这张工作图根据 vLLM 项目说明和目标配置建立理解，不代表每个模型、入口和硬件组合都按完全相同的运行路径执行。",
+    "nodes": [
+      {
+        "id": "client_request",
+        "label": "用户或应用发来请求",
+        "description": "输入文字、对话、图片或其他需要模型处理的内容。",
+        "type": "input",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": [],
+        "owner_view": {
+          "meaning": "这是一次模型工作的起点，内容可能来自人、应用或其他系统。",
+          "visible_result": "系统收到要处理的文字、对话、图片或其他内容。",
+          "current_change": "本次没有发现接收内容的方式被修改。",
+          "affected_people": "所有调用方都会经过输入边界，但没有证据说明这个边界发生了变化。",
+          "unknowns": ["本次没有运行真实请求。"],
+          "owner_checks": ["确认目标调用方式仍能提交原来的输入。"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["client_request"], "source_refs": ["target-profile:vllm:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "service_entry",
+        "label": "请求进入 vLLM",
+        "description": "可以由程序直接调用，也可以通过兼容 OpenAI 的接口进入。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["interfaces"],
+        "owner_view": {
+          "meaning": "这是请求跨进 vLLM 边界的位置，不把启动服务的命令误当成用户提交请求。",
+          "visible_result": "调用方的请求进入 vLLM。",
+          "current_change": "修改发生在离线聊天入口之后的输入准备，不是所有服务入口。",
+          "affected_people": "离线聊天调用方最相关；其他入口目前没有发现同一实现被修改。",
+          "unknowns": ["没有运行程序直接调用或在线服务接口。"],
+          "owner_checks": ["分别确认程序直接调用和兼容 OpenAI 的接口仍可用。"],
+          "basis": {"claim_ids": ["architecture.input-preparation"], "evidence_ids": ["arch.node.001"], "component_ids": ["service_entry"], "source_refs": ["target-profile:vllm:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "prepare_input",
+        "label": "整理模型输入",
+        "description": "应用对话模板，处理文字和图片，并把内容转换成模型能读取的标记。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "changed",
+        "implementation_group_ids": ["interfaces", "input_processing"],
+        "owner_view": {
+          "meaning": "这一步把人能理解的对话和图片整理成模型真正读取的输入。",
+          "visible_result": "对话模板、文字切分和多模态处理共同形成模型输入。",
+          "current_change": "本次修复就在这里：离线聊天默认不再重复添加开头标记。",
+          "affected_people": "使用离线多模态聊天的人最可能感受到变化。",
+          "unknowns": ["没有用真实模型检查最终输入。", "不同对话模板是否都符合预期仍未验证。"],
+          "owner_checks": ["确认默认只有一个开头标记。", "确认调用方主动覆盖默认值仍有效。"],
+          "basis": {"claim_ids": ["function.chat-marker-fix", "architecture.input-preparation"], "evidence_ids": ["git.patch", "arch.node.001"], "component_ids": ["prepare_input"], "source_refs": ["validated-brief:8fbd5a84b4ef35582e4e16e6aac679b1b2676e9de03ef536ceef9e62e7525220"]}
+        }
+      },
+      {
+        "id": "queue_requests",
+        "label": "把请求排入处理队列",
+        "description": "收集等待中的任务，并组合适合一起处理的请求。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["engine_control"],
+        "owner_view": {
+          "meaning": "系统把许多请求排队并组合处理，以提高运行效率。",
+          "visible_result": "输入成为等待模型处理的任务。",
+          "current_change": "本次没有发现排队或批处理规则被修改。",
+          "affected_people": "没有证据说明等待时间或吞吐量发生变化。",
+          "unknowns": ["未运行压力或性能测试。"],
+          "owner_checks": ["如关注性能，另行检查请求排队和批处理指标。"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["queue_requests"], "source_refs": ["target-profile:vllm:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "plan_resources",
+        "label": "安排请求和计算资源",
+        "description": "决定哪些请求先计算，管理已处理内容的缓存，并协调计算任务执行。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["engine_control", "memory_and_scale"],
+        "owner_view": {
+          "meaning": "系统安排请求的先后和批次，管理缓存，并协调计算任务；这里不是临时替用户挑选模型。",
+          "visible_result": "等待中的请求按安排获得缓存和计算机会。",
+          "current_change": "本次没有发现资源安排逻辑被修改。",
+          "affected_people": "没有证据说明显存占用、吞吐量或并行方式发生变化。",
+          "unknowns": ["未运行任何硬件或资源测试。"],
+          "owner_checks": ["如部署环境敏感，检查显存和并发指标没有异常。"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["plan_resources"], "source_refs": ["target-profile:vllm:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "run_model",
+        "label": "运行模型计算",
+        "description": "在 GPU、CPU 或其他支持的硬件上执行模型。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["model_execution"],
+        "owner_view": {
+          "meaning": "模型在实际硬件上读取准备好的输入并生成下一步结果。",
+          "visible_result": "得到模型计算产生的候选输出。",
+          "current_change": "本次没有发现模型计算核心被修改。",
+          "affected_people": "模型输入改变可能间接影响结果，但模型执行代码本身没有发现变化。",
+          "unknowns": ["没有运行 GPU、CPU 或其他硬件后端。"],
+          "owner_checks": ["用一个受影响模型比较修复前后的真实输出。"],
+          "basis": {"claim_ids": ["attention.runtime-not-verified"], "evidence_ids": [], "component_ids": ["run_model"], "source_refs": ["target-profile:vllm:conceptual_architecture", "limitation:vllm-not-executed"]}
+        }
+      },
+      {
+        "id": "prepare_output",
+        "label": "整理生成结果，可边生成边返回",
+        "description": "把模型输出整理成调用方可接收的内容；支持时，可以在生成过程中逐步返回。",
+        "type": "output",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["engine_control", "extensions"],
+        "owner_view": {
+          "meaning": "系统把模型计算结果整理成调用方可以接收的内容，不必总等到全部生成完成后才返回。",
+          "visible_result": "形成一次性返回的完整结果，或在流式输出时逐步返回内容。",
+          "current_change": "本次没有发现输出整理逻辑被直接修改。",
+          "affected_people": "最终内容可能因输入标记修复而不同，但输出处理本身没有发现变化。",
+          "unknowns": ["没有比较修复前后的实际生成结果。", "没有验证流式和非流式返回。"],
+          "owner_checks": ["检查受影响场景的回答内容和结束状态正常。", "分别确认流式和非流式返回符合预期。"],
+          "basis": {"claim_ids": ["function.chat-marker-fix"], "evidence_ids": ["git.patch"], "component_ids": ["prepare_output"], "source_refs": ["target-profile:vllm:conceptual_architecture", "limitation:indirect-output-effect"]}
+        }
+      },
+      {
+        "id": "client_response",
+        "label": "让调用方收到结果",
+        "description": "调用方收到完整结果，或在使用流式输出时逐步收到内容。",
+        "type": "output",
+        "statement_state": "project_declared",
+        "change_state": "not_observed",
+        "implementation_group_ids": ["interfaces"],
+        "owner_view": {
+          "meaning": "这是用户或应用最终拿到模型结果的边界。",
+          "visible_result": "调用方一次性或逐步收到模型回答、生成内容和相关运行信息。",
+          "current_change": "本次没有发现返回格式或输出接口被修改。",
+          "affected_people": "普通用户是否能感觉到差异取决于具体模型和输入，本次尚未运行验证。",
+          "unknowns": ["没有最终用户体验或实际 API 返回证据。"],
+          "owner_checks": ["确认受影响调用方式仍返回预期格式和内容。"],
+          "basis": {"claim_ids": ["attention.runtime-not-verified"], "evidence_ids": [], "component_ids": ["client_response"], "source_refs": ["target-profile:vllm:conceptual_architecture", "limitation:vllm-not-executed"]}
+        }
+      }
+    ],
+    "flows": [
+      {"from": "client_request", "to": "service_entry", "label": "进入系统", "statement_state": "project_declared"},
+      {"from": "service_entry", "to": "prepare_input", "label": "交给输入处理", "statement_state": "project_declared"},
+      {"from": "prepare_input", "to": "queue_requests", "label": "形成模型任务", "statement_state": "project_declared"},
+      {"from": "queue_requests", "to": "plan_resources", "label": "安排先后与缓存", "statement_state": "project_declared"},
+      {"from": "plan_resources", "to": "run_model", "label": "交给计算任务", "statement_state": "project_declared"},
+      {"from": "run_model", "to": "prepare_output", "label": "产生输出", "statement_state": "project_declared"},
+      {"from": "prepare_output", "to": "client_response", "label": "完整或逐步返回", "statement_state": "project_declared"}
+    ]
+  },
+  "evidence_layers": [
+    {"id": "software_control", "label": "负责人结论", "purpose": "先回答改了什么、谁可能受影响、还不知道什么和下一步做什么。"},
+    {"id": "explanation", "label": "完整解释", "purpose": "用五个问题和可点击工作图解释软件与本次变化。"},
+    {"id": "technical_evidence", "label": "技术证据", "purpose": "保留固定 Git 差异、静态模块、关系和证据边界供核对。"}
+  ],
+  "validation": {
+    "allowed_statement_states": ["observed_fact", "supported_interpretation", "project_declared", "unknown"],
+    "source_claim_ids": ["function.chat-marker-fix", "architecture.input-preparation", "architecture.test-coverage-added", "attention.runtime-not-verified", "system.missing.history"],
+    "source_evidence_ids": ["git.change_identity", "git.diff_summary", "git.file.001", "git.file.002", "git.patch", "arch.node.001", "arch.node.002", "arch.impact.001", "arch.impact.002", "arch.impact.003", "arch.impact.004", "task.original"],
+    "source_component_ids": ["client_request", "service_entry", "prepare_input", "queue_requests", "plan_resources", "run_model", "prepare_output", "client_response"],
+    "limitations": [
+      "项目工作图来自固定快照下的 vLLM 目标配置，不是运行时调用追踪。",
+      "静态 import 关系不能证明真实请求一定执行。",
+      "本次没有安装或运行 vLLM，也没有下载模型。",
+      "提交中的测试代码存在，但本次没有执行。",
+      "这是一份人工编写并绑定来源的控制文档，不证明自动生成质量。"
+    ],
+    "human_comprehension_status": "pending_independent_participant"
+  },
+  "control_identity": "1a484c052e9680487f36696f6a5abbf7bf07971df9005914dd7ecfbfc12f53c5"
+}

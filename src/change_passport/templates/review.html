@@ -12,7 +12,13 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">D</span><span>DigitalSelf · Change Passport</span></div>
+    <div class="topbar-main">
+      <div class="brand"><span id="brand-mark" class="brand-mark" aria-hidden="true"></span><span id="brand-name"></span></div>
+      <nav id="primary-tabs" class="primary-tabs" role="tablist" aria-label="查看方式">
+        <button id="change-tab" class="primary-tab" role="tab" type="button" data-page="change" aria-controls="change-page">变化解读</button>
+        <button id="architecture-tab" class="primary-tab" role="tab" type="button" data-page="architecture" aria-controls="architecture-page">整体架构</button>
+      </nav>
+    </div>
     <div id="top-status" class="top-status" aria-label="本次变化状态"></div>
   </header>
 
@@ -26,12 +32,26 @@
       <div id="scope-note" class="scope-note"></div>
     </section>
 
-    <nav id="primary-tabs" class="primary-tabs" role="tablist" aria-label="查看方式">
-      <button id="change-tab" class="primary-tab" role="tab" type="button" data-page="change" aria-controls="change-page">变化解读</button>
-      <button id="architecture-tab" class="primary-tab" role="tab" type="button" data-page="architecture" aria-controls="architecture-page">整体架构</button>
-    </nav>
-
     <section id="change-page" class="page-panel" role="tabpanel" aria-labelledby="change-tab">
+      <section id="owner-change" class="owner-change" aria-label="这次改动的负责人摘要" hidden>
+        <article class="owner-conclusion">
+          <p class="eyebrow">一句话结论</p>
+          <h2 id="owner-change-headline"></h2>
+          <div id="owner-change-meta" class="owner-change-meta"></div>
+          <p id="owner-confirmed-copy" class="owner-confirmed-copy"></p>
+        </article>
+        <div id="owner-status-list" class="owner-status-list" aria-label="负责人需要掌握的三个结论"></div>
+        <details class="owner-full-explanation">
+          <summary><span>查看完整说明</span><small>五个问题与完整依据</small></summary>
+          <section id="owner-questions" class="owner-questions" aria-label="软件负责人需要回答的五个问题"></section>
+        </details>
+        <details class="owner-technical-disclosure">
+          <summary>为什么这么判断？查看技术细节</summary>
+          <div id="legacy-change-host" class="owner-technical-body"></div>
+        </details>
+      </section>
+
+      <div id="legacy-change-content">
       <section id="summary-grid" class="summary-grid" aria-label="四个关键问题"></section>
 
       <section class="workspace" aria-label="变化路径与节点说明">
@@ -72,28 +92,87 @@
         </button>
         <div id="technical-content" class="technical-content" hidden></div>
       </section>
+      </div>
     </section>
 
     <section id="architecture-page" class="page-panel" role="tabpanel" aria-labelledby="architecture-tab" hidden>
-      <article class="architecture-card">
+      <article id="owner-architecture" class="owner-architecture" hidden>
+        <div class="owner-architecture-heading">
+          <div>
+            <p class="eyebrow">这个软件怎么工作</p>
+            <h2 id="owner-map-headline"></h2>
+            <p id="owner-map-overview"></p>
+          </div>
+          <div class="owner-map-heading-tools">
+            <span id="owner-map-state" class="architecture-source"></span>
+            <span id="owner-map-depth-label" class="owner-map-depth-label"></span>
+            <button id="owner-map-back" class="secondary-button owner-map-back" type="button" hidden>收起当前步骤</button>
+          </div>
+        </div>
+        <div id="owner-map-boundary" class="architecture-concept-boundary"></div>
+        <div class="owner-map-legend" aria-label="图中状态说明">
+          <span class="owner-map-legend-item"><span class="owner-map-legend-swatch is-selected" aria-hidden="true"></span>深蓝边框 = 当前查看</span>
+          <span class="owner-map-legend-item"><span class="owner-map-legend-swatch is-changed" aria-hidden="true"></span>橙色 = 本次改动</span>
+        </div>
+        <div id="owner-map-evidence-key" class="owner-map-evidence-key" aria-label="信息来源说明" hidden>
+          <span data-evidence-key="declared"><strong>来自项目说明</strong>：项目自己这样描述</span>
+          <span data-evidence-key="code"><strong>找到对应代码</strong>：代码里确实有相关位置</span>
+        </div>
+        <div class="owner-map-workspace">
+          <section id="owner-map-canvas" class="owner-map-canvas" tabindex="-1" aria-label="可点击的软件工作图">
+            <svg id="owner-map-links" class="owner-map-links" aria-hidden="true"></svg>
+            <div id="owner-map-nodes" class="owner-map-nodes"></div>
+          </section>
+          <aside id="owner-map-inspector" class="owner-map-inspector" aria-label="当前工作步骤说明"></aside>
+        </div>
+        <details class="owner-relation-disclosure">
+          <summary>查看步骤之间的完整关系</summary>
+          <div id="owner-map-relations" class="owner-map-relations" aria-label="完整工作关系说明"></div>
+        </details>
+        <details class="owner-technical-disclosure owner-implementation-disclosure">
+          <summary>查看技术实现结构</summary>
+          <p id="technical-payload-status" class="technical-note" hidden></p>
+          <div id="legacy-architecture-host" class="owner-technical-body"></div>
+        </details>
+      </article>
+      <article id="legacy-architecture-content" class="architecture-card">
         <div class="architecture-heading">
           <div>
             <p class="eyebrow">整体系统结构图</p>
-            <h2>先看系统分区，再按需下钻模块</h2>
+            <h2>先看系统如何工作，再核对实现结构</h2>
             <p id="architecture-description" class="architecture-description"></p>
           </div>
           <div id="architecture-stats" class="architecture-stats" aria-label="结构覆盖"></div>
         </div>
         <div id="architecture-scope" class="architecture-scope"></div>
         <div class="architecture-workspace">
-          <div id="architecture-canvas" class="architecture-canvas" tabindex="-1" aria-label="系统分区关系图">
-            <svg id="architecture-links" class="architecture-links" aria-hidden="true"></svg>
-            <div id="architecture-groups" class="architecture-groups"></div>
+          <div id="architecture-canvas" class="architecture-canvas unified-architecture-canvas" tabindex="-1" aria-label="可展开的整体架构图">
+            <section id="architecture-concept" class="architecture-concept" aria-label="系统工作流" hidden>
+              <div class="architecture-layer-heading">
+                <div>
+                  <p class="eyebrow">系统工作流</p>
+                  <h3 id="architecture-concept-title"></h3>
+                  <p id="architecture-concept-description" class="architecture-description"></p>
+                </div>
+                <span id="architecture-concept-source" class="architecture-source"></span>
+              </div>
+              <div id="architecture-concept-boundary" class="architecture-concept-boundary"></div>
+              <p id="architecture-concept-layout-status" class="architecture-concept-layout-status" hidden></p>
+              <div id="architecture-concept-canvas" class="architecture-concept-canvas" tabindex="-1" aria-label="系统工作流关系图">
+                <div class="architecture-story-band architecture-story-band-input" aria-hidden="true"><span>外部输入</span><small>由人或 Git 提供</small></div>
+                <div class="architecture-story-band architecture-story-band-system" aria-hidden="true"><span>系统自动处理</span><small>只读、可复核</small></div>
+                <div class="architecture-story-band architecture-story-band-human" aria-hidden="true"><span>人工决定</span><small>系统不可越过</small></div>
+                <svg id="architecture-concept-links" class="architecture-concept-links" aria-hidden="true"></svg>
+                <div id="architecture-concept-components" class="architecture-concept-components"></div>
+              </div>
+              <div id="architecture-concept-relations" class="architecture-concept-relations" aria-label="系统工作流关系说明"></div>
+            </section>
+            <section id="architecture-implementation" class="architecture-implementation" aria-label="展开的静态实现" hidden>
+              <div id="architecture-groups" class="architecture-groups"></div>
+            </section>
           </div>
-          <aside id="architecture-inspector" class="architecture-inspector" aria-label="系统分区说明"></aside>
+          <aside id="architecture-inspector" class="architecture-inspector" aria-label="当前架构说明"></aside>
         </div>
-        <div id="architecture-relations" class="architecture-relations" aria-label="分区关系说明"></div>
-        <div id="architecture-modules" class="architecture-modules" hidden></div>
       </article>
     </section>
 
@@ -105,6 +184,8 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <script id="review-data" type="application/json">{{REVIEW_JSON}}</script>
+  <script id="software-control-data" type="application/json">{{SOFTWARE_CONTROL_JSON}}</script>
+  <script id="technical-payload-data" type="application/json">{{TECHNICAL_PAYLOAD_JSON}}</script>
   <script>
 {{APP_JS}}
   </script>

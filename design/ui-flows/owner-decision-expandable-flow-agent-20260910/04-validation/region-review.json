@@ -1,0 +1,13 @@
+{
+  "status": "passed_with_known_limits",
+  "score": 8.8,
+  "delivery_allowed": true,
+  "regions": {
+    "header_tabs": {"score": 9.0, "status": "pass"},
+    "owner_decision": {"score": 9.0, "status": "pass"},
+    "software_workflow": {"score": 8.5, "status": "pass"},
+    "narrow_layout": {"score": 8.7, "status": "pass"}
+  },
+  "human_comprehension": "not_run",
+  "runtime_behavior": "not_run"
+}

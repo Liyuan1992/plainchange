@@ -1,0 +1,362 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://change-passport.local/schemas/software-control.v1.schema.json",
+  "title": "Change Passport software control view v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "sample_id",
+    "source_identity",
+    "product",
+    "first_screen_summary",
+    "five_questions",
+    "working_map",
+    "evidence_layers",
+    "validation",
+    "control_identity"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "change-passport.software-control.v1"
+    },
+    "sample_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_identity": {
+      "$ref": "#/definitions/sourceIdentity"
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "purpose", "statement_state", "source_refs"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1},
+        "statement_state": {"$ref": "#/definitions/statementState"},
+        "source_refs": {"$ref": "#/definitions/stringRefs"}
+      }
+    },
+    "first_screen_summary": {
+      "$ref": "#/definitions/firstScreenSummary"
+    },
+    "five_questions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/definitions/questionAnswer"}
+    },
+    "working_map": {
+      "$ref": "#/definitions/workingMap"
+    },
+    "evidence_layers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "purpose"],
+        "properties": {
+          "id": {"enum": ["software_control", "explanation", "technical_evidence"]},
+          "label": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_statement_states",
+        "source_claim_ids",
+        "source_evidence_ids",
+        "source_component_ids",
+        "limitations",
+        "human_comprehension_status"
+      ],
+      "properties": {
+        "allowed_statement_states": {
+          "type": "array",
+          "const": ["observed_fact", "supported_interpretation", "project_declared", "unknown"]
+        },
+        "source_claim_ids": {"$ref": "#/definitions/stringRefs"},
+        "source_evidence_ids": {"$ref": "#/definitions/stringRefs"},
+        "source_component_ids": {"$ref": "#/definitions/stringRefs"},
+        "limitations": {"$ref": "#/definitions/stringRefs"},
+        "human_comprehension_status": {"const": "pending_independent_participant"}
+      }
+    },
+    "control_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "definitions": {
+    "statementState": {
+      "enum": ["observed_fact", "supported_interpretation", "project_declared", "unknown"]
+    },
+    "stringRefs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["brief_identity", "review_identity", "change_identity", "artifacts"],
+      "properties": {
+        "brief_identity": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "review_identity": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "change_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["base_commit", "head_commit", "patch_sha256"],
+          "properties": {
+            "base_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+            "head_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+            "patch_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": {"enum": ["validated_brief", "beginner_review", "system_architecture", "target_profile"]},
+              "path": {"type": "string", "minLength": 1},
+              "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    "basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_ids", "evidence_ids", "component_ids", "source_refs"],
+      "properties": {
+        "claim_ids": {"$ref": "#/definitions/stringRefs"},
+        "evidence_ids": {"$ref": "#/definitions/stringRefs"},
+        "component_ids": {"$ref": "#/definitions/stringRefs"},
+        "source_refs": {"$ref": "#/definitions/stringRefs"}
+      }
+    },
+    "summaryStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "statement_state", "state_label", "state_explanation", "basis"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "statement_state": {"$ref": "#/definitions/statementState"},
+        "state_label": {"type": "string", "minLength": 1, "maxLength": 8},
+        "state_explanation": {"type": "string", "minLength": 1},
+        "basis": {"$ref": "#/definitions/basis"}
+      }
+    },
+    "firstScreenSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headline", "internal_concept_label", "confirmed_change", "user_impact", "residual_risk", "owner_action"],
+      "properties": {
+        "headline": {"type": "string", "minLength": 1},
+        "internal_concept_label": {"type": "string", "minLength": 1},
+        "confirmed_change": {"$ref": "#/definitions/summaryStatement"},
+        "user_impact": {"$ref": "#/definitions/summaryStatement"},
+        "residual_risk": {"$ref": "#/definitions/summaryStatement"},
+        "owner_action": {"$ref": "#/definitions/summaryStatement"}
+      }
+    },
+    "audienceImpact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audience", "status", "explanation", "source_refs"],
+      "properties": {
+        "audience": {"type": "string", "minLength": 1},
+        "status": {"enum": ["very_likely", "possible", "not_observed", "unknown"]},
+        "explanation": {"type": "string", "minLength": 1},
+        "source_refs": {"$ref": "#/definitions/stringRefs"}
+      }
+    },
+    "recommendedAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "instructions", "basis_type", "completion_status", "source_refs"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "title": {"type": "string", "minLength": 1},
+        "instructions": {"type": "string", "minLength": 1},
+        "basis_type": {"enum": ["verified_change", "evidence_gap", "project_checklist"]},
+        "completion_status": {"const": "recommended_not_run"},
+        "source_refs": {"$ref": "#/definitions/stringRefs"}
+      }
+    },
+    "answerDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "software_steps": {"$ref": "#/definitions/stringRefs"},
+        "change_points": {"$ref": "#/definitions/stringRefs"},
+        "comparison_example": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "before", "after"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "before": {
+              "type": "array",
+              "minItems": 2,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "after": {
+              "type": "array",
+              "minItems": 2,
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "audience_impacts": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/audienceImpact"}
+        },
+        "unknowns": {"$ref": "#/definitions/stringRefs"},
+        "owner_checks": {"$ref": "#/definitions/stringRefs"},
+        "actions": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/recommendedAction"}
+        }
+      }
+    },
+    "questionAnswer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question", "answer", "statement_state", "state_label", "basis", "details"],
+      "properties": {
+        "id": {"enum": ["software_operation", "current_change", "affected_people", "unknowns", "next_verification"]},
+        "question": {"type": "string", "minLength": 1},
+        "answer": {"type": "string", "minLength": 1},
+        "statement_state": {"$ref": "#/definitions/statementState"},
+        "state_label": {"type": "string", "minLength": 1},
+        "basis": {"$ref": "#/definitions/basis"},
+        "details": {"$ref": "#/definitions/answerDetails"}
+      }
+    },
+    "workingMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "description", "screen_summary", "overview_map", "statement_state", "source", "boundary_note", "nodes", "flows"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "screen_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["headline", "overview", "boundary_label"],
+          "properties": {
+            "headline": {"type": "string", "minLength": 1},
+            "overview": {"type": "string", "minLength": 1},
+            "boundary_label": {"type": "string", "minLength": 1, "maxLength": 12}
+          }
+        },
+        "overview_map": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "nodes", "flows"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "nodes": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {"$ref": "#/definitions/overviewNode"}
+            },
+            "flows": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/definitions/mapFlow"}
+            }
+          }
+        },
+        "statement_state": {"const": "project_declared"},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile_id", "profile_sha256"],
+          "properties": {
+            "profile_id": {"type": "string", "minLength": 1},
+            "profile_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        },
+        "boundary_note": {"type": "string", "minLength": 1},
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "description", "type", "statement_state", "change_state", "implementation_group_ids", "owner_view"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "label": {"type": "string", "minLength": 1},
+              "description": {"type": "string", "minLength": 1},
+              "type": {"enum": ["input", "process", "output", "human_gate", "state"]},
+              "statement_state": {"const": "project_declared"},
+              "change_state": {"enum": ["changed", "not_observed", "unknown"]},
+              "implementation_group_ids": {"$ref": "#/definitions/stringRefs"},
+              "owner_view": {
+                "$ref": "#/definitions/ownerNodeView"
+              }
+            }
+          }
+        },
+        "flows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/definitions/mapFlow"}
+        }
+      }
+    },
+    "overviewNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "description", "statement_state", "change_state", "detail_node_ids"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "statement_state": {"const": "project_declared"},
+        "change_state": {"enum": ["changed", "not_observed", "unknown"]},
+        "detail_node_ids": {"$ref": "#/definitions/stringRefs"}
+      }
+    },
+    "mapFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "label", "statement_state"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "statement_state": {"const": "project_declared"}
+      }
+    },
+    "ownerNodeView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meaning", "visible_result", "current_change", "affected_people", "unknowns", "owner_checks", "basis"],
+      "properties": {
+        "meaning": {"type": "string", "minLength": 1},
+        "visible_result": {"type": "string", "minLength": 1},
+        "current_change": {"type": "string", "minLength": 1},
+        "affected_people": {"type": "string", "minLength": 1},
+        "unknowns": {"$ref": "#/definitions/stringRefs"},
+        "owner_checks": {"$ref": "#/definitions/stringRefs"},
+        "basis": {"$ref": "#/definitions/basis"}
+      }
+    }
+  }
+}

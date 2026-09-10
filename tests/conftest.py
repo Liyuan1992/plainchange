@@ -51,6 +51,7 @@ def write_manifest(
     evidence_inputs: list[dict[str, Any]] | None = None,
     hidden_ground_truth: list[dict[str, Any]] | None = None,
     architecture_baseline: Path | None = None,
+    target_profile: Path | None = None,
 ) -> Path:
     data = {
         "schema_version": "change-passport.sample.v1",
@@ -97,6 +98,8 @@ def write_manifest(
     }
     if architecture_baseline is not None:
         data["architecture_baseline"] = {"path": str(architecture_baseline)}
+    if target_profile is not None:
+        data["target_profile"] = {"path": str(target_profile)}
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return path
 

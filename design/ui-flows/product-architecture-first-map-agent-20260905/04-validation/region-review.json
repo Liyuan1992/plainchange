@@ -1,0 +1,20 @@
+{
+  "task": "product-architecture-first-map",
+  "score": 8.8,
+  "delivery_allowed": true,
+  "desktop": {
+    "viewport": [1440, 1050],
+    "concept_components": 8,
+    "svg_flows": 8,
+    "text_relations": 8,
+    "concept_before_static_implementation": true,
+    "console_problems": 0
+  },
+  "mobile": {
+    "viewport": [390, 844],
+    "scroll_width": 390,
+    "concept_columns": 1,
+    "svg_hidden": true
+  },
+  "next_gate": "independent_non_coder_retelling"
+}

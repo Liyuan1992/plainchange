@@ -1,0 +1,21 @@
+{
+  "total_score": 9,
+  "delivery_allowed": true,
+  "regions": {
+    "architecture_canvas": {"result": "pass", "score": 9, "detail": "FastAPI 9 and self-hosted 8 workflow cards are one vertical column at desktop; connector display is none and complete relation text remains available."},
+    "inline_static_section": {"result": "pass", "score": 8},
+    "right_inspector": {"result": "pass", "score": 9},
+    "narrow_layout": {"result": "pass", "score": 8}
+  },
+  "evidence": {
+    "fastapi_subdomains": 7,
+    "self_hosted_subdomains": 5,
+    "desktop_console_issues": 0,
+    "fastapi_vertical_cards": 9,
+    "self_hosted_vertical_cards": 8,
+    "mobile_width": 390,
+    "mobile_scroll_width": 375
+  },
+  "retained_deliverable": "artifacts/fastapi-0.136.2-to-0.136.3/review.html",
+  "next_round_fixes": ["independent beginner retelling"]
+}

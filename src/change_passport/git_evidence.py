@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Sequence
 
 from .models import Limits, RepositorySpec
+from .analysis_cache import default_cache_root
 
 
 class GitEvidenceError(RuntimeError):
@@ -58,7 +60,13 @@ class GitEvidence:
         }
 
 
-def _run_git(repo: Path, args: Sequence[str], timeout: int) -> bytes:
+def _run_git(
+    repo: Path,
+    args: Sequence[str],
+    timeout: int,
+    *,
+    no_lazy_fetch: bool = False,
+) -> bytes:
     env = os.environ.copy()
     env.update(
         {
@@ -67,6 +75,8 @@ def _run_git(repo: Path, args: Sequence[str], timeout: int) -> bytes:
             "GIT_TERMINAL_PROMPT": "0",
         }
     )
+    if no_lazy_fetch:
+        env["GIT_NO_LAZY_FETCH"] = "1"
     try:
         completed = subprocess.run(
             ["git", "-C", str(repo), "--no-pager", *args],
@@ -86,11 +96,160 @@ def _run_git(repo: Path, args: Sequence[str], timeout: int) -> bytes:
     return completed.stdout
 
 
-def _resolve_commit(repo: Path, ref: str, timeout: int) -> str:
+@dataclass(frozen=True)
+class RepositoryMaterialization:
+    repository: RepositorySpec
+    object_status: str
+    missing_object_count: int
+    used_managed_copy: bool
+    managed_copy_path: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "repository": {
+                "path": str(self.repository.path),
+                "base": self.repository.base,
+                "head": self.repository.head,
+            },
+            "object_status": self.object_status,
+            "missing_object_count": self.missing_object_count,
+            "used_managed_copy": self.used_managed_copy,
+            "managed_copy_path": self.managed_copy_path,
+        }
+
+
+def _missing_objects(repo: Path, base: str, head: str, timeout: int) -> tuple[str, ...]:
+    raw = _run_git(
+        repo,
+        ["rev-list", "--objects", "--missing=print", base, head, "--"],
+        timeout,
+        no_lazy_fetch=True,
+    )
+    return tuple(
+        line[1:].decode("ascii", errors="replace").strip()
+        for line in raw.splitlines()
+        if line.startswith(b"?")
+    )
+
+
+def _run_git_program(args: Sequence[str], timeout: int) -> None:
+    env = os.environ.copy()
+    env.update({"GIT_TERMINAL_PROMPT": "0", "GIT_PAGER": "cat"})
+    try:
+        completed = subprocess.run(
+            ["git", *args],
+            check=False,
+            capture_output=True,
+            shell=False,
+            timeout=timeout,
+            env=env,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise GitEvidenceError("managed Git materialization timed out") from exc
+    except OSError as exc:
+        raise GitEvidenceError("git executable is unavailable") from exc
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise GitEvidenceError(f"managed Git materialization failed: {detail or completed.returncode}")
+
+
+def materialize_repository(
+    repository: RepositorySpec,
+    limits: Limits,
+    *,
+    cache_root: Path | None = None,
+    progress: Callable[[int, int, str], None] | None = None,
+) -> RepositoryMaterialization:
+    """Use the target read-only when complete; hydrate missing objects in managed cache."""
+
+    timeout = limits.git_timeout_seconds
+    if progress is not None:
+        progress(0, 2, "检查固定版本所需的 Git 对象")
+    try:
+        base = _resolve_commit(repository.path, repository.base, timeout, no_lazy_fetch=True)
+        head = _resolve_commit(repository.path, repository.head, timeout, no_lazy_fetch=True)
+        missing = _missing_objects(repository.path, base, head, timeout)
+    except GitEvidenceError:
+        base = head = ""
+        missing = ("unresolved-required-commit",)
+    if not missing:
+        if progress is not None:
+            progress(2, 2, "固定版本所需对象已经完整")
+        return RepositoryMaterialization(
+            repository=RepositorySpec(repository.path, base, head),
+            object_status="complete",
+            missing_object_count=0,
+            used_managed_copy=False,
+            managed_copy_path=None,
+        )
+
+    try:
+        remote = _run_git(
+            repository.path,
+            ["remote", "get-url", "origin"],
+            timeout,
+            no_lazy_fetch=True,
+        ).decode("utf-8", errors="strict").strip()
+    except (GitEvidenceError, UnicodeDecodeError) as exc:
+        raise GitEvidenceError(
+            "required Git objects are missing and the target has no usable origin; "
+            "configure origin or provide a complete local repository"
+        ) from exc
+    if not remote:
+        raise GitEvidenceError("required Git objects are missing and origin is empty")
+
+    root = (cache_root or default_cache_root()) / "git"
+    root.mkdir(parents=True, exist_ok=True)
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", repository.path.name)[:48] or "repository"
+    identity = hashlib.sha256(str(repository.path).casefold().encode("utf-8")).hexdigest()[:16]
+    managed = root / f"{safe_name}-{identity}.git"
+    if not managed.is_dir():
+        _run_git_program(["init", "--bare", str(managed)], timeout)
+    remotes = _run_git(managed, ["remote"], timeout).decode("utf-8", errors="replace").splitlines()
+    if "origin" in remotes:
+        _run_git(managed, ["remote", "set-url", "origin", remote], timeout)
+    else:
+        _run_git(managed, ["remote", "add", "origin", remote], timeout)
+
+    resolved: list[str] = []
+    for index, ref in enumerate((repository.base, repository.head), start=1):
+        if progress is not None:
+            progress(index - 1, 2, f"在受管缓存中补齐第 {index} 个固定版本")
+        _run_git(
+            managed,
+            ["fetch", "--no-tags", "--force", "origin", ref],
+            max(timeout, 120),
+        )
+        resolved.append(_resolve_commit(managed, "FETCH_HEAD", timeout, no_lazy_fetch=True))
+        if progress is not None:
+            progress(index, 2, f"已补齐第 {index} 个固定版本")
+    materialized = RepositorySpec(managed, resolved[0], resolved[1])
+    remaining = _missing_objects(managed, resolved[0], resolved[1], timeout)
+    if remaining:
+        raise GitEvidenceError(
+            f"managed Git copy is still missing {len(remaining)} required objects"
+        )
+    return RepositoryMaterialization(
+        repository=materialized,
+        object_status="hydrated_in_managed_cache",
+        missing_object_count=len(missing),
+        used_managed_copy=True,
+        managed_copy_path=str(managed),
+    )
+
+
+def _resolve_commit(
+    repo: Path,
+    ref: str,
+    timeout: int,
+    *,
+    no_lazy_fetch: bool = False,
+) -> str:
     raw = _run_git(
         repo,
         ["rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"],
         timeout,
+        no_lazy_fetch=no_lazy_fetch,
     )
     commit = raw.decode("ascii", errors="strict").strip()
     if len(commit) != 40 or any(char not in "0123456789abcdef" for char in commit.lower()):

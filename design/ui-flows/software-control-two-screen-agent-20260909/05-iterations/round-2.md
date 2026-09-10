@@ -1,0 +1,7 @@
+# Round 2
+
+- Focus: owner-requested P0/P1 information compression and progressive map depth.
+- Review items this round is allowed to fix: result-first headline, four-part ten-second summary, state explanations, collapsed five questions, four-step overview, eight-step expansion, audience table, and checklist styling.
+- Changes made: the headline now starts with the repaired user-visible outcome and demotes the internal concept to a chip; the default page contains three compact owner answers after that explanation; every summary state has a clickable one-sentence definition; the complete five questions are collapsed; audience impact is tabular; recommended checks are visibly unchecked; the default map is a source-declared four-step graph whose nodes partition all eight detailed steps exactly once; clicking a four-step node expands the same graph and keeps the current-change focus, while one control returns to the overview.
+- Verification result: 60 automated tests pass; the sample passes its checked-in JSON Schema with PowerShell `Test-Json`; Python compilation, JavaScript syntax, generated HTML parsing, offline-resource checks, canonical identity, dependent hash checks, and `git diff --check` pass. The current in-app browser still blocks local `file://` interaction, so no screenshot score or visual acceptance is claimed.
+- Remaining deviations: real browser screenshots remain blocked by the local file URL policy unless the browser surface changes.

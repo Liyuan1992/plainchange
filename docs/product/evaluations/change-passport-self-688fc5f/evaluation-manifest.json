@@ -1,0 +1,30 @@
+{
+  "schema_version": "change-passport.human-comprehension-evaluation-manifest.v1",
+  "evaluation_id": "change-passport-self-688fc5f",
+  "source_control_identity": "979031ea971f7dc2dab79cd2d2f60b443eba455170cd2d6e4be4dbfee4bfaf22",
+  "source_sample_path": "docs/product/samples/change-passport-self-688fc5f.software-control.json",
+  "source_sample_sha256": "16207F14DF233C64B5E62745DAB80D8BB6E4A5EE805D3DA745A616A86FAD2BBB",
+  "participant_visible_files": [
+    {
+      "path": "docs/product/evaluations/change-passport-self-688fc5f/participant-card.md",
+      "sha256": "4994AB15F6BB11163180D51498B16CE903181E5D85882E815D5CB6EC30A16666"
+    }
+  ],
+  "evaluator_only_files": [
+    {
+      "path": "docs/product/evaluations/change-passport-self-688fc5f/evaluator-guide.md",
+      "sha256": "B2E4399D9191FC92050188FE811985008C6A3D1696F632D857653E5E1AFD7239"
+    },
+    {
+      "path": "docs/product/evaluations/change-passport-self-688fc5f/observation.template.json",
+      "sha256": "180FCDC801810DC8B50F1C76EE4D971CCA1E88B27087359561DEFB59FB736716"
+    },
+    {
+      "path": "docs/product/schemas/human-comprehension-observation.v1.schema.json",
+      "sha256": "A742A7EF96BDBADDFD3A1B2241A43373A2CABAC723341B849081D8397CD2AC50"
+    }
+  ],
+  "current_status": "not_run",
+  "result_path": null,
+  "boundary_note": "这份 manifest 证明评测材料身份与隔离，不证明已经存在参与者或理解结果。"
+}

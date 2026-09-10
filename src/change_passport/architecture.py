@@ -8,8 +8,9 @@ import posixpath
 import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
+from .analysis_cache import AnalysisCache, cache_key
 from .git_evidence import (
     GitEvidence,
     GitTreeEntry,
@@ -18,6 +19,7 @@ from .git_evidence import (
     read_git_blobs,
 )
 from .models import ManifestError, SampleManifest, canonical_json_bytes, sha256_bytes
+from .target_profile import PresentationProfile, TargetProfile, load_target_profile
 
 BASELINE_SCHEMA = "change-passport.architecture-baseline.v1"
 DELTA_SCHEMA = "change-passport.architecture-delta.v1"
@@ -28,68 +30,6 @@ SUPPORTED_SUFFIXES = {".py", ".js", ".jsx", ".ts", ".tsx"}
 MAX_ARCHITECTURE_BLOB_BYTES = 300_000
 MAX_DISPLAY_NODES = 14
 
-SYSTEM_SECTION_DEFINITIONS = (
-    {
-        "id": "entry_experience",
-        "label": "用户入口与交互",
-        "responsibility": "承接网页、桌面、浏览器、语音和命令行中的用户操作。",
-        "lane": "main",
-    },
-    {
-        "id": "agent_runtime",
-        "label": "Agent 与执行核心",
-        "responsibility": "组织智能体运行、任务编排、会话和执行生命周期。",
-        "lane": "main",
-    },
-    {
-        "id": "memory_knowledge",
-        "label": "记忆与知识系统",
-        "responsibility": "保存、检索和组织长期记忆、知识与自我理解。",
-        "lane": "main",
-    },
-    {
-        "id": "capabilities_tools",
-        "label": "能力与工具",
-        "responsibility": "向 Agent 提供可调用能力、工具、桥接器和代码分析。",
-        "lane": "main",
-    },
-    {
-        "id": "context_governance",
-        "label": "上下文与自主控制",
-        "responsibility": "管理上下文、自主策略、控制边界和证据约束。",
-        "lane": "main",
-    },
-    {
-        "id": "work_coordination",
-        "label": "工作与项目协作",
-        "responsibility": "连接工作收件箱、项目流程和任务结果。",
-        "lane": "main",
-    },
-    {
-        "id": "data_foundation",
-        "label": "数据与基础设施",
-        "responsibility": "提供配置、数据访问、存储和基础运行支撑。",
-        "lane": "main",
-    },
-    {
-        "id": "quality_safety",
-        "label": "测试与质量保障",
-        "responsibility": "用测试和检查验证系统行为与回归边界。",
-        "lane": "support",
-    },
-    {
-        "id": "engineering_delivery",
-        "label": "工程、评测与交付",
-        "responsibility": "承载脚本、评测、打包、设计流程和交付辅助。",
-        "lane": "support",
-    },
-    {
-        "id": "unclassified",
-        "label": "待归类",
-        "responsibility": "这些代码尚未命中已确认的系统分区规则，需要人工确认。",
-        "lane": "support",
-    },
-)
 class ArchitectureError(ManifestError):
     """Raised when an architecture baseline or deterministic delta fails closed."""
 
@@ -359,119 +299,8 @@ class Snapshot:
     supported_files: int
     unknowns: tuple[str, ...]
     oversize_files: int = 0
-
-
-def _path_is_under(path: str, *prefixes: str) -> bool:
-    return any(
-        path == prefix or path.startswith(prefix.rstrip("/") + "/")
-        for prefix in prefixes
-    )
-
-
-def _system_section_id(path: str) -> str:
-    """Map a verified source path to the confirmed DigitalSelf v1.3 glossary."""
-
-    name = PurePosixPath(path).name
-    if _path_is_under(
-        path,
-        "browser_extension",
-        "desktop",
-        "src/digital_self/web",
-        "src/digital_self/voice",
-        "src/digital_self/cli",
-        "src/digital_self/pc_build_advisor",
-    ) or path in {"src/digital_self/job_readiness.py"}:
-        return "entry_experience"
-    if _path_is_under(
-        path,
-        "src/digital_self/agents",
-        "src/digital_self/core",
-        "src/digital_self/kernel",
-        "src/digital_self/worker",
-        "src/digital_self/session",
-        "src/digital_self/pipeline",
-        "src/digital_self/workflow",
-    ) or path in {
-        "src/digital_self/routing.py",
-        "src/digital_self/runtime_lifecycle.py",
-        "src/digital_self/core_host.py",
-        "src/digital_self/terminal_queue.py",
-    }:
-        return "agent_runtime"
-    if _path_is_under(
-        path,
-        "src/digital_self/memory",
-        "src/digital_self/self_model",
-        "src/digital_self/profile_timeline",
-        "src/digital_self/work_knowledge",
-    ) or path in {
-        "src/digital_self/public_knowledge.py",
-        "src/digital_self/intelligence.py",
-        "src/digital_self/industry_research.py",
-    } or name.startswith("learning_understanding"):
-        return "memory_knowledge"
-    if _path_is_under(
-        path,
-        "src/digital_self/skills",
-        "src/digital_self/tools",
-        "src/digital_self/mcp_server",
-        "src/digital_self/adapters",
-        "src/digital_self/llm",
-        "src/digital_self/ai_coding_feedback",
-    ) or path in {
-        "src/digital_self/ai_coding_feedback_policy.py",
-        "src/digital_self/code_analysis.py",
-        "src/digital_self/codex_adapter.py",
-        "src/digital_self/codex_bridge.py",
-        "src/digital_self/claude_adapter.py",
-        "src/digital_self/claude_bridge.py",
-        "src/digital_self/lab_assets.py",
-        "src/digital_self/world_cup_agent.py",
-    }:
-        return "capabilities_tools"
-    if _path_is_under(
-        path,
-        "src/digital_self/autonomy",
-        "src/digital_self/context",
-        "src/digital_self/control",
-        "src/digital_self/requirements",
-    ) or path in {
-        "src/digital_self/evidence_trust.py",
-        "src/digital_self/conversation_sync.py",
-    }:
-        return "context_governance"
-    if _path_is_under(
-        path,
-        "src/digital_self/work_inbox",
-        "src/digital_self/product_workflows",
-    ) or path in {
-        "src/digital_self/work_project_resolver.py",
-        "src/digital_self/work_summary.py",
-    }:
-        return "work_coordination"
-    if _path_is_under(
-        path,
-        "src/digital_self/storage",
-        "src/digital_self/data",
-    ) or path in {
-        "src/digital_self/config.py",
-        "src/digital_self/server_data_hub.py",
-        "src/digital_self/__init__.py",
-    }:
-        return "data_foundation"
-    if _path_is_under(path, "tests") or (
-        "/" not in path and (name.startswith("test_") or name.startswith("check_"))
-    ):
-        return "quality_safety"
-    if _path_is_under(
-        path,
-        "scripts",
-        "benchmarks",
-        "packaging",
-        "design/ui-flows",
-    ) or path in {"deploy.py", "search_chat.py"}:
-        return "engineering_delivery"
-    return "unclassified"
+    cache_hits: int = 0
+    cache_misses: int = 0
 
 
 def _aliases_for_path(path: str) -> tuple[str, ...]:
@@ -610,6 +439,64 @@ def _parse_module(
     return _parse_javascript(path, text, entry, commit)
 
 
+def _cache_payload(item: ParsedModule) -> dict[str, Any]:
+    return {
+        "responsibilities": list(item.node.responsibilities),
+        "interfaces": list(item.node.interfaces),
+        "imports": [
+            {
+                "module": ref.module,
+                "level": ref.level,
+                "imported_names": list(ref.imported_names),
+                "line": ref.line,
+                "relative_specifier": ref.relative_specifier,
+            }
+            for ref in item.imports
+        ],
+    }
+
+
+def _parsed_from_cache(
+    path: str,
+    entry: GitTreeEntry,
+    commit: str,
+    value: Mapping[str, Any],
+) -> ParsedModule:
+    aliases = _aliases_for_path(path)
+    label = min(aliases, key=lambda item: (item.count("."), len(item))) if aliases else path
+    responsibilities = tuple(str(item) for item in value.get("responsibilities", []))
+    interfaces = tuple(str(item) for item in value.get("interfaces", []))
+    imports = tuple(
+        ImportRef(
+            module=str(item.get("module", "")),
+            level=int(item.get("level", 0)),
+            imported_names=tuple(str(name) for name in item.get("imported_names", [])),
+            line=int(item.get("line", 0)),
+            relative_specifier=(
+                str(item["relative_specifier"])
+                if item.get("relative_specifier") is not None
+                else None
+            ),
+        )
+        for item in value.get("imports", [])
+        if isinstance(item, Mapping)
+    )
+    return ParsedModule(
+        node=ArchitectureNode(
+            node_id=_node_id(path),
+            kind="module",
+            label=label,
+            owned_paths=(path,),
+            responsibilities=responsibilities,
+            interfaces=interfaces,
+            evidence_refs=(f"git:{commit}:{path}",),
+            last_verified_commit=commit,
+            content_identity=entry.object_id,
+        ),
+        imports=imports,
+    )
+
+
 def _resolve_python_import(
     current_path: str,
     ref: ImportRef,
@@ -692,6 +579,8 @@ def _parse_full_snapshot(
     repo: Path,
     commit: str,
     timeout: int,
+    analysis_cache: AnalysisCache | None = None,
+    progress: Callable[[int, int, str], None] | None = None,
 ) -> Snapshot:
     tree = list_git_tree(repo, commit, timeout)
     supported = {
@@ -706,14 +595,42 @@ def _parse_full_snapshot(
         for path, entry in sorted(supported.items())
         if entry.size <= MAX_ARCHITECTURE_BLOB_BYTES
     ]
-    blobs = read_git_blobs(repo, commit, readable_paths, timeout)
-    for path, entry in sorted(supported.items()):
+    cached = analysis_cache.get_many(
+        (path, supported[path].object_id) for path in readable_paths
+    ) if analysis_cache is not None else {}
+    missed_paths = [
+        path for path in readable_paths
+        if cache_key(path, supported[path].object_id) not in cached
+    ]
+    if progress is not None:
+        progress(
+            0,
+            len(readable_paths),
+            f"快照 {commit[:8]}：缓存命中 {len(readable_paths) - len(missed_paths)} 个模块",
+        )
+    blobs = read_git_blobs(repo, commit, missed_paths, timeout)
+    cache_writes: list[tuple[str, str, Mapping[str, Any]]] = []
+    supported_items = sorted(supported.items())
+    for index, (path, entry) in enumerate(supported_items, start=1):
         try:
-            parsed[path] = _parse_module(
-                repo, commit, path, entry, timeout, raw=blobs.get(path)
-            )
+            cached_value = cached.get(cache_key(path, entry.object_id))
+            if cached_value is not None:
+                parsed[path] = _parsed_from_cache(path, entry, commit, cached_value)
+            else:
+                parsed[path] = _parse_module(
+                    repo, commit, path, entry, timeout, raw=blobs.get(path)
+                )
+                cache_writes.append((path, entry.object_id, _cache_payload(parsed[path])))
         except (ArchitectureError, SyntaxError) as exc:
             unknowns.append(f"{path}: {type(exc).__name__}: {exc}")
+        if progress is not None and (index % 250 == 0 or index == len(supported_items)):
+            progress(
+                min(index, len(readable_paths)),
+                len(readable_paths),
+                f"快照 {commit[:8]}：建立静态模块索引",
+            )
+    if analysis_cache is not None:
+        analysis_cache.put_many(cache_writes)
     aliases = _alias_index(tree)
     all_nodes = {item.node.node_id: item.node for item in parsed.values()}
     path_nodes = {path: item.node for path, item in parsed.items()}
@@ -737,6 +654,8 @@ def _parse_full_snapshot(
             entry.size > MAX_ARCHITECTURE_BLOB_BYTES
             for entry in supported.values()
         ),
+        cache_hits=len(readable_paths) - len(missed_paths),
+        cache_misses=len(missed_paths),
     )
 
 
@@ -781,6 +700,8 @@ def _bounded_snapshot(
             ]
         ),
         oversize_files=full.oversize_files,
+        cache_hits=full.cache_hits,
+        cache_misses=full.cache_misses,
     )
 
 
@@ -790,6 +711,7 @@ def _incremental_head_snapshot(
     changed_paths: set[str],
     baseline: ArchitectureBaseline,
     timeout: int,
+    analysis_cache: AnalysisCache | None = None,
 ) -> Snapshot:
     tree = list_git_tree(repo, commit, timeout)
     aliases = _alias_index(tree)
@@ -808,15 +730,27 @@ def _incremental_head_snapshot(
     }
     parsed_by_path: dict[str, ParsedModule] = {}
     unknowns: list[str] = []
+    cache_hits = 0
+    cache_misses = 0
 
     def parse_path(path: str) -> ParsedModule | None:
+        nonlocal cache_hits, cache_misses
         if path in parsed_by_path:
             return parsed_by_path[path]
         entry = tree.get(path)
         if entry is None or PurePosixPath(path).suffix not in SUPPORTED_SUFFIXES:
             return None
         try:
-            parsed_by_path[path] = _parse_module(repo, commit, path, entry, timeout)
+            cached = analysis_cache.get_many([(path, entry.object_id)]) if analysis_cache is not None else {}
+            cached_value = cached.get(cache_key(path, entry.object_id))
+            if cached_value is not None:
+                cache_hits += 1
+                parsed_by_path[path] = _parsed_from_cache(path, entry, commit, cached_value)
+            else:
+                cache_misses += 1
+                parsed_by_path[path] = _parse_module(repo, commit, path, entry, timeout)
+                if analysis_cache is not None:
+                    analysis_cache.put_many([(path, entry.object_id, _cache_payload(parsed_by_path[path]))])
         except (ArchitectureError, SyntaxError) as exc:
             unknowns.append(f"{path}: {type(exc).__name__}: {exc}")
             return None
@@ -858,12 +792,15 @@ def _incremental_head_snapshot(
             PurePosixPath(path).suffix in SUPPORTED_SUFFIXES for path in tree
         ),
         unknowns=tuple(unknowns),
+        cache_hits=cache_hits,
+        cache_misses=cache_misses,
     )
 
 
 def _load_approved_baseline(
     manifest: SampleManifest,
     git: GitEvidence,
+    repository_path: Path | None = None,
 ) -> ArchitectureBaseline | None:
     path = manifest.architecture_baseline_path
     if path is None:
@@ -880,7 +817,9 @@ def _load_approved_baseline(
     if baseline.commit_identity != git.base_commit:
         raise ArchitectureError("baseline_stale: baseline commit does not match base commit")
     tree = list_git_tree(
-        manifest.repository.path, git.base_commit, manifest.limits.git_timeout_seconds
+        repository_path or manifest.repository.path,
+        git.base_commit,
+        manifest.limits.git_timeout_seconds,
     )
     for tracked_path, object_id in baseline.tracked_path_hashes.items():
         entry = tree.get(tracked_path)
@@ -1133,6 +1072,7 @@ def build_system_architecture_snapshot(
     commit: str,
     snapshot: Snapshot,
     delta: Mapping[str, Any],
+    target_profile: TargetProfile,
 ) -> dict[str, Any]:
     """Build a complete supported static Head snapshot plus a human overview."""
 
@@ -1141,7 +1081,7 @@ def build_system_architecture_snapshot(
     group_node_ids: dict[str, list[str]] = {}
     for node in sorted(snapshot.nodes.values(), key=lambda item: item.node_id):
         path = node.owned_paths[0] if node.owned_paths else ""
-        group_id = _system_section_id(path)
+        group_id = target_profile.section_id_for_path(path)
         node_groups[node.node_id] = group_id
         group_node_ids.setdefault(group_id, []).append(node.node_id)
         row = node.to_dict()
@@ -1204,7 +1144,7 @@ def build_system_architecture_snapshot(
                 row = delta_nodes.get(node_id, {})
                 owned_paths = row.get("owned_paths", [])
                 if isinstance(owned_paths, list) and owned_paths:
-                    group_id = _system_section_id(str(owned_paths[0]))
+                    group_id = target_profile.section_id_for_path(str(owned_paths[0]))
             if group_id is None:
                 group_id = "unclassified"
             group_status_ids.setdefault(group_id, {}).setdefault(status, []).append(
@@ -1212,8 +1152,8 @@ def build_system_architecture_snapshot(
             )
 
     groups = []
-    for definition in SYSTEM_SECTION_DEFINITIONS:
-        group_id = str(definition["id"])
+    for definition in target_profile.sections:
+        group_id = definition.section_id
         node_ids = sorted(group_node_ids.get(group_id, []))
         changes = group_status_ids.get(group_id, {})
         if not node_ids and not any(changes.values()):
@@ -1231,14 +1171,10 @@ def build_system_architecture_snapshot(
         groups.append(
             {
                 "group_id": group_id,
-                "label": str(definition["label"]),
-                "responsibility": str(definition["responsibility"]),
-                "lane": str(definition["lane"]),
-                "group_source": (
-                    "confirmed_prd_v1.3_system_glossary"
-                    if group_id != "unclassified"
-                    else "explicit_unclassified_fallback"
-                ),
+                "label": definition.label,
+                "responsibility": definition.responsibility,
+                "lane": definition.lane,
+                "group_source": target_profile.group_source(group_id),
                 "node_ids": node_ids,
                 "module_count": len(node_ids),
                 "internal_edge_ids": sorted(internal_edge_ids.get(group_id, [])),
@@ -1270,6 +1206,7 @@ def build_system_architecture_snapshot(
         "schema_version": SYSTEM_ARCHITECTURE_SCHEMA,
         "repository_id": repository_id,
         "commit_identity": commit,
+        "target_profile": target_profile.snapshot_metadata(),
         "scope": "all-successfully-parsed-supported-modules",
         "status": "candidate_static_snapshot",
         "status_label": "候选静态快照，尚未批准为长期基线",
@@ -1337,6 +1274,16 @@ def validate_system_architecture_snapshot(value: Any) -> dict[str, Any]:
         raise ArchitectureError("system architecture collections must be arrays")
     if not isinstance(coverage, Mapping):
         raise ArchitectureError("system architecture coverage must be an object")
+    try:
+        presentation = PresentationProfile.from_dict(
+            model.get("target_profile"), "system architecture target_profile"
+        )
+    except ManifestError as exc:
+        raise ArchitectureError(str(exc)) from exc
+    profile_source = (
+        f"target-profile:{presentation.profile_id}:sha256:"
+        f"{presentation.profile_sha256}"
+    )
 
     node_index = {
         str(item.get("node_id")): item
@@ -1354,6 +1301,15 @@ def validate_system_architecture_snapshot(value: Any) -> dict[str, Any]:
         raise ArchitectureError("system architecture contains duplicate or invalid groups")
     assigned: list[str] = []
     for group_id, group in group_index.items():
+        expected_group_source = (
+            profile_source
+            if group_id != "unclassified"
+            else profile_source + ":unclassified-fallback"
+        )
+        if group.get("group_source") != expected_group_source:
+            raise ArchitectureError(
+                "system architecture group source does not match target profile"
+            )
         node_ids = group.get("node_ids")
         if not isinstance(node_ids, list):
             raise ArchitectureError("system architecture group node_ids must be an array")
@@ -1485,26 +1441,43 @@ def validate_system_architecture_snapshot(value: Any) -> dict[str, Any]:
     return model
 
 
-def build_architecture_bundle(manifest: SampleManifest, git: GitEvidence) -> dict[str, Any]:
+def build_architecture_bundle(
+    manifest: SampleManifest,
+    git: GitEvidence,
+    *,
+    analysis_repo_path: Path | None = None,
+    analysis_cache: AnalysisCache | None = None,
+    progress: Callable[[int, int, str], None] | None = None,
+) -> dict[str, Any]:
     changed_paths = {item.path for item in git.files if not item.binary}
-    baseline = _load_approved_baseline(manifest, git)
+    repo = analysis_repo_path or manifest.repository.path
+    baseline = _load_approved_baseline(manifest, git, repo)
     repository_id = _repository_id(manifest.repository.path)
+    target_profile = load_target_profile(manifest.target_profile_path)
     full_head = _parse_full_snapshot(
-        manifest.repository.path,
+        repo,
         git.head_commit,
         manifest.limits.git_timeout_seconds,
+        analysis_cache,
+        progress,
     )
     if baseline is None:
         baseline_status = "bootstrap_unapproved"
         full_before = _parse_full_snapshot(
-            manifest.repository.path,
+            repo,
             git.base_commit,
             manifest.limits.git_timeout_seconds,
+            analysis_cache,
+            progress,
         )
         before = _bounded_snapshot(full_before, changed_paths)
         after = _bounded_snapshot(full_head, changed_paths)
         source_baseline_id = None
         reused_nodes = 0
+        cache_stats = {
+            "hits": full_head.cache_hits + full_before.cache_hits,
+            "misses": full_head.cache_misses + full_before.cache_misses,
+        }
     else:
         baseline_status = "approved"
         source_baseline_id = baseline.baseline_id
@@ -1531,17 +1504,22 @@ def build_architecture_bundle(manifest: SampleManifest, git: GitEvidence) -> dic
             reused_nodes = 0
         else:
             after = _incremental_head_snapshot(
-                manifest.repository.path,
+                repo,
                 git.head_commit,
                 changed_paths,
                 baseline,
                 manifest.limits.git_timeout_seconds,
+                analysis_cache,
             )
             reused_nodes = sum(
                 item.node_id in after.nodes
                 and item.content_identity == after.nodes[item.node_id].content_identity
                 for item in baseline.nodes
             )
+        cache_stats = {
+            "hits": full_head.cache_hits + after.cache_hits,
+            "misses": full_head.cache_misses + after.cache_misses,
+        }
 
     delta = _build_delta(
         git,
@@ -1556,6 +1534,7 @@ def build_architecture_bundle(manifest: SampleManifest, git: GitEvidence) -> dic
         git.head_commit,
         full_head,
         delta,
+        target_profile,
     )
     candidate_baseline = _baseline_from_snapshot(
         repository_id,
@@ -1599,6 +1578,7 @@ def build_architecture_bundle(manifest: SampleManifest, git: GitEvidence) -> dic
         "system_architecture": system_architecture,
         "proposal": proposal,
         "decision_template": decision_template,
+        "cache_stats": cache_stats,
     }
 
 

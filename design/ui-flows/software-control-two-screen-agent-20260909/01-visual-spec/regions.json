@@ -1,0 +1,11 @@
+{
+  "regions": [
+    {"id": "chrome", "name": "top bar and compact hero", "priority": "preserve"},
+    {"id": "primary_navigation", "name": "two owner-facing tabs", "priority": "high"},
+    {"id": "change_conclusion", "name": "headline and three status statements", "priority": "highest"},
+    {"id": "five_questions", "name": "owner-readable answers and comparison", "priority": "high"},
+    {"id": "working_map", "name": "clickable top-to-bottom software graph", "priority": "highest"},
+    {"id": "owner_inspector", "name": "selected step explanation", "priority": "high"},
+    {"id": "technical_details", "name": "existing evidence and implementation views", "priority": "preserve_collapsed"}
+  ]
+}

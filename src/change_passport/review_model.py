@@ -10,6 +10,7 @@ from .architecture import (
     validate_system_architecture_snapshot,
 )
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
+from .target_profile import PresentationProfile, default_presentation_profile
 
 REVIEW_SCHEMA = "change-passport.beginner-review.v2"
 
@@ -34,49 +35,7 @@ _STATUS_ORDER = {
     "unchanged_context": 3,
 }
 
-# Presentation-only translations confirmed by the v1.2 prototype. Exact technical
-# labels remain in the model and these labels never create nodes, edges, or claims.
-_PRESENTATION_LABEL_PATTERNS = (
-    ("test_skill_argument_validation", "验证参数检查与错误分类"),
-    ("argument_validation", "统一检查并整理参数"),
-    ("tool_execution_policy", "判断失败是否值得重试"),
-    ("skills.errors", "把异常归成统一类别"),
-    ("skills.registry", "登记并调用工具"),
-    ("skills.base", "返回结构化工具结果"),
-    ("skills.web", "网页访问工具"),
-    ("skill_execution", "聊天中的工具执行入口"),
-    ("image_generation", "图像生成工具"),
-    ("ai_coding_feedback", "AI 编码反馈工具"),
-    ("local_file", "本地文件工具"),
-    ("local_search", "项目内文本搜索"),
-    ("skills.control", "控制与执行桥接"),
-    ("chat_engine.engine", "聊天运行入口"),
-)
-_PLAIN_TERM_REPLACEMENTS = (
-    ("SkillRegistry", "工具调用入口"),
-    ("本地 provider completion 回执", "AI 完成说明"),
-    ("的事后自报目标", "当时解释的目标"),
-    ("回执自报实现包括", "AI 回复中还说实现包括"),
-    ("input_schema", "参数声明"),
-    ("参数声明 成为唯一校验事实来源", "统一负责参数检查"),
-    ("参数声明成为唯一校验事实来源", "统一负责参数检查"),
-    ("让 统一负责参数检查", "统一负责参数检查"),
-    ("让统一负责参数检查", "统一负责参数检查"),
-    ("并让工具失败对模型和重试策略可判断", "并让系统知道失败后是否值得重试"),
-    ("argument_clamps", "参数调整记录"),
-    ("minimum/maximum", "允许范围"),
-    ("uniqueItems", "去重规则"),
-    ("JSON Schema", "参数规则"),
-    ("type 关键字", "类型规则"),
-    ("缺少权威类型: actual_test_receipt", "没有可核对的独立测试收据"),
-    ("actual_test_receipt", "可核对的独立测试收据"),
-    ("缺少权威类型:", "缺少所需证据："),
-    ("校验原因：", "原因："),
-    ("retryable", "是否值得重试"),
-    ("归一化", "整理"),
-    ("集中参数整理、错误分类、是否值得重试 语义和对旧行为的兼容保留", "集中整理参数、统一错误分类、判断失败是否值得重试，并兼容旧行为"),
-    ("技能", "工具"),
-)
+_DEFAULT_PRESENTATION = default_presentation_profile()
 _TASK_CONTEXT_ROLES = {
     "original_task": (0, "user", "用户原话", "用户实际说过的内容"),
     "retrospective_claim": (1, "assistant", "AI 回复", "AI 当时的理解或完成说明"),
@@ -118,10 +77,15 @@ def _truth_for_claims(claims: list[Mapping[str, Any]]) -> tuple[str, str]:
     return lowest[0], lowest[1]
 
 
-def _plain_excerpt(value: str, *, max_length: int = 72) -> str:
+def _plain_excerpt(
+    value: str,
+    presentation: PresentationProfile,
+    *,
+    max_length: int = 72,
+) -> str:
     result = value.replace("`", "").strip()
     result = re.sub(r"\baicr_[0-9a-f]+\b", "", result, flags=re.IGNORECASE)
-    for source, target in _PLAIN_TERM_REPLACEMENTS:
+    for source, target in presentation.term_replacements:
         result = result.replace(source, target)
     result = re.sub(r"\s+", " ", result)
     result = re.sub(r"(?<=[\u3400-\u9fff])\s+(?=[\u3400-\u9fff])", "", result)
@@ -140,11 +104,16 @@ def _plain_excerpt(value: str, *, max_length: int = 72) -> str:
     return first_clause
 
 
-def _bounded_context_excerpt(value: Any, *, max_length: int = 280) -> str:
+def _bounded_context_excerpt(
+    value: Any,
+    presentation: PresentationProfile,
+    *,
+    max_length: int = 280,
+) -> str:
     if not isinstance(value, str):
         return ""
     result = value.replace("`", "").strip()
-    for source, target in _PLAIN_TERM_REPLACEMENTS:
+    for source, target in presentation.term_replacements:
         result = result.replace(source, target)
     result = re.sub(r"\s+", " ", result)
     if len(result) > max_length:
@@ -152,7 +121,9 @@ def _bounded_context_excerpt(value: Any, *, max_length: int = 280) -> str:
     return result
 
 
-def _task_context_from_evidence(evidence_value: Any) -> dict[str, Any]:
+def _task_context_from_evidence(
+    evidence_value: Any, presentation: PresentationProfile
+) -> dict[str, Any]:
     entries: list[dict[str, Any]] = []
     if isinstance(evidence_value, list):
         for index, raw_item in enumerate(evidence_value):
@@ -162,7 +133,7 @@ def _task_context_from_evidence(evidence_value: Any) -> dict[str, Any]:
             role = _TASK_CONTEXT_ROLES.get(authority)
             if role is None:
                 continue
-            text = _bounded_context_excerpt(raw_item.get("content"))
+            text = _bounded_context_excerpt(raw_item.get("content"), presentation)
             if not text:
                 continue
             order, role_id, role_label, source_label = role
@@ -218,6 +189,7 @@ def _summary_from_claims(
     claims: list[Mapping[str, Any]],
     binding_index: Mapping[str, Mapping[str, Any]],
     fallback: str,
+    presentation: PresentationProfile,
 ) -> dict[str, Any]:
     selected = sorted(claims, key=_claim_sort_key)[:3]
     truth_state, truth_label = _truth_for_claims(selected)
@@ -232,7 +204,10 @@ def _summary_from_claims(
         for evidence_id in evidence_ids
         for node_id in binding_index.get(evidence_id, {}).get("node_ids", [])
     )
-    texts = [_plain_excerpt(str(item["text"])).rstrip("。；") for item in selected]
+    texts = [
+        _plain_excerpt(str(item["text"]), presentation).rstrip("。；")
+        for item in selected
+    ]
     text = "；".join(texts) + ("。" if texts else "")
     limitations = _stable_unique(
         limitation
@@ -261,7 +236,7 @@ def _summary_from_claims(
         "items": [
             {
                 "claim_id": str(item["id"]),
-                "text": _plain_excerpt(str(item["text"])),
+                "text": _plain_excerpt(str(item["text"]), presentation),
                 "truth_state": _TRUTH.get(
                     str(item.get("claim_type")), _TRUTH["unknown"]
                 )[0],
@@ -313,12 +288,13 @@ def _plain_label(
     node_id: str,
     before: Mapping[str, Mapping[str, Any]],
     after: Mapping[str, Mapping[str, Any]],
+    presentation: PresentationProfile,
 ) -> str:
     responsibility = _responsibility(after.get(node_id)) or _responsibility(before.get(node_id))
     if responsibility and re.search(r"[\u3400-\u9fff]", responsibility):
-        return _plain_excerpt(responsibility, max_length=32)
+        return _plain_excerpt(responsibility, presentation, max_length=32)
     technical_label = _technical_label(node_id, before, after)
-    for pattern, label in _PRESENTATION_LABEL_PATTERNS:
+    for pattern, label in presentation.node_label_rules:
         if pattern in technical_label:
             return label
     return "职责名称尚不清楚"
@@ -328,13 +304,14 @@ def _plain_label_source(
     node_id: str,
     before: Mapping[str, Mapping[str, Any]],
     after: Mapping[str, Mapping[str, Any]],
+    presentation: PresentationProfile,
 ) -> str:
     responsibility = _responsibility(after.get(node_id)) or _responsibility(before.get(node_id))
     if responsibility and re.search(r"[\u3400-\u9fff]", responsibility):
         return "verified_responsibility"
     technical_label = _technical_label(node_id, before, after)
-    if any(pattern in technical_label for pattern, _ in _PRESENTATION_LABEL_PATTERNS):
-        return "confirmed_prototype_glossary"
+    if any(pattern in technical_label for pattern, _ in presentation.node_label_rules):
+        return "target_profile"
     return "unknown"
 
 
@@ -352,12 +329,13 @@ def _view_node(
     before: Mapping[str, Mapping[str, Any]],
     after: Mapping[str, Mapping[str, Any]],
     node_claims: Mapping[str, list[str]],
+    presentation: PresentationProfile,
 ) -> dict[str, Any]:
     status = _node_status(node_id, before, after)
     return {
         "node_id": node_id,
-        "label": _plain_label(node_id, before, after),
-        "label_source": _plain_label_source(node_id, before, after),
+        "label": _plain_label(node_id, before, after, presentation),
+        "label_source": _plain_label_source(node_id, before, after, presentation),
         "technical_label": _technical_label(node_id, before, after),
         "status": status,
         "status_label": _STATUS_LABELS.get(status, status),
@@ -373,6 +351,7 @@ def _build_view(
     before: Mapping[str, Mapping[str, Any]],
     after: Mapping[str, Mapping[str, Any]],
     node_claims: Mapping[str, list[str]],
+    presentation: PresentationProfile,
 ) -> dict[str, Any]:
     ordered_ids = sorted(
         nodes,
@@ -398,7 +377,8 @@ def _build_view(
     return {
         "id": side,
         "nodes": [
-            _view_node(node_id, before, after, node_claims) for node_id in ordered_ids
+            _view_node(node_id, before, after, node_claims, presentation)
+            for node_id in ordered_ids
         ],
         "paths": sorted(
             paths,
@@ -408,6 +388,59 @@ def _build_view(
             [dict(item) for item in edges],
             key=lambda item: str(item.get("edge_id", "")),
         ),
+    }
+
+
+def _conceptual_architecture_view(
+    presentation: PresentationProfile,
+    system_architecture: Mapping[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Project-profile workflow, deliberately separate from static topology facts."""
+
+    conceptual = presentation.conceptual_architecture
+    if conceptual is None or system_architecture is None:
+        return None
+    group_labels = {
+        str(group["group_id"]): str(group["label"])
+        for group in _require_list(system_architecture.get("groups"), "system architecture groups")
+        if isinstance(group, Mapping)
+    }
+    components = []
+    for component in conceptual.components:
+        resolved_group_ids = [
+            group_id for group_id in component.group_ids if group_id in group_labels
+        ]
+        components.append(
+            {
+                "id": component.component_id,
+                "type": component.component_type,
+                "label": component.label,
+                "description": component.description,
+                "grid_column": component.grid_column,
+                "grid_row": component.grid_row,
+                "implementation_groups": [
+                    {"id": group_id, "label": group_labels[group_id]}
+                    for group_id in resolved_group_ids
+                ],
+                "unresolved_group_ids": [
+                    group_id
+                    for group_id in component.group_ids
+                    if group_id not in group_labels
+                ],
+            }
+        )
+    return {
+        "source": {
+            "kind": "target_profile",
+            "label": "目标配置声明的产品/流程架构",
+            "profile_id": presentation.profile_id,
+            "profile_sha256": presentation.profile_sha256,
+        },
+        "title": conceptual.title,
+        "description": conceptual.description,
+        "boundary_note": conceptual.boundary_note,
+        "components": components,
+        "flows": [item.to_dict() for item in conceptual.flows],
     }
 
 
@@ -450,6 +483,12 @@ def build_beginner_review_model(
                 raise ManifestError(
                     f"system architecture {status} overlay does not match delta"
                 )
+    presentation = _DEFAULT_PRESENTATION
+    if system_architecture is not None:
+        presentation = PresentationProfile.from_dict(
+            system_architecture.get("target_profile"),
+            "system_architecture.target_profile",
+        )
     claims = [
         _require_mapping(item, f"claims[{index}]")
         for index, item in enumerate(_require_list(brief.get("claims"), "claims"))
@@ -479,6 +518,7 @@ def build_beginner_review_model(
         ],
         binding_index=binding_index,
         fallback="现有证据不足，无法确认用户可感知的功能变化。",
+        presentation=presentation,
     )
     why = _summary_from_claims(
         item_id="summary.why",
@@ -487,8 +527,9 @@ def build_beginner_review_model(
         claims=[item for item in claims if item.get("scope") == "task_intent"],
         binding_index=binding_index,
         fallback="这份报告没有拿到任务对话，暂时无法说明为什么这样改。",
+        presentation=presentation,
     )
-    task_context = _task_context_from_evidence(task_evidence_value)
+    task_context = _task_context_from_evidence(task_evidence_value, presentation)
     if why["claim_ids"]:
         task_context["state"] = "ready"
         task_context["state_label"] = "原因已有证据"
@@ -550,6 +591,7 @@ def build_beginner_review_model(
         claims=[item for item in claims if item.get("section") == "attention"],
         binding_index=binding_index,
         fallback="需要人工检查证据包中的缺口，当前没有可验证的进一步结论。",
+        presentation=presentation,
     )
     summary = [what, why, impact, attention]
 
@@ -590,8 +632,10 @@ def build_beginner_review_model(
             impact_text = "它用于补充理解上下文，现有证据没有确认直接运行影响。"
         node_details[node_id] = {
             "node_id": node_id,
-            "label": _plain_label(node_id, before, after),
-            "label_source": _plain_label_source(node_id, before, after),
+            "label": _plain_label(node_id, before, after, presentation),
+            "label_source": _plain_label_source(
+                node_id, before, after, presentation
+            ),
             "technical_label": _technical_label(node_id, before, after),
             "status": status,
             "status_label": _STATUS_LABELS.get(status, status),
@@ -630,13 +674,34 @@ def build_beginner_review_model(
     ]
     views = {
         "before": _build_view(
-            "before", before, before_edges, impact_paths, before, after, node_claims
+            "before",
+            before,
+            before_edges,
+            impact_paths,
+            before,
+            after,
+            node_claims,
+            presentation,
         ),
         "after": _build_view(
-            "after", after, after_edges, impact_paths, before, after, node_claims
+            "after",
+            after,
+            after_edges,
+            impact_paths,
+            before,
+            after,
+            node_claims,
+            presentation,
         ),
         "diff": _build_view(
-            "diff", diff_nodes, diff_edges, impact_paths, before, after, node_claims
+            "diff",
+            diff_nodes,
+            diff_edges,
+            impact_paths,
+            before,
+            after,
+            node_claims,
+            presentation,
         ),
     }
 
@@ -684,6 +749,9 @@ def build_beginner_review_model(
         str(item.get("edge_id", "")) for item in [*before_edges, *after_edges]
     )
     omitted_ids = _stable_unique(omissions.get("omitted_node_ids", []))
+    conceptual_architecture = _conceptual_architecture_view(
+        presentation, system_architecture
+    )
     model: dict[str, Any] = {
         "schema_version": REVIEW_SCHEMA,
         "sample_id": str(brief["sample_id"]),
@@ -692,6 +760,10 @@ def build_beginner_review_model(
         "change_identity": dict(delta["change_identity"]),
         "baseline_validation": dict(delta["baseline_validation"]),
         "header": {
+            "brand": {
+                "mark": presentation.brand_mark,
+                "name": presentation.display_name,
+            },
             "eyebrow": "本地只读变化说明",
             "title": "这次 AI 改了什么？",
             "subtitle": (
@@ -732,6 +804,7 @@ def build_beginner_review_model(
         "limitations": _stable_unique(
             [*delta.get("limitations", []), *delta.get("unknowns", [])]
         ),
+        "conceptual_architecture": conceptual_architecture,
         "system_architecture": system_architecture,
         "validation": {
             "source_claim_ids": claim_ids,

@@ -1,0 +1,26 @@
+{
+  "score": 9.1,
+  "delivery_allowed": true,
+  "desktop": {
+    "viewport": "1440x1050",
+    "component_count": 8,
+    "flow_count": 8,
+    "responsibility_band_count": 3,
+    "floating_svg_label_count": 0,
+    "textual_relation_count": 8,
+    "connector_card_intersection_count": 0,
+    "band_headers_clear_cards": true,
+    "page_switch_toast_hidden": true,
+    "horizontal_overflow": false,
+    "console_problems": 0
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "story_order_preserved": true,
+    "decorative_links_hidden": true,
+    "bands_hidden": true,
+    "horizontal_overflow": false,
+    "console_problems": 0
+  },
+  "remaining_gate": "Independent non-coder retelling is still required."
+}

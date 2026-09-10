@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import base64
+import gzip
 import json
 from importlib import resources
 from typing import Any, Mapping
 
-from .models import ManifestError
+from .models import ManifestError, canonical_json_bytes, sha256_bytes
 from .review_model import validate_beginner_review_model
+from .software_control import validate_software_control
 
 THEME_SCHEMA = "change-passport.review-theme.v1"
-SOURCE_DESIGN_TOKENS_SHA256 = (
-    "3C14725FC63A06CD32820F9B734E570B02075E72D60D8FEB96581BC3AC869D40"
-)
 EXPECTED_THEME_PROPERTIES = {
     "--amber",
     "--amber-line",
@@ -55,8 +55,6 @@ def _load_theme() -> dict[str, str]:
         raise ManifestError("review theme is not valid JSON") from exc
     if not isinstance(value, Mapping) or value.get("schema_version") != THEME_SCHEMA:
         raise ManifestError("review theme schema is invalid")
-    if value.get("source_design_tokens_sha256") != SOURCE_DESIGN_TOKENS_SHA256:
-        raise ManifestError("review theme is not bound to the confirmed design tokens")
     properties = value.get("custom_properties")
     if not isinstance(properties, Mapping):
         raise ManifestError("review theme custom_properties must be an object")
@@ -99,15 +97,45 @@ def _json_for_script(value: Any) -> str:
     )
 
 
-def render_review_html(model_value: Any) -> str:
+def _technical_payload(system_architecture: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    if system_architecture is None:
+        return None
+    raw = canonical_json_bytes(system_architecture)
+    compressed = gzip.compress(raw, compresslevel=9, mtime=0)
+    return {
+        "schema_version": "change-passport.technical-payload.v1",
+        "encoding": "gzip+base64",
+        "sha256": sha256_bytes(raw),
+        "compressed_sha256": sha256_bytes(compressed),
+        "uncompressed_bytes": len(raw),
+        "compressed_bytes": len(compressed),
+        "data": base64.b64encode(compressed).decode("ascii"),
+    }
+
+
+def render_review_html(model_value: Any, software_control_value: Any | None = None) -> str:
     model = validate_beginner_review_model(model_value)
+    system_architecture = model.get("system_architecture")
+    software_control = None
+    if software_control_value is not None:
+        software_control = validate_software_control(
+            software_control_value,
+            review=model,
+            system_architecture=system_architecture,
+        )
+    compact_model = dict(model)
+    compact_model.pop("system_architecture", None)
     template = _resource_text("templates/review.html")
     css = _resource_text("templates/review.css")
     javascript = _resource_text("templates/review.js")
     replacements = {
         "{{THEME_CSS}}": _theme_css(_load_theme()),
         "{{APP_CSS}}": css,
-        "{{REVIEW_JSON}}": _json_for_script(model),
+        "{{REVIEW_JSON}}": _json_for_script(compact_model),
+        "{{SOFTWARE_CONTROL_JSON}}": _json_for_script(software_control),
+        "{{TECHNICAL_PAYLOAD_JSON}}": _json_for_script(
+            _technical_payload(system_architecture)
+        ),
         "{{APP_JS}}": javascript,
     }
     rendered = template

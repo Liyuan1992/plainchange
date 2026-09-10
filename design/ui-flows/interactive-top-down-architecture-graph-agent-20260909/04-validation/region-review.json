@@ -1,0 +1,33 @@
+{
+  "total_score": 9,
+  "delivery_allowed": true,
+  "regions": {
+    "concept_graph": {
+      "result": "pass",
+      "score": 9,
+      "notes": ["FastAPI: 9 nodes, 9 arrows, 5 descending rows, 0 card intersections", "Change Passport: 8 nodes, 8 arrows, 7 descending rows, 0 card intersections"]
+    },
+    "inline_implementation": {
+      "result": "pass",
+      "score": 9,
+      "notes": ["only the clicked node is selected", "7 subdomains open in the same canvas", "second click collapses"]
+    },
+    "right_inspector": {
+      "result": "pass",
+      "score": 9,
+      "notes": ["selected group context shown", "collapse restores overview"]
+    },
+    "narrow_fallback": {
+      "result": "pass",
+      "score": 9,
+      "notes": ["390 px document width", "one card column", "arrows hidden", "all relationship prose retained"]
+    }
+  },
+  "evidence": {
+    "desktop_screenshot": "current-after.png",
+    "mobile_screenshot": "mobile-after.png",
+    "full_test_count": 50,
+    "console_problems": 0
+  },
+  "next_round_fixes": ["independent beginner retelling"]
+}

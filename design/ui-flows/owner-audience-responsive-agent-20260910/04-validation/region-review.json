@@ -1,0 +1,27 @@
+{
+  "status": "pass",
+  "score": 9.3,
+  "regions": {
+    "owner-audience-card": {
+      "score": 9.5,
+      "vertical_strip": false,
+      "horizontal_overflow": false
+    },
+    "question-columns": {
+      "score": 9.4,
+      "primary_gap_px": 14,
+      "secondary_gap_px": 14
+    },
+    "intermediate-width": {
+      "score": 9.0,
+      "minimum_explanation_width_px": 188
+    },
+    "narrow-width": {
+      "score": 9.3,
+      "minimum_explanation_width_px": 256,
+      "horizontal_overflow": false
+    }
+  },
+  "console_problem_count": 0,
+  "human_comprehension": "not_run"
+}

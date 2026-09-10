@@ -1,0 +1,7 @@
+{
+  "owner-audience-card": {
+    "target": "affected-audience rows in the expanded five-question explanation",
+    "must_match": ["readable explanation width", "audience and status hierarchy", "no abnormal row height", "no horizontal overflow"],
+    "allowed_deviation_px": 8
+  }
+}

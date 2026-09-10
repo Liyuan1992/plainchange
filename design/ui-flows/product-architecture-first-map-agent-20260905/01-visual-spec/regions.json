@@ -1,0 +1,17 @@
+{
+  "architecture_intro": {
+    "target": "architecture tab heading and source boundary",
+    "must_match": ["conceptual architecture before static modules", "explicit profile-source label", "runtime limitation retained"],
+    "allowed_deviation_px": 12
+  },
+  "concept_map": {
+    "target": "system input-processing-output-human-gate workflow",
+    "must_match": ["visible directed flow", "human approval gate", "source-code mappings are secondary"],
+    "allowed_deviation_px": 16
+  },
+  "implementation_layer": {
+    "target": "existing static code structure map",
+    "must_match": ["static import boundaries", "module drill-down", "not presented as product workflow"],
+    "allowed_deviation_px": 12
+  }
+}

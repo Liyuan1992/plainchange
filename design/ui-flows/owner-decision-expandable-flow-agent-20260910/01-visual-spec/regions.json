@@ -1,0 +1,17 @@
+{
+  "header_tabs": {
+    "target": "compact brand plus two real report tabs",
+    "must_match": ["single header row", "clear active tab", "secondary evidence chips", "responsive wrapping"],
+    "allowed_deviation_px": 10
+  },
+  "owner_decision": {
+    "target": "result-first conclusion plus three decision cards",
+    "must_match": ["conclusion dominance", "three scannable answers", "collapsed complete explanation", "technical disclosure last"],
+    "allowed_deviation_px": 12
+  },
+  "software_workflow": {
+    "target": "top-to-bottom clickable workflow with synchronized inspector",
+    "must_match": ["four-step default", "same-canvas detail expansion", "selected versus changed distinction", "no duplicate default relation list"],
+    "allowed_deviation_px": 12
+  }
+}

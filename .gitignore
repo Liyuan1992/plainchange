@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+model-provider.local.json
 
 # Common local dependencies and environments
 node_modules/

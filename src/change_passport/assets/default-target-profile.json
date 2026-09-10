@@ -1,0 +1,56 @@
+{
+  "schema_version": "change-passport.target-profile.v1",
+  "profile_id": "generic-default",
+  "display_name": "Change Passport",
+  "brand_mark": "C",
+  "sections": [
+    {
+      "id": "application_code",
+      "label": "应用代码",
+      "responsibility": "承载应用主要功能和业务逻辑。",
+      "lane": "main",
+      "path_prefixes": ["src", "app", "lib"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "quality_safety",
+      "label": "测试与质量保障",
+      "responsibility": "用测试和检查验证系统行为与回归边界。",
+      "lane": "support",
+      "path_prefixes": ["tests", "test"],
+      "exact_paths": [],
+      "basename_prefixes": ["test_", "check_"]
+    },
+    {
+      "id": "engineering_delivery",
+      "label": "工程与交付辅助",
+      "responsibility": "承载脚本、构建、评测和交付辅助。",
+      "lane": "support",
+      "path_prefixes": ["scripts", "tools"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "unclassified",
+      "label": "待归类",
+      "responsibility": "这些代码尚未命中当前配置的分区规则，需要人工确认。",
+      "lane": "support",
+      "path_prefixes": [],
+      "exact_paths": [],
+      "basename_prefixes": []
+    }
+  ],
+  "node_label_rules": [],
+  "module_areas": [
+    {"id": "application", "order": 1, "path_prefixes": ["src/", "app/", "lib/"], "label": "应用代码", "description": "承载主要功能的应用模块。"},
+    {"id": "tests", "order": 2, "path_prefixes": ["tests/", "test/"], "label": "测试与验证", "description": "用于验证系统行为和边界的测试模块。"},
+    {"id": "engineering", "order": 3, "path_prefixes": ["scripts/", "tools/"], "label": "工程辅助", "description": "构建、检查和交付辅助模块。"}
+  ],
+  "term_replacements": [
+    {"from": "缺少权威类型: actual_test_receipt", "to": "没有可核对的独立测试收据"},
+    {"from": "actual_test_receipt", "to": "可核对的独立测试收据"},
+    {"from": "缺少权威类型:", "to": "缺少所需证据："},
+    {"from": "校验原因：", "to": "原因："}
+  ]
+}

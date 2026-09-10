@@ -1,0 +1,603 @@
+{
+  "schema_version": "change-passport.software-control.v1",
+  "sample_id": "change-passport-688fc5f-retained-edge",
+  "source_identity": {
+    "brief_identity": "be10218977c2f9afe78799451b0c464ef87663e532e2cab8fda92282230445b9",
+    "review_identity": "33d7563d8ecfdaeb22b6c8c29940c330dd1d0d4fdaae842b9fa1d61e8d673797",
+    "change_identity": {
+      "base_commit": "a4576ec082d88ca935496919992fcc3837b79ac7",
+      "head_commit": "688fc5f094ca96703d5013da474cef6a5091bd5d",
+      "patch_sha256": "670a4a37ddc9556a7fd8a9eb755c0dd6460e6b34055f93e1fdc422c94786d72c"
+    },
+    "artifacts": [
+      {
+        "role": "validated_brief",
+        "path": "artifacts/change-passport-self-688fc5f/brief.json",
+        "sha256": "41D9C6C864536A8BB26CFA0603D2139ED67D511E8FCB1A0A34EBD4BB36145A6A"
+      },
+      {
+        "role": "beginner_review",
+        "path": "artifacts/change-passport-self-688fc5f/beginner-review.json",
+        "sha256": "5219A1BBE8C1F8DBA7749ADE4B06083ACAE1F99B50F87C4333963EBD4467C10E"
+      },
+      {
+        "role": "system_architecture",
+        "path": "artifacts/change-passport-self-688fc5f/system-architecture.json",
+        "sha256": "1C192A4F1B52145A49ED9F20F8F1D12FBC8832742A16022D8D67E4E9BED2AC76"
+      },
+      {
+        "role": "target_profile",
+        "path": "examples/target-profiles/change-passport.v1.json",
+        "sha256": "A5CDA9A72CE1BB2B954C42AA39155F6B3C11D27A1CAFAE62A0932B1EFE93F372"
+      }
+    ]
+  },
+  "product": {
+    "name": "Change Passport",
+    "purpose": "把一次 AI 完成的软件改动和已有任务、测试材料整理成一份可核对的说明，帮助负责人知道发生了什么、哪里还不确定，以及下一步应该检查什么。",
+    "statement_state": "project_declared",
+    "source_refs": [
+      "target-profile:change-passport:a5cda9a72ce1bb2b954c42aa39155f6b3c11d27a1cafae62a0932b1efe93f372"
+    ]
+  },
+  "first_screen_summary": {
+    "headline": "这次 AI 修复了一个“没改也可能被说成改了”的问题",
+    "internal_concept_label": "变化识别规则",
+    "confirmed_change": {
+      "text": "它主要修复了一个误报问题：以前有些实际上没变的内容，可能会被系统误认为发生了变化。",
+      "statement_state": "observed_fact",
+      "state_label": "已确认",
+      "state_explanation": "现有证据能够支持这个结论。",
+      "basis": {
+        "claim_ids": [
+          "architecture.edge-comparison",
+          "function.retained-edge"
+        ],
+        "evidence_ids": [
+          "arch.node.002",
+          "git.patch",
+          "task.original"
+        ],
+        "component_ids": [],
+        "source_refs": [
+          "validated-brief:be10218977c2f9afe78799451b0c464ef87663e532e2cab8fda92282230445b9"
+        ]
+      }
+    },
+    "user_impact": {
+      "text": "目前没有证据表明它改变了最终用户的操作或软件的核心功能。",
+      "statement_state": "unknown",
+      "state_label": "目前没发现",
+      "state_explanation": "当前材料没有发现这类影响，但这不等于已经证明它不存在。",
+      "basis": {
+        "claim_ids": [
+          "architecture.edge-comparison"
+        ],
+        "evidence_ids": [
+          "arch.node.002"
+        ],
+        "component_ids": [
+          "static_extraction"
+        ],
+        "source_refs": [
+          "limitation:static-impact-is-not-user-impact"
+        ]
+      }
+    },
+    "residual_risk": {
+      "text": "还没有运行完整软件确认实际表现，因此现在不能保证完全没有其他影响。",
+      "statement_state": "unknown",
+      "state_label": "还没验证",
+      "state_explanation": "还缺少必要检查，现在不能把结果当成已经确认。",
+      "basis": {
+        "claim_ids": [],
+        "evidence_ids": [],
+        "component_ids": [],
+        "source_refs": [
+          "limitation:runtime-behavior-unverified"
+        ]
+      }
+    },
+    "owner_action": {
+      "text": "确认“没变时不会误报”和“真的变化时仍能发现”这两种情况。",
+      "statement_state": "supported_interpretation",
+      "state_label": "接下来做",
+      "state_explanation": "这是根据当前变化和证据缺口给出的负责人检查建议，不代表已经检查完成。",
+      "basis": {
+        "claim_ids": ["attention.test-receipt", "function.retained-edge"],
+        "evidence_ids": ["git.patch", "task.original", "test.receipt"],
+        "component_ids": [],
+        "source_refs": ["limitation:static-impact-is-not-user-impact"]
+      }
+    }
+  },
+  "five_questions": [
+    {
+      "id": "software_operation",
+      "question": "这是个什么软件？",
+      "answer": "Change Passport 先确定这次 AI 改了哪些内容，再收集用户原本想做什么、已经检查过什么。它会区分哪些事情已经确定、哪些还不知道，最后生成一份负责人能看懂的说明。是否接受结果并留作以后参考，由人决定。",
+      "statement_state": "project_declared",
+      "state_label": "项目说明",
+      "basis": {
+        "claim_ids": [],
+        "evidence_ids": [],
+        "component_ids": [
+          "approved_baseline",
+          "evidence_spine",
+          "explicit_evidence",
+          "fixed_change",
+          "guarded_explanation",
+          "human_gate",
+          "reader_outputs",
+          "static_extraction"
+        ],
+        "source_refs": [
+          "target-profile:change-passport:conceptual_architecture"
+        ]
+      },
+      "details": {
+        "software_steps": [
+          "确定这次 AI 改了哪些内容",
+          "收集用户原本想做什么、已经检查过什么",
+          "区分哪些事情已经确定、哪些还不知道",
+          "生成负责人能看懂的说明",
+          "由人决定是否接受，并留作以后参考"
+        ]
+      }
+    },
+    {
+      "id": "current_change",
+      "question": "AI 这次主要改变了什么？",
+      "answer": "这次改的是 Change Passport 自己识别变化的规则。过去，一段内容没有真正改变，只是重新检查一次，也可能被误报为“发生了变化”。现在不会了；真正改变的内容仍然会被记录。",
+      "statement_state": "observed_fact",
+      "state_label": "已确认",
+      "basis": {
+        "claim_ids": [
+          "architecture.edge-comparison",
+          "function.retained-edge"
+        ],
+        "evidence_ids": [
+          "arch.node.002",
+          "git.patch",
+          "task.original"
+        ],
+        "component_ids": [],
+        "source_refs": [
+          "validated-brief:be10218977c2f9afe78799451b0c464ef87663e532e2cab8fda92282230445b9"
+        ]
+      },
+      "details": {
+        "change_points": [
+          "只更换核对版本时，不再误报为结构变化",
+          "关系的来源位置真的移动时，仍然保留变化记录"
+        ],
+        "comparison_example": {
+          "title": "用一个例子理解",
+          "before": [
+            "软件内容没有改变",
+            "系统重新检查一次",
+            "可能被误报为“发生变化”"
+          ],
+          "after": [
+            "软件内容没有改变",
+            "系统重新检查一次",
+            "不再算变化"
+          ]
+        }
+      }
+    },
+    {
+      "id": "affected_people",
+      "question": "谁可能感觉到变化？",
+      "answer": "目前没有证据表明普通用户会直接感觉到变化。这次修改发生在 Change Passport 自己判断“软件有没有变化”的内部步骤，不是登录、付款、页面操作等用户直接使用的功能。",
+      "statement_state": "unknown",
+      "state_label": "目前没发现",
+      "basis": {
+        "claim_ids": [
+          "architecture.edge-comparison"
+        ],
+        "evidence_ids": [
+          "arch.node.002"
+        ],
+        "component_ids": [
+          "static_extraction"
+        ],
+        "source_refs": [
+          "beginner-review:33d7563d8ecfdaeb22b6c8c29940c330dd1d0d4fdaae842b9fa1d61e8d673797:limitations"
+        ]
+      },
+      "details": {
+        "audience_impacts": [
+          {
+            "audience": "使用 Change Passport 查看变化的人",
+            "status": "unknown",
+            "explanation": "他们可能看到更准确的变化说明，但当前材料没有记录真实使用感受。",
+            "source_refs": [
+              "claim:function.retained-edge",
+              "limitation:static-impact-is-not-user-impact"
+            ]
+          },
+          {
+            "audience": "被分析软件的最终用户",
+            "status": "not_observed",
+            "explanation": "目前没有发现登录、付款、页面操作等用户直接使用的功能发生变化，但这不等于已经确认没有影响。",
+            "source_refs": [
+              "claim:architecture.edge-comparison",
+              "limitation:runtime-behavior-unverified"
+            ]
+          },
+          {
+            "audience": "依赖这份结果的其他系统",
+            "status": "unknown",
+            "explanation": "还没有验证其他工具或后续流程会不会因为结果变化而受到影响。",
+            "source_refs": [
+              "limitation:runtime-behavior-unverified"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "unknowns",
+      "question": "还有什么我们不知道？",
+      "answer": "我们还没有真正运行完整软件确认实际表现，也没有核对这次修改会不会改变以前生成的结果。因此目前只能确认内部判断规则改了，不能保证实际使用时完全没有其他影响。",
+      "statement_state": "unknown",
+      "state_label": "还没验证",
+      "basis": {
+        "claim_ids": [
+          "system.missing.history"
+        ],
+        "evidence_ids": [],
+        "component_ids": [],
+        "source_refs": [
+          "architecture-delta:limitations",
+          "architecture-delta:unknowns",
+          "claim:system.missing.history"
+        ]
+      },
+      "details": {
+        "unknowns": [
+          "还没有真正运行完整软件，确认实际使用时有没有别的影响",
+          "还没有核对这次修改会不会改变以前生成的结果"
+        ]
+      }
+    },
+    {
+      "id": "next_verification",
+      "question": "我接下来该检查什么？",
+      "answer": "接下来只需要确认三件事：",
+      "statement_state": "supported_interpretation",
+      "state_label": "建议检查",
+      "basis": {
+        "claim_ids": [
+          "attention.test-receipt",
+          "function.retained-edge"
+        ],
+        "evidence_ids": [
+          "git.patch",
+          "task.original",
+          "test.receipt"
+        ],
+        "component_ids": [],
+        "source_refs": [
+          "limitation:static-impact-is-not-user-impact"
+        ]
+      },
+      "details": {
+        "owner_checks": [
+          "没有真正变化时，系统不会再误报",
+          "真正发生变化时，系统仍然能识别",
+          "生成的说明不会把“可能相关”写成“用户一定受影响”"
+        ],
+        "actions": [
+          {
+            "id": "verify.revalidation-only",
+            "title": "核对只更换核对版本的情况",
+            "instructions": "使用关系内容和来源位置都没有改变、只有核对版本不同的样本，确认系统不再把它报告为结构变化。",
+            "basis_type": "verified_change",
+            "completion_status": "recommended_not_run",
+            "source_refs": [
+              "claim:function.retained-edge",
+              "evidence:task.original"
+            ]
+          },
+          {
+            "id": "verify.source-location-move",
+            "title": "核对来源位置真的移动的情况",
+            "instructions": "使用同一关系仍然存在、但来源行确实移动的样本，确认系统仍然保留这项结构位置变化。",
+            "basis_type": "verified_change",
+            "completion_status": "recommended_not_run",
+            "source_refs": [
+              "claim:architecture.edge-comparison",
+              "evidence:task.original"
+            ]
+          },
+          {
+            "id": "verify.user-impact-language",
+            "title": "检查用户影响的表达边界",
+            "instructions": "打开生成说明，确认它把内部关联标为线索，而没有宣称最终用户已经受到真实运行影响。",
+            "basis_type": "evidence_gap",
+            "completion_status": "recommended_not_run",
+            "source_refs": [
+              "limitation:static-impact-is-not-user-impact",
+              "limitation:runtime-behavior-unverified"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "working_map": {
+    "title": "Change Passport 怎样把一次 AI 改动变成负责人能判断的说明",
+    "description": "系统先弄清 AI 改了什么和用户原本想做什么，再区分已经确定与仍不知道的事情，最后把决定权交给人。",
+    "screen_summary": {
+      "headline": "从一次 AI 改动，到一份你能作决定的说明",
+      "overview": "你提供想看的改动和已有检查，Change Passport 负责整理事实、识别真正变化并说明未知项；是否接受结果，始终由人决定。",
+      "boundary_label": "项目说明"
+    },
+    "overview_map": {
+      "title": "先用四步看懂这个软件",
+      "nodes": [
+        {
+          "id": "overview.fixed_change",
+          "label": "固定这次 AI 的改动",
+          "description": "先确定这次到底要看哪一次改动。",
+          "statement_state": "project_declared",
+          "change_state": "unknown",
+          "detail_node_ids": ["fixed_change"]
+        },
+        {
+          "id": "overview.collect_evidence",
+          "label": "收集需求、代码和检查结果",
+          "description": "把用户要求、代码变化和已有检查放在一起。",
+          "statement_state": "project_declared",
+          "change_state": "unknown",
+          "detail_node_ids": ["explicit_evidence", "evidence_spine"]
+        },
+        {
+          "id": "overview.separate_change",
+          "label": "分清“真的变了”和“还不知道”",
+          "description": "识别真实变化，同时保留还没有证据确认的事情。",
+          "statement_state": "project_declared",
+          "change_state": "changed",
+          "detail_node_ids": ["static_extraction", "guarded_explanation"]
+        },
+        {
+          "id": "overview.report_and_decide",
+          "label": "生成说明，由人决定是否接受",
+          "description": "把结果交给负责人，明确接受后再留作参考。",
+          "statement_state": "project_declared",
+          "change_state": "unknown",
+          "detail_node_ids": ["reader_outputs", "human_gate", "approved_baseline"]
+        }
+      ],
+      "flows": [
+        {"from": "overview.fixed_change", "to": "overview.collect_evidence", "label": "确定范围后收集材料", "statement_state": "project_declared"},
+        {"from": "overview.collect_evidence", "to": "overview.separate_change", "label": "用材料判断真实变化", "statement_state": "project_declared"},
+        {"from": "overview.separate_change", "to": "overview.report_and_decide", "label": "把结论交给负责人", "statement_state": "project_declared"}
+      ]
+    },
+    "statement_state": "project_declared",
+    "source": {
+      "profile_id": "change-passport",
+      "profile_sha256": "a5cda9a72ce1bb2b954c42aa39155f6b3c11d27a1cafae62a0932b1efe93f372"
+    },
+    "boundary_note": "这张图来自项目的版本化说明，不是程序运行记录，也不能单独证明每一次真实执行都按此顺序发生。",
+    "nodes": [
+      {
+        "id": "fixed_change",
+        "label": "确定这次要看的改动",
+        "description": "先明确这次要理解的是哪一次 AI 改动，避免分析对象中途改变。",
+        "type": "input",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": [],
+        "owner_view": {
+          "meaning": "先把这次要看的 AI 改动锁定，避免分析到一半换成别的内容。",
+          "visible_result": "你会得到一段明确、不会中途改变的分析范围。",
+          "current_change": "目前没有证据表明本次修改改变了这一步。",
+          "affected_people": "软件负责人会得到边界更清楚的说明；最终用户不会直接操作这一步。",
+          "unknowns": ["项目说明中有这一步，但现有材料不是每次实际执行的运行记录"],
+          "owner_checks": ["确认报告分析的是自己选择的那次改动"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["fixed_change"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "explicit_evidence",
+        "label": "收集用户要求和已有检查",
+        "description": "把用户原本想做什么、AI 如何回应以及已经检查过什么放在一起。",
+        "type": "input",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": [],
+        "owner_view": {
+          "meaning": "补齐判断这次改动所需的背景，而不是只看最终代码。",
+          "visible_result": "你会看到用户要求、AI 的说明和已有检查分别来自哪里。",
+          "current_change": "目前没有证据表明本次修改改变了这一步。",
+          "affected_people": "软件负责人更容易判断 AI 是否真的完成了原本要求。",
+          "unknowns": ["没有提供的对话或检查不会被系统自动当成已经存在"],
+          "owner_checks": ["确认关键用户要求和已有检查没有遗漏"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["explicit_evidence"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "evidence_spine",
+        "label": "确认哪些事情真的发生了",
+        "description": "把已经有材料支持的事情和仅仅声称完成的事情分开。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": ["evidence_pipeline"],
+        "owner_view": {
+          "meaning": "先确认事实，再开始解释，避免把 AI 的完成说明直接当成结果。",
+          "visible_result": "每个结论都会标明已经确认、只是有依据，还是目前不知道。",
+          "current_change": "目前没有证据表明本次修改改变了这一步。",
+          "affected_people": "软件负责人能分清已经发生的事和还需要验证的事。",
+          "unknowns": ["没有对应材料的说法仍然无法确认"],
+          "owner_checks": ["确认重要结论都能找到对应材料"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["evidence_spine"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "static_extraction",
+        "label": "判断软件哪些部分真的变了",
+        "description": "比较改动前后，排除只是重新检查造成的假变化，同时保留真正发生的变化。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "changed",
+        "implementation_group_ids": ["evidence_pipeline"],
+        "owner_view": {
+          "meaning": "判断哪些内容真的发生变化，哪些只是被系统重新检查了一次。",
+          "visible_result": "报告只把真正发生的差异标成变化，减少误报。",
+          "current_change": "本次改动就在这里：内容没有改变、只是重新检查时，不再被误报为发生变化。",
+          "affected_people": "查看 Change Passport 报告的人可能看到更准确的结果；目前没有证据表明最终用户会直接感觉到变化。",
+          "unknowns": ["还没有运行完整软件确认实际使用时是否有其他影响", "还没有核对以前生成的结果会不会改变"],
+          "owner_checks": ["没有真正变化时不再误报", "真正发生变化时仍然能够识别"],
+          "basis": {
+            "claim_ids": ["architecture.edge-comparison", "function.retained-edge"],
+            "evidence_ids": ["arch.node.002", "git.patch", "task.original"],
+            "component_ids": ["static_extraction"],
+            "source_refs": ["validated-brief:be10218977c2f9afe78799451b0c464ef87663e532e2cab8fda92282230445b9"]
+          }
+        }
+      },
+      {
+        "id": "guarded_explanation",
+        "label": "把确定和不知道的事情分开",
+        "description": "已经确认的事情明确说明；材料不够的事情直接告诉负责人还不知道。",
+        "type": "process",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": ["evidence_pipeline"],
+        "owner_view": {
+          "meaning": "防止一句顺畅的解释掩盖了仍然缺少的信息。",
+          "visible_result": "说明会同时展示已确认结论和需要继续验证的事项。",
+          "current_change": "本次规则修正会影响上一步提供给这里的变化结果，但没有证据表明这一步本身被修改。",
+          "affected_people": "软件负责人能看见不确定性，不会被迫把未知当成安全。",
+          "unknowns": ["表达更谨慎不等于已经验证所有实际影响"],
+          "owner_checks": ["确认说明没有把“可能相关”写成“用户一定受影响”"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["guarded_explanation"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "reader_outputs",
+        "label": "生成负责人能看懂的说明",
+        "description": "用结论、影响、未知项和下一步检查说明这次 AI 到底做了什么。",
+        "type": "output",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": ["evidence_pipeline"],
+        "owner_view": {
+          "meaning": "把前面的判断整理成负责人可以阅读和转交的结果。",
+          "visible_result": "一份先讲结论、再按需查看依据和技术细节的变化说明。",
+          "current_change": "报告会使用上游更准确的变化判断，但当前材料没有证明输出页面本身被修改。",
+          "affected_people": "查看报告的人可能更少看到误报；最终用户影响仍未确认。",
+          "unknowns": ["内容准确不代表表达一定适合所有第一次使用的人"],
+          "owner_checks": ["确认第一屏能直接回答改了什么、谁可能受影响和下一步做什么"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["reader_outputs"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "human_gate",
+        "label": "由人决定是否接受",
+        "description": "系统负责说明，是否认可并继续使用这次结果仍由负责人决定。",
+        "type": "human_gate",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": [],
+        "owner_view": {
+          "meaning": "Change Passport 不能替你批准 AI 的改动，也不能替你承担决定。",
+          "visible_result": "负责人可以接受、拒绝或要求继续验证。",
+          "current_change": "目前没有证据表明本次修改改变了这一步。",
+          "affected_people": "对软件负责的人保留最终控制权。",
+          "unknowns": ["没有负责人明确决定时，系统不能假设结果已经获得认可"],
+          "owner_checks": ["确认系统没有自动把候选结果标成已接受"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["human_gate"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      },
+      {
+        "id": "approved_baseline",
+        "label": "留作以后比较的参考",
+        "description": "只有负责人明确接受后，这次结果才能在以后帮助判断新的改动。",
+        "type": "state",
+        "statement_state": "project_declared",
+        "change_state": "unknown",
+        "implementation_group_ids": ["evidence_pipeline"],
+        "owner_view": {
+          "meaning": "把已接受结果保存成以后可以重新核对的参考，而不是永远不变的真相。",
+          "visible_result": "下一次分析可以从已接受的历史结果继续比较。",
+          "current_change": "目前没有证据表明本次修改改变了这一步。",
+          "affected_people": "软件负责人可以连续理解多次 AI 改动，而不是每次从头开始。",
+          "unknowns": ["当前候选结果尚未获得负责人批准，不能当作长期参考"],
+          "owner_checks": ["确认只有明确接受的结果才会进入以后参考"],
+          "basis": {"claim_ids": [], "evidence_ids": [], "component_ids": ["approved_baseline"], "source_refs": ["target-profile:change-passport:conceptual_architecture"]}
+        }
+      }
+    ],
+    "flows": [
+      {"from": "fixed_change", "to": "evidence_spine", "label": "告诉系统这次看什么", "statement_state": "project_declared"},
+      {"from": "explicit_evidence", "to": "evidence_spine", "label": "补充用户要求和已有检查", "statement_state": "project_declared"},
+      {"from": "evidence_spine", "to": "static_extraction", "label": "交出已经确认的事实", "statement_state": "project_declared"},
+      {"from": "evidence_spine", "to": "guarded_explanation", "label": "说明哪些材料可以使用", "statement_state": "project_declared"},
+      {"from": "static_extraction", "to": "guarded_explanation", "label": "交出真正发生的变化", "statement_state": "project_declared"},
+      {"from": "guarded_explanation", "to": "reader_outputs", "label": "整理成负责人语言", "statement_state": "project_declared"},
+      {"from": "reader_outputs", "to": "human_gate", "label": "交给负责人决定", "statement_state": "project_declared"},
+      {"from": "human_gate", "to": "approved_baseline", "label": "明确接受后才保留", "statement_state": "project_declared"}
+    ]
+  },
+  "evidence_layers": [
+    {
+      "id": "software_control",
+      "label": "软件掌控层",
+      "purpose": "先回答软件如何工作、改了什么、谁受影响、哪里未知和下一步测什么。"
+    },
+    {
+      "id": "explanation",
+      "label": "解释分析层",
+      "purpose": "说明每个判断来自已观察事实、项目声明、解释还是证据缺口。"
+    },
+    {
+      "id": "technical_evidence",
+      "label": "技术证据层",
+      "purpose": "在需要复核时查看变化范围、代码位置、静态关系和测试记录。"
+    }
+  ],
+  "validation": {
+    "allowed_statement_states": [
+      "observed_fact",
+      "supported_interpretation",
+      "project_declared",
+      "unknown"
+    ],
+    "source_claim_ids": [
+      "architecture.edge-comparison",
+      "attention.test-receipt",
+      "function.retained-edge",
+      "system.missing.history"
+    ],
+    "source_evidence_ids": [
+      "arch.node.002",
+      "git.patch",
+      "task.original",
+      "test.receipt"
+    ],
+    "source_component_ids": [
+      "approved_baseline",
+      "evidence_spine",
+      "explicit_evidence",
+      "fixed_change",
+      "guarded_explanation",
+      "human_gate",
+      "reader_outputs",
+      "static_extraction"
+    ],
+    "limitations": [
+      "这是一份人工编辑、来源受约束的语义样本，不证明自动生成器已经实现",
+      "软件工作地图来自项目声明，不是运行时追踪",
+      "静态代码关系不证明真实用户影响",
+      "独立非技术参与者尚未完成五问复述"
+    ],
+    "human_comprehension_status": "pending_independent_participant"
+  },
+  "control_identity": "979031ea971f7dc2dab79cd2d2f60b443eba455170cd2d6e4be4dbfee4bfaf22"
+}

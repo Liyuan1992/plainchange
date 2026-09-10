@@ -1,0 +1,17 @@
+{
+  "story_map": {
+    "target": "first architecture layer",
+    "must_match": ["three responsibility bands", "numbered main route", "orthogonal gutter-only connectors", "visible human decision boundary"],
+    "allowed_deviation_px": 8
+  },
+  "relationship_key": {
+    "target": "compact textual fallback",
+    "must_match": ["all configured flows retained", "no floating SVG labels", "main route is ordered"],
+    "allowed_deviation_px": 6
+  },
+  "implementation_layer": {
+    "target": "existing static map below story map",
+    "must_match": ["same implementation entry", "same mapped-code drill-down", "static-import limitation"],
+    "allowed_deviation_px": 0
+  }
+}

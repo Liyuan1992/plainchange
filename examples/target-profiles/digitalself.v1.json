@@ -1,0 +1,157 @@
+{
+  "schema_version": "change-passport.target-profile.v1",
+  "profile_id": "digitalself",
+  "display_name": "DigitalSelf · Change Passport",
+  "brand_mark": "D",
+  "sections": [
+    {
+      "id": "entry_experience",
+      "label": "用户入口与交互",
+      "responsibility": "承接网页、桌面、浏览器、语音和命令行中的用户操作。",
+      "lane": "main",
+      "path_prefixes": ["browser_extension", "desktop", "src/digital_self/web", "src/digital_self/voice", "src/digital_self/cli", "src/digital_self/pc_build_advisor"],
+      "exact_paths": ["src/digital_self/job_readiness.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "agent_runtime",
+      "label": "Agent 与执行核心",
+      "responsibility": "组织智能体运行、任务编排、会话和执行生命周期。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/agents", "src/digital_self/core", "src/digital_self/kernel", "src/digital_self/worker", "src/digital_self/session", "src/digital_self/pipeline", "src/digital_self/workflow"],
+      "exact_paths": ["src/digital_self/routing.py", "src/digital_self/runtime_lifecycle.py", "src/digital_self/core_host.py", "src/digital_self/terminal_queue.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "memory_knowledge",
+      "label": "记忆与知识系统",
+      "responsibility": "保存、检索和组织长期记忆、知识与自我理解。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/memory", "src/digital_self/self_model", "src/digital_self/profile_timeline", "src/digital_self/work_knowledge"],
+      "exact_paths": ["src/digital_self/public_knowledge.py", "src/digital_self/intelligence.py", "src/digital_self/industry_research.py"],
+      "basename_prefixes": ["learning_understanding"]
+    },
+    {
+      "id": "capabilities_tools",
+      "label": "能力与工具",
+      "responsibility": "向 Agent 提供可调用能力、工具、桥接器和代码分析。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/skills", "src/digital_self/tools", "src/digital_self/mcp_server", "src/digital_self/adapters", "src/digital_self/llm", "src/digital_self/ai_coding_feedback"],
+      "exact_paths": ["src/digital_self/ai_coding_feedback_policy.py", "src/digital_self/code_analysis.py", "src/digital_self/codex_adapter.py", "src/digital_self/codex_bridge.py", "src/digital_self/claude_adapter.py", "src/digital_self/claude_bridge.py", "src/digital_self/lab_assets.py", "src/digital_self/world_cup_agent.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "context_governance",
+      "label": "上下文与自主控制",
+      "responsibility": "管理上下文、自主策略、控制边界和证据约束。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/autonomy", "src/digital_self/context", "src/digital_self/control", "src/digital_self/requirements"],
+      "exact_paths": ["src/digital_self/evidence_trust.py", "src/digital_self/conversation_sync.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "work_coordination",
+      "label": "工作与项目协作",
+      "responsibility": "连接工作收件箱、项目流程和任务结果。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/work_inbox", "src/digital_self/product_workflows"],
+      "exact_paths": ["src/digital_self/work_project_resolver.py", "src/digital_self/work_summary.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "data_foundation",
+      "label": "数据与基础设施",
+      "responsibility": "提供配置、数据访问、存储和基础运行支撑。",
+      "lane": "main",
+      "path_prefixes": ["src/digital_self/storage", "src/digital_self/data"],
+      "exact_paths": ["src/digital_self/config.py", "src/digital_self/server_data_hub.py", "src/digital_self/__init__.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "quality_safety",
+      "label": "测试与质量保障",
+      "responsibility": "用测试和检查验证系统行为与回归边界。",
+      "lane": "support",
+      "path_prefixes": ["tests"],
+      "exact_paths": [],
+      "basename_prefixes": ["test_", "check_"]
+    },
+    {
+      "id": "engineering_delivery",
+      "label": "工程、评测与交付",
+      "responsibility": "承载脚本、评测、打包、设计流程和交付辅助。",
+      "lane": "support",
+      "path_prefixes": ["scripts", "benchmarks", "packaging", "design/ui-flows"],
+      "exact_paths": ["deploy.py", "search_chat.py"],
+      "basename_prefixes": []
+    },
+    {
+      "id": "unclassified",
+      "label": "待归类",
+      "responsibility": "这些代码尚未命中当前配置的分区规则，需要人工确认。",
+      "lane": "support",
+      "path_prefixes": [],
+      "exact_paths": [],
+      "basename_prefixes": []
+    }
+  ],
+  "node_label_rules": [
+    {"pattern": "test_skill_argument_validation", "label": "验证参数检查与错误分类"},
+    {"pattern": "argument_validation", "label": "统一检查并整理参数"},
+    {"pattern": "tool_execution_policy", "label": "判断失败是否值得重试"},
+    {"pattern": "skills.errors", "label": "把异常归成统一类别"},
+    {"pattern": "skills.registry", "label": "登记并调用工具"},
+    {"pattern": "skills.base", "label": "返回结构化工具结果"},
+    {"pattern": "skills.web", "label": "网页访问工具"},
+    {"pattern": "skill_execution", "label": "聊天中的工具执行入口"},
+    {"pattern": "image_generation", "label": "图像生成工具"},
+    {"pattern": "ai_coding_feedback", "label": "AI 编码反馈工具"},
+    {"pattern": "local_file", "label": "本地文件工具"},
+    {"pattern": "local_search", "label": "项目内文本搜索"},
+    {"pattern": "skills.control", "label": "控制与执行桥接"},
+    {"pattern": "chat_engine.engine", "label": "聊天运行入口"}
+  ],
+  "module_areas": [
+    {"id": "web-chat", "order": 2, "path_prefixes": ["src/digital_self/web/static/modules/chat/"], "label": "聊天与对话界面", "description": "聊天页面中的显示与操作模块，按源码目录归在一起。"},
+    {"id": "web-ui", "order": 1, "path_prefixes": ["src/digital_self/web/static/"], "label": "网页功能界面", "description": "网页中可见的页面与功能模块，按前端目录归在一起。"},
+    {"id": "desktop-browser", "order": 3, "path_prefixes": ["desktop/", "browser_extension/"], "label": "桌面与浏览器入口", "description": "桌面外壳和浏览器扩展中的入口模块。"},
+    {"id": "cli", "order": 4, "path_prefixes": ["src/digital_self/cli/"], "label": "命令行入口", "description": "在终端中使用的命令入口与公共辅助模块。"},
+    {"id": "voice-vtuber", "order": 5, "path_prefixes": ["src/digital_self/voice/", "src/digital_self/vtuber/"], "label": "语音与数字人", "description": "语音交互和数字人接入相关模块。"},
+    {"id": "web-api", "order": 6, "path_prefixes": ["src/digital_self/web/"], "label": "网页背后的服务", "description": "为网页、桌面和浏览器提供数据与操作能力的后台服务。"},
+    {"id": "memory-review", "order": 1, "path_prefixes": ["src/digital_self/memory/review/", "src/digital_self/memory/reviewed_write/"], "label": "记忆审核与写入", "description": "记忆进入长期存储前后的审核与受控写入模块。"},
+    {"id": "memory", "order": 2, "path_prefixes": ["src/digital_self/memory/", "src/digital_self/knowledge/", "src/digital_self/learning/"], "label": "记忆与知识服务", "description": "记忆检索、整理、迁移和知识读取相关模块。"},
+    {"id": "agent-runtime", "order": 1, "path_prefixes": ["src/digital_self/agents/", "src/digital_self/core/", "src/digital_self/kernel/", "src/digital_self/worker/", "src/digital_self/session/", "src/digital_self/pipeline/", "src/digital_self/workflow/"], "label": "智能体运行与任务执行", "description": "智能体、会话和任务运行生命周期中的模块。"},
+    {"id": "capabilities", "order": 1, "path_prefixes": ["src/digital_self/skills/", "src/digital_self/tools/", "src/digital_self/control/", "src/digital_self/llm/"], "label": "能力、工具与模型接入", "description": "可调用能力、工具执行和模型连接相关模块。"},
+    {"id": "context-governance", "order": 1, "path_prefixes": ["src/digital_self/context/", "src/digital_self/autonomy/", "src/digital_self/requirements/"], "label": "上下文与自主控制", "description": "上下文组织、边界约束和自主任务控制相关模块。"},
+    {"id": "work-coordination", "order": 1, "path_prefixes": ["src/digital_self/work_inbox/", "src/digital_self/product_workflows/"], "label": "工作与项目协作", "description": "工作收件箱、项目流程和协作结果相关模块。"},
+    {"id": "data-foundation", "order": 1, "path_prefixes": ["src/digital_self/data/", "src/digital_self/storage/", "src/digital_self/config/"], "label": "数据与配置基础", "description": "数据访问、存储和配置基础相关模块。"},
+    {"id": "integrations", "order": 7, "path_prefixes": ["src/digital_self/adapters/", "src/digital_self/integrations/"], "label": "外部接入适配", "description": "连接外部应用或既有接口的适配模块。"},
+    {"id": "tests", "order": 1, "path_prefixes": ["tests/"], "label": "测试与验证", "description": "用于验证系统行为和边界的测试模块。"},
+    {"id": "engineering", "order": 2, "path_prefixes": ["scripts/", "packaging/"], "label": "工程脚本与交付", "description": "构建、检查、打包和交付辅助模块。"}
+  ],
+  "term_replacements": [
+    {"from": "SkillRegistry", "to": "工具调用入口"},
+    {"from": "本地 provider completion 回执", "to": "AI 完成说明"},
+    {"from": "的事后自报目标", "to": "当时解释的目标"},
+    {"from": "回执自报实现包括", "to": "AI 回复中还说实现包括"},
+    {"from": "input_schema", "to": "参数声明"},
+    {"from": "参数声明 成为唯一校验事实来源", "to": "统一负责参数检查"},
+    {"from": "参数声明成为唯一校验事实来源", "to": "统一负责参数检查"},
+    {"from": "让 统一负责参数检查", "to": "统一负责参数检查"},
+    {"from": "让统一负责参数检查", "to": "统一负责参数检查"},
+    {"from": "并让工具失败对模型和重试策略可判断", "to": "并让系统知道失败后是否值得重试"},
+    {"from": "argument_clamps", "to": "参数调整记录"},
+    {"from": "minimum/maximum", "to": "允许范围"},
+    {"from": "uniqueItems", "to": "去重规则"},
+    {"from": "JSON Schema", "to": "参数规则"},
+    {"from": "type 关键字", "to": "类型规则"},
+    {"from": "缺少权威类型: actual_test_receipt", "to": "没有可核对的独立测试收据"},
+    {"from": "actual_test_receipt", "to": "可核对的独立测试收据"},
+    {"from": "缺少权威类型:", "to": "缺少所需证据："},
+    {"from": "校验原因：", "to": "原因："},
+    {"from": "retryable", "to": "是否值得重试"},
+    {"from": "归一化", "to": "整理"},
+    {"from": "集中参数整理、错误分类、是否值得重试 语义和对旧行为的兼容保留", "to": "集中整理参数、统一错误分类、判断失败是否值得重试，并兼容旧行为"},
+    {"from": "技能", "to": "工具"}
+  ]
+}

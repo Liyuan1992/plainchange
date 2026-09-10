@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from change_passport.git_evidence import (
     GitEvidenceError,
     collect_git_evidence,
+    materialize_repository,
     read_git_blobs,
 )
 from change_passport.models import Limits, RepositorySpec
@@ -73,3 +75,32 @@ def test_reads_multiple_immutable_blobs_in_one_batch(sample_repo):
     assert set(blobs) == {"app.py", "feature.py"}
     assert b"greeting(name" in blobs["app.py"]
     assert blobs["feature.py"] == b"ENABLED = True\n"
+
+
+def test_missing_shallow_history_is_hydrated_only_in_managed_cache(
+    sample_repo, tmp_path: Path
+):
+    repo, base, head = sample_repo
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "clone", "--bare", str(repo), str(remote)], check=True, capture_output=True)
+    shallow = tmp_path / "shallow"
+    subprocess.run(
+        ["git", "clone", "--depth", "1", f"file:///{remote.as_posix().lstrip('/')}", str(shallow)],
+        check=True,
+        capture_output=True,
+    )
+    before = _status(shallow)
+
+    result = materialize_repository(
+        RepositorySpec(path=shallow, base=base, head=head),
+        Limits(),
+        cache_root=tmp_path / "cache",
+    )
+
+    assert result.used_managed_copy is True
+    assert result.object_status == "hydrated_in_managed_cache"
+    assert result.repository.path != shallow
+    assert _status(shallow) == before
+    evidence = collect_git_evidence(result.repository, Limits())
+    assert evidence.base_commit == base
+    assert evidence.head_commit == head

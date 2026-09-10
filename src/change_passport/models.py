@@ -241,6 +241,7 @@ class SampleManifest:
     evidence_inputs: tuple[EvidenceInput, ...]
     hidden_ground_truth: tuple[HiddenGroundTruth, ...]
     architecture_baseline_path: Path | None
+    target_profile_path: Path | None
     limits: Limits
 
     @property
@@ -262,6 +263,7 @@ class SampleManifest:
             "evidence_inputs",
             "hidden_ground_truth",
             "architecture_baseline",
+            "target_profile",
             "limits",
         }
         unknown = set(data) - allowed
@@ -305,6 +307,30 @@ class SampleManifest:
                 raise ManifestError(
                     f"architecture baseline is not a file: {baseline_path}"
                 )
+        target_profile_path: Path | None = None
+        target_profile_raw = data.get("target_profile")
+        if target_profile_raw is not None:
+            target_profile_data = _require_mapping(target_profile_raw, "target_profile")
+            if set(target_profile_data) != {"path"}:
+                raise ManifestError("target_profile must contain only path")
+            raw_target_profile_path = Path(
+                _require_string(target_profile_data.get("path"), "target_profile.path")
+            )
+            candidate = (
+                raw_target_profile_path
+                if raw_target_profile_path.is_absolute()
+                else path.parent / raw_target_profile_path
+            )
+            try:
+                target_profile_path = candidate.resolve(strict=True)
+            except OSError as exc:
+                raise ManifestError(
+                    f"target profile does not exist: {candidate}"
+                ) from exc
+            if not target_profile_path.is_file():
+                raise ManifestError(
+                    f"target profile is not a file: {target_profile_path}"
+                )
         result = cls(
             manifest_path=path,
             sample_id=sample_id,
@@ -312,6 +338,7 @@ class SampleManifest:
             evidence_inputs=evidence,
             hidden_ground_truth=hidden,
             architecture_baseline_path=baseline_path,
+            target_profile_path=target_profile_path,
             limits=Limits.from_dict(data.get("limits")),
         )
         result.validate_separation()
@@ -348,6 +375,8 @@ class SampleManifest:
             for item in (*self.evidence_inputs, *self.hidden_ground_truth)
             if item.source.source_type == "file"
         }
+        if self.target_profile_path is not None:
+            source_paths.add(self.target_profile_path)
         if output in source_paths:
             raise ManifestError("output path overlaps an evidence source")
         return output

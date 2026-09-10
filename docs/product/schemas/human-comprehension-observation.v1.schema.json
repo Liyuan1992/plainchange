@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://change-passport.local/schemas/human-comprehension-observation.v1.schema.json",
+  "title": "Change Passport human comprehension observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluation_id",
+    "source_control_identity",
+    "status",
+    "participant",
+    "protocol",
+    "answers",
+    "critical_misunderstandings",
+    "result",
+    "recorded_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "change-passport.human-comprehension-observation.v1"},
+    "evaluation_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "source_control_identity": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "status": {"enum": ["not_run", "completed", "invalid"]},
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anonymous_id", "prior_project_knowledge", "technical_familiarity", "responsibility_fit"],
+      "properties": {
+        "anonymous_id": {"type": ["string", "null"]},
+        "prior_project_knowledge": {"type": ["boolean", "null"]},
+        "technical_familiarity": {"enum": [null, "non_coder", "beginner"]},
+        "responsibility_fit": {"type": ["boolean", "null"]}
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_read_seconds", "actual_read_seconds", "hints_given", "hint_notes", "participant_materials"],
+      "properties": {
+        "target_read_seconds": {"const": 60},
+        "actual_read_seconds": {"type": ["integer", "null"], "minimum": 1},
+        "hints_given": {"type": "boolean"},
+        "hint_notes": {"type": ["string", "null"]},
+        "participant_materials": {
+          "type": "array",
+          "const": ["participant-card.md"]
+        }
+      }
+    },
+    "answers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "verbatim_answer", "score", "score_reason"],
+        "properties": {
+          "id": {"enum": ["software_operation", "current_change", "affected_people", "unknowns", "next_verification"]},
+          "verbatim_answer": {"type": ["string", "null"]},
+          "score": {"enum": [null, 0, 1]},
+          "score_reason": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "critical_misunderstandings": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["points", "passed", "evaluator_notes"],
+      "properties": {
+        "points": {"type": ["integer", "null"], "minimum": 0, "maximum": 5},
+        "passed": {"type": ["boolean", "null"]},
+        "evaluator_notes": {"type": ["string", "null"]}
+      }
+    },
+    "recorded_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

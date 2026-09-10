@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.generator_contract import validate_packet
-from change_passport.model_adapter import (
+from plainchange.generator_contract import validate_packet
+from plainchange.model_adapter import (
     ModelGenerationError,
     OpenAICompatibleRawBriefProvider,
     generate_raw_brief_with_model,
     load_model_provider_config,
     raw_brief_json_schema,
 )
-from change_passport.pipeline import prepare_sample
+from plainchange.pipeline import prepare_sample
 
 
 def _write_config(path: Path, **overrides) -> Path:
@@ -106,7 +106,7 @@ def test_compatible_adapter_supports_three_output_modes(
         return _completion(_model_claims(packet))
 
     monkeypatch.setenv("TEST_MODEL_API_KEY", "secret-test-value")
-    monkeypatch.setattr("change_passport.model_adapter._post_json", fake_post)
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
     provider = OpenAICompatibleRawBriefProvider(config)
     raw, receipt_path = generate_raw_brief_with_model(packet, tmp_path / "prepared", provider)
 
@@ -145,7 +145,7 @@ def test_missing_environment_credential_fails_before_request_and_keeps_receipt(
     def should_not_call(*_args, **_kwargs):
         raise AssertionError("request must not be sent without the configured credential")
 
-    monkeypatch.setattr("change_passport.model_adapter._post_json", should_not_call)
+    monkeypatch.setattr("plainchange.model_adapter._post_json", should_not_call)
     with pytest.raises(ModelGenerationError, match="TEST_MODEL_API_KEY"):
         generate_raw_brief_with_model(
             packet,

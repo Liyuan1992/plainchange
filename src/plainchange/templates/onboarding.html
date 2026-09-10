@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="change-passport-session" content="__SESSION_TOKEN__">
-  <title>开始使用 · Change Passport</title>
+  <meta name="plainchange-session" content="__SESSION_TOKEN__">
+  <link rel="icon" href="data:,">
+  <title>开始使用 · PlainChange</title>
   <link rel="stylesheet" href="/onboarding.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Change Passport 首页">
-      <span class="brand-mark" aria-hidden="true">CP</span>
-      <span>Change Passport</span>
+    <a class="brand" href="/" aria-label="PlainChange 首页">
+      <span class="brand-mark" aria-hidden="true">PC</span>
+      <span>PlainChange</span>
     </a>
     <span class="version">Alpha __APP_VERSION__</span>
   </header>
@@ -20,7 +21,7 @@
     <section class="hero">
       <p class="eyebrow">第一次使用，只需三步</p>
       <h1>选一个项目，看看 AI 到底改了什么</h1>
-      <p>Change Passport 只读取你选定的两个版本，不修改项目，也不会默认上传源码。</p>
+      <p>PlainChange 只读取你选定的两个版本，不修改项目，也不会默认上传源码。</p>
     </section>
 
     <section class="workspace" aria-label="生成报告">
@@ -38,7 +39,7 @@
           </div>
           <p class="hint">选择电脑上的 Git 项目文件夹。你也可以直接粘贴路径。</p>
           <div class="path-row">
-            <input id="repository-path" type="text" autocomplete="off" placeholder="例如：D:\Dev\Projects\my-app">
+            <input id="repository-path" type="text" autocomplete="off" placeholder="例如：C:\projects\my-app">
             <button id="pick-button" class="secondary" type="button">选择文件夹</button>
             <button id="inspect-button" class="primary" type="button">读取项目</button>
           </div>

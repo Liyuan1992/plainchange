@@ -9,10 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.cli import main
-from change_passport.git_evidence import GitEvidenceError
-from change_passport.models import ManifestError
-from change_passport.pipeline import analyze_sample, finalize_brief, prepare_sample
+from plainchange.cli import main
+from plainchange.git_evidence import GitEvidenceError
+from plainchange.models import ManifestError
+from plainchange.pipeline import analyze_sample, finalize_brief, prepare_sample
 from conftest import run_git
 from test_software_control import resign, software_control_sample
 
@@ -177,6 +177,23 @@ def test_cli_prepare_and_finalize(sample_repo, manifest_factory, tmp_path: Path,
     assert json.loads((output / "score.json").read_text(encoding="utf-8"))["outcome"] == "pass"
 
 
+def test_cli_analyze_project_and_shorthand_generate_change_passport(
+    sample_repo, tmp_path: Path, capsys, monkeypatch
+):
+    repo, _base, _head = sample_repo
+    direct_output = tmp_path / "direct-output"
+
+    assert main(["analyze", str(repo), "--output", str(direct_output)]) == 0
+    assert (direct_output / "review.html").is_file()
+    assert "Change Passport generated:" in capsys.readouterr().out
+
+    shorthand_output = tmp_path / "shorthand-output"
+    monkeypatch.chdir(repo)
+    assert main([".", "--output", str(shorthand_output)]) == 0
+    assert (shorthand_output / "review.html").is_file()
+    assert "Change Passport generated:" in capsys.readouterr().out
+
+
 def test_cli_rejects_output_inside_target_repo(sample_repo, manifest_factory, tmp_path: Path, capsys):
     repo, base, head = sample_repo
     manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
@@ -252,7 +269,7 @@ def test_prepare_reports_progress_and_reuses_content_cache(
     sample_repo, manifest_factory, tmp_path: Path, monkeypatch
 ):
     repo, base, head = sample_repo
-    monkeypatch.setenv("CHANGE_PASSPORT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("PLAINCHANGE_CACHE_DIR", str(tmp_path / "cache"))
     manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
     first = prepare_sample(manifest, tmp_path / "first")
     second = prepare_sample(manifest, tmp_path / "second")
@@ -275,7 +292,7 @@ def test_analyze_builds_candidate_owner_report_without_model(
     sample_repo, manifest_factory, tmp_path: Path, monkeypatch
 ):
     repo, base, head = sample_repo
-    monkeypatch.setenv("CHANGE_PASSPORT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("PLAINCHANGE_CACHE_DIR", str(tmp_path / "cache"))
     manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
     before = _status(repo)
 
@@ -357,7 +374,7 @@ archive -> retain the result
     run_git(repo, "commit", "-m", "stop unready work")
     head = run_git(repo, "rev-parse", "HEAD")
     manifest = manifest_factory(tmp_path / "conditional.json", repo, base, head)
-    monkeypatch.setenv("CHANGE_PASSPORT_CACHE_DIR", str(tmp_path / "cache-conditional"))
+    monkeypatch.setenv("PLAINCHANGE_CACHE_DIR", str(tmp_path / "cache-conditional"))
 
     result = analyze_sample(manifest, tmp_path / "conditional-analysis")
     control = json.loads(Path(result["software_control_auto"]).read_text(encoding="utf-8"))
@@ -374,7 +391,7 @@ def test_analyze_can_use_configured_compatible_model(
     sample_repo, manifest_factory, tmp_path: Path, monkeypatch
 ):
     repo, base, head = sample_repo
-    monkeypatch.setenv("CHANGE_PASSPORT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("PLAINCHANGE_CACHE_DIR", str(tmp_path / "cache"))
     manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
 
     config_path = tmp_path / "model-provider.json"
@@ -408,7 +425,7 @@ def test_analyze_can_use_configured_compatible_model(
             "usage": {"prompt_tokens": 42, "completion_tokens": 24, "total_tokens": 66},
         }
 
-    monkeypatch.setattr("change_passport.model_adapter._post_json", fake_post)
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
     result = analyze_sample(
         manifest,
         tmp_path / "model-analysis",
@@ -439,7 +456,7 @@ def test_prepare_keeps_a_failure_receipt(
     sample_repo, manifest_factory, tmp_path: Path, monkeypatch
 ):
     repo, _, head = sample_repo
-    monkeypatch.setenv("CHANGE_PASSPORT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("PLAINCHANGE_CACHE_DIR", str(tmp_path / "cache"))
     manifest = manifest_factory(tmp_path / "sample.json", repo, head, head)
     output = tmp_path / "failed"
 

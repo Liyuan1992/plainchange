@@ -3,26 +3,25 @@ requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "change-passport-spike"
+name = "plainchange"
 version = "0.1.0a1"
-description = "Local evidence-bound reports for understanding AI software changes"
+description = "Know what AI changed, what it affects, and what still needs verification"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = []
-classifiers = ["License :: OSI Approved :: MIT License"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<9"]
 
 [project.scripts]
-change-passport = "change_passport.cli:main"
+plainchange = "plainchange.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-change_passport = ["templates/*.html", "templates/*.css", "templates/*.js", "assets/*.json"]
+plainchange = ["templates/*.html", "templates/*.css", "templates/*.js", "assets/*.json"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

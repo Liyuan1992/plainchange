@@ -3,7 +3,7 @@
   "provider_id": "my-compatible-provider",
   "base_url": "https://api.example.com/v1",
   "model": "replace-with-your-model-name",
-  "api_key_env": "CHANGE_PASSPORT_MODEL_API_KEY",
+  "api_key_env": "PLAINCHANGE_MODEL_API_KEY",
   "timeout_seconds": 120,
   "response_format": "json_schema"
 }

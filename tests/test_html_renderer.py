@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 import re
 
-from change_passport.html_renderer import (
+from plainchange.html_renderer import (
     EXPECTED_THEME_PROPERTIES,
     render_review_html,
 )
-from change_passport.review_model import build_beginner_review_model
+from plainchange.review_model import build_beginner_review_model
 from test_software_control import resign, software_control_sample
 
 from test_review_model import validated_brief

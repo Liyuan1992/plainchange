@@ -1,6 +1,6 @@
 # Project facts
 
-Current Alpha delivery: TASK-20260910-038 freezes the approved core at `c09652efb34f` and adds a packaged, loopback-only three-step start: choose a local Git project, confirm earlier/newer versions, and generate/open the existing evidence-bound report without hand-writing JSON. The 89-test suite, clean-wheel install, HTTP smoke, and desktop/390 px browser checks pass; target fixtures remain unchanged. The owner chose the MIT license and requires a replacement for the occupied `Change Passport` identity before the final release commit and tag. No remote, push, deployment, public release, telemetry, or automatic model request is authorized.
+Current Alpha delivery: TASK-20260910-038 is DONE. It freezes the approved core at `c09652efb34f` and establishes **PlainChange** as the product, Python package, import namespace, CLI, cache, and guided local UI. PlainChange generates an evidence-backed **Change Passport**; existing `change-passport.*` schemas remain the artifact/protocol family. The local entrypoints are `plainchange analyze .`, shorthand `plainchange .`, and loopback UI `plainchange serve`. The MIT `0.1.0a1` wheel/sdist, clean installation, direct analysis, 90-test suite, package/privacy checks, and real Edge 1280/390 px checks pass; local release tag `v0.1.0-alpha.1` identifies the accepted Alpha. No remote, push, deployment, registry publication, telemetry, or automatic model request occurred.
 
 Current behavior-semantic result: TASK-20260910-037 adds conservative, source-bound diff signals for newly added raises, explicit non-zero returns, and callable-signature changes. The no-model owner draft now says `还没判断` instead of presenting unperformed semantic analysis as `目前没发现`, maps only the primary source path when unique, and recommends separate normal and stop/failure checks. The fixed VideoFactory report now locates the change at `检查视频质量`; static signals still do not prove reachability, runtime, breaking impact, or user impact.
 
@@ -18,7 +18,7 @@ Current owner-map correction: TASK-20260910-027 distinguishes request entry from
 
 ## Purpose
 
-Help people who remain responsible for AI-built software understand how it works, what the AI changed, who may be affected, what remains unknown, and what to verify next—without requiring complete code-review ability or weakening deterministic evidence authority.
+PlainChange is the understanding and human-control layer between AI-generated code and a software owner's decision. It helps responsible people understand how software works, what AI changed, who may be affected, what remains unknown, and what to verify next—without requiring complete code-review ability or weakening deterministic evidence authority.
 
 ## Entrypoints and main components
 
@@ -57,16 +57,16 @@ Help people who remain responsible for AI-built software understand how it works
 - Accepted architecture decision: `docs/project-governance/decisions/ADR-0001-deterministic-evidence-spine.md`
 - Accepted architecture decision: `docs/project-governance/decisions/ADR-0002-persistent-architecture-baseline-and-delta.md`
 - Business/source PRD: confirmed Change Passport PRD v2.0 at `docs/product/PRD-v2.0-software-control-layer-draft.md`; the original approved substantive draft SHA-256 is `3AE6F91ECDC647B9A3934F976B8130C8FB006048D702B10AC6DCF513A853C98E`, the first-screen owner-language revision was `CC2FB5CB06A60606BB23E61156D75A8FE08BBB6A31809F39CC2E5F028A532E4A`, the first complete two-screen semantic revision was `9B32A54FE77C7FC37B0AEDA07E2191EBFE26DDAE860EAF2AB5C41132F13839FE`, the ten-second/four-step revision was `C708DE24BA17672C029F74D46E7D2ADA206D6092EB2C201E69A21C6D64467700`, and the current persistent-overview/inline-detail revision is `D709F4F6A1138D86FD2591513CAF86EBC7DE6187418F93DA7DD21548299BCB0C`. It preserves the v1.2 evidence contract and the v1.4 task-context distinction between user text, AI replies, and user confirmation.
-- CLI entrypoint: `src/change_passport/cli.py`
-- Manifest and authority contract: `src/change_passport/models.py`
-- Target-specific grouping and presentation profile contract: `src/change_passport/target_profile.py`, `examples/target-profiles/`
-- Read-only Git collector: `src/change_passport/git_evidence.py`
-- Generator packet contract: `src/change_passport/generator_contract.py`
-- Deterministic validator/renderer: `src/change_passport/validator.py`
-- Pipeline and scoring: `src/change_passport/pipeline.py`, `src/change_passport/scoring.py`
-- Architecture schemas, extraction, baseline validation, delta, impact, proposal approval, and Mermaid rendering: `src/change_passport/architecture.py`
-- Beginner-facing deterministic projection: `src/change_passport/review_model.py`
-- No-network single-file renderer and packaged templates/theme: `src/change_passport/html_renderer.py`, `src/change_passport/templates/`, `src/change_passport/assets/`
+- CLI entrypoint: `src/plainchange/cli.py`
+- Manifest and authority contract: `src/plainchange/models.py`
+- Target-specific grouping and presentation profile contract: `src/plainchange/target_profile.py`, `examples/target-profiles/`
+- Read-only Git collector: `src/plainchange/git_evidence.py`
+- Generator packet contract: `src/plainchange/generator_contract.py`
+- Deterministic validator/renderer: `src/plainchange/validator.py`
+- Pipeline and scoring: `src/plainchange/pipeline.py`, `src/plainchange/scoring.py`
+- Architecture schemas, extraction, baseline validation, delta, impact, proposal approval, and Mermaid rendering: `src/plainchange/architecture.py`
+- Beginner-facing deterministic projection: `src/plainchange/review_model.py`
+- No-network single-file renderer and packaged templates/theme: `src/plainchange/html_renderer.py`, `src/plainchange/templates/`, `src/plainchange/assets/`
 - Tests: `tests/`
 
 ## Commands
@@ -75,12 +75,12 @@ Help people who remain responsible for AI-built software understand how it works
 | --- | --- | --- |
 | Environment inventory | `python --version` | 2026-09-04: Python 3.12.10 |
 | Git inventory | `git status --short --branch` | 2026-09-05: local `main` initialized at `a4576ec`; no remote configured |
-| Run/help | `uv run change-passport --help` | 2026-09-10: exit 0, `analyze`, `prepare`, `finalize`, `score`, and `approve-baseline` listed |
-| Test | `uv run pytest -q` | 2026-09-06: 50 passed |
-| Compile | `uv run python -m compileall -q src tests` | 2026-09-06: exit 0 |
-| JavaScript syntax | `node --check src/change_passport/templates/review.js` | 2026-09-06: exit 0 |
-| Formal DigitalSelf prepare + finalize | `uv run change-passport prepare ...` then `finalize ...` | 2026-09-05: exit 0; target status unchanged; 8/0/0 claims; 14 added / 1 removed / 1 modified edge; 1057 system modules / 1768 static edges / 9 groups / 0 unclassified |
-| Formal Change Passport self sample | `uv run change-passport prepare ...` then `finalize ...` | 2026-09-05: exit 0 against isolated `a4576ec..688fc5f` clone; target remained clean; 3/1/0 claims; 2 modified nodes; 0/0/0 edges; 23 modules / 48 static edges / 2 groups / 0 unclassified |
+| Run/help | `uv run plainchange --help` | 2026-09-10: exit 0; `serve`, `analyze`, `prepare`, `finalize`, `score`, and `approve-baseline` listed |
+| Test | `uv run pytest -q` | 2026-09-10: 90 passed |
+| Compile | `uv run python -m compileall -q src tests` | 2026-09-10: exit 0 |
+| JavaScript syntax | `node --check src/plainchange/templates/review.js`, onboarding, and browser verifier | 2026-09-10: exit 0 |
+| Formal DigitalSelf prepare + finalize | `uv run plainchange prepare ...` then `finalize ...` | 2026-09-05: exit 0; target status unchanged; 8/0/0 claims; 14 added / 1 removed / 1 modified edge; 1057 system modules / 1768 static edges / 9 groups / 0 unclassified |
+| Formal Change Passport self sample | `uv run plainchange prepare ...` then `finalize ...` | 2026-09-05: exit 0 against isolated `a4576ec..688fc5f` clone; target remained clean; 3/1/0 claims; 2 modified nodes; 0/0/0 edges; 23 modules / 48 static edges / 2 groups / 0 unclassified |
 | Product-architecture visual acceptance | local HTTP preview + Playwright capture | 2026-09-05: desktop 1440 px and mobile 390 px; 8 profile-sourced components / 8 flows shown before static map; 0 console warnings/errors; no mobile overflow |
 | Software-control contract validation | `Test-Json` + source/hash/parity assertions | 2026-09-09: result-first summary, 5 ordered questions, 4 overview steps covering 8 detail steps exactly once, 3 unexecuted actions, source hashes and canonical identity matched |
 | Human-comprehension kit validation | `Test-Json` + separation/hash assertions | 2026-09-09: participant files 1, evaluator-only files 3, 5 blank answer slots, 0 participant leaks, 0 fabricated answers, result `not_run` |
@@ -88,9 +88,9 @@ Help people who remain responsible for AI-built software understand how it works
 | Second-screen semantic validation | `Test-Json` + node/flow/inspector/change-source/language assertions | 2026-09-09: 8 unique nodes, 8 valid flows, 8 complete owner inspectors, 1 directly sourced changed node, rejected owner-layer terms 0; interaction not yet implemented |
 | Complex public-project validation | fixed vLLM `prepare` + source-bound `finalize --software-control` | 2026-09-09: 4,501 modules, 21,091 static edges, 9 groups, 0 unclassified; 4/8 map coverage and one changed-node binding pass; 60 tests pass; runtime and owner visual review not run |
 | vLLM owner-map correction | fixed-source check + profile/control regeneration + generic legend assertions | 2026-09-10: 10.9 s prepare / <1 s finalize; new/stale wording, 4/8 binding, offline HTML, target preservation, and 60 tests pass; visual owner review not run |
-| Automatic observable analysis | `change-passport analyze` on fixed vLLM range, cold then warm | 2026-09-10: 65 tests pass; cold 9.406 s, warm 3.808 s; 9,002/0 warm cache hits/misses; report 12.93 MB → 3.14 MB; target read-only; browser click acceptance blocked |
+| Automatic observable analysis | `plainchange analyze` on fixed vLLM range, cold then warm | 2026-09-10: 65 tests pass; cold 9.406 s, warm 3.808 s; 9,002/0 warm cache hits/misses; report 12.93 MB → 3.14 MB; target read-only; browser click acceptance blocked |
 | Owner decision and expandable workflow UI | fixed vLLM report, headless Edge 1440×1000 and 390×844 | 2026-09-10: 65 tests pass; four overview nodes / one changed; selected-detail state parity pass; relation and five-question disclosures closed; no horizontal overflow; zero console problems; visual review 8.8/10 |
-| Build/package | Not in approved spike scope | — |
+| Build/package | `scripts/build-release.ps1`, clean wheel install, direct-project analysis, Edge checks | 2026-09-10: pass; final wheel/sdist hashes recorded in TASK-038 |
 
 ## Hard boundaries
 

@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.architecture import (
+from plainchange.architecture import (
     ArchitectureError,
     architecture_evidence_bindings,
     render_mermaid,
     validate_system_architecture_snapshot,
 )
-from change_passport.pipeline import approve_baseline_proposal, prepare_sample
-from change_passport.models import canonical_json_bytes, sha256_bytes
+from plainchange.pipeline import approve_baseline_proposal, prepare_sample
+from plainchange.models import canonical_json_bytes, sha256_bytes
 
 
 def _git(repo: Path, *args: str) -> str:

@@ -13,13 +13,13 @@ PARSER_CACHE_VERSION = "static-module-parser.v1"
 
 
 def default_cache_root() -> Path:
-    configured = os.environ.get("CHANGE_PASSPORT_CACHE_DIR")
+    configured = os.environ.get("PLAINCHANGE_CACHE_DIR")
     if configured:
         return Path(configured).expanduser().resolve(strict=False)
     external = Path("E:/DevCache")
     if external.is_dir():
-        return external / "change-passport"
-    return Path.home() / ".cache" / "change-passport"
+        return external / "plainchange"
+    return Path.home() / ".cache" / "plainchange"
 
 
 def cache_key(path: str, object_id: str) -> str:

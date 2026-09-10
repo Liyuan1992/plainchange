@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.models import ManifestError, SampleManifest
+from plainchange.models import ManifestError, SampleManifest
 
 
 def test_manifest_loads_and_separates_sources(sample_repo, manifest_factory, tmp_path: Path):

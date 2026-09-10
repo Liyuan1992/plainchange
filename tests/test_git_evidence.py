@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.git_evidence import (
+from plainchange.git_evidence import (
     GitEvidenceError,
     collect_git_evidence,
     materialize_repository,
     read_git_blobs,
 )
-from change_passport.models import Limits, RepositorySpec
+from plainchange.models import Limits, RepositorySpec
 
 
 def _status(repo) -> str:

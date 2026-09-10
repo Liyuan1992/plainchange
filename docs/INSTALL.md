@@ -1,4 +1,4 @@
-# 安装与首次使用
+# PlainChange 安装与首次使用
 
 当前版本：`0.1.0a1`（Alpha）。它适合受邀用户在自己的电脑上试用，还不是面向所有人的正式版。
 
@@ -9,7 +9,9 @@
 - Python 3.12 或更高版本。
 - 一个至少有两次提交的本地 Git 项目。
 
-分析在本机完成，目标项目保持只读。报告默认写到目标项目旁边的 `change-passport-reports` 文件夹。
+分析在本机完成，目标项目保持只读。报告默认写到目标项目旁边的 `plainchange-reports` 文件夹。
+
+最快的命令是在需要理解的 Git 项目目录运行 `plainchange .`。如果更喜欢图形引导，再运行 `plainchange serve`。
 
 ## 方法一：从源码启动（推荐给当前 Alpha 试用者）
 
@@ -17,10 +19,10 @@
 
 ```powershell
 uv sync
-uv run change-passport start
+uv run plainchange serve
 ```
 
-Windows 用户也可以双击仓库根目录的 `start-change-passport.cmd`。
+Windows 用户也可以双击仓库根目录的 `start-plainchange.cmd`。
 
 浏览器会自动打开首次使用页面。接下来只需要：
 
@@ -30,17 +32,23 @@ Windows 用户也可以双击仓库根目录的 `start-change-passport.cmd`。
 
 ## 方法二：安装 Alpha wheel
 
-收到 `change_passport_spike-0.1.0a1-py3-none-any.whl` 后，在它所在的目录执行：
+收到 `plainchange-0.1.0a1-py3-none-any.whl` 后，在它所在的目录执行：
 
 ```powershell
-py -m pip install .\change_passport_spike-0.1.0a1-py3-none-any.whl
-change-passport start
+py -m pip install .\plainchange-0.1.0a1-py3-none-any.whl
+plainchange .
+```
+
+这会分析当前项目最近两个提交。需要选择其他项目或版本时，运行：
+
+```powershell
+plainchange serve
 ```
 
 如果命令不在 PATH 中，可以使用：
 
 ```powershell
-py -m change_passport start
+py -m plainchange .
 ```
 
 ## 本地页面没有自动打开
@@ -48,7 +56,7 @@ py -m change_passport start
 运行：
 
 ```powershell
-change-passport start --no-open
+plainchange serve --no-open
 ```
 
 终端会打印一个 `http://127.0.0.1:8765/` 开头的本机地址。复制到浏览器即可。页面只监听本机，不能作为公开网站使用。
@@ -58,7 +66,7 @@ change-passport start --no-open
 换一个端口：
 
 ```powershell
-change-passport start --port 8877
+plainchange serve --port 8877
 ```
 
 ## 模型增强是可选项

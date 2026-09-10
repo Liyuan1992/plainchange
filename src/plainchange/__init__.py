@@ -1,4 +1,4 @@
-"""Evidence-bound change brief experiment."""
+"""PlainChange turns AI-made software changes into a verifiable Change Passport."""
 
 from .models import ManifestError, SampleManifest
 

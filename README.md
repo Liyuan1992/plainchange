@@ -1,8 +1,14 @@
-# Change Passport
+# PlainChange
 
 [MIT License](LICENSE)
 
-把一次固定的 Git 变化，变成一份可核对的说明：改了什么、为什么改、影响到哪里，以及哪些事尚不能确定。
+**Know what AI changed, what it affects, and what still needs verification.**
+
+Without reading every changed line.
+
+PlainChange turns AI-made software changes into an evidence-backed **Change Passport**.
+
+PlainChange 是 AI 生成代码与人类决策之间的理解和控制层。它不要求软件负责人读完每一行代码，而是把一次固定的 Git 变化变成一份可核对的 Change Passport：改了什么、影响什么、哪些已经确认、哪些仍需验证，以及接下来该检查什么。
 
 状态：`0.1.0a1` 本地 Alpha 已具备候选报告与首次使用入口；尚未完成独立人工复述、三份评分样本或 baseline 批准。因此自动分区和负责人语言仍是待确认初稿，不是运行事实或独立效果评估。
 
@@ -10,14 +16,14 @@
 
 ```powershell
 uv sync
-uv run change-passport start
+uv run plainchange .
 ```
 
-浏览器打开后，只需选择项目、确认前后两个版本并点击“生成变化说明”。默认全程本地运行，不调用模型、不上传源码，也不修改目标项目。Windows 用户还可以双击 `start-change-passport.cmd`。完整安装与 Alpha 限制见 [安装与首次使用](docs/INSTALL.md)。
+这会比较当前项目最近两个提交，并在项目外生成一份 Change Passport。想使用浏览器引导页，可以运行 `uv run plainchange serve`；Windows 用户也可以双击 `start-plainchange.cmd`。默认全程本地运行，不调用模型、不上传源码，也不修改目标项目。完整安装与 Alpha 限制见 [安装与首次使用](docs/INSTALL.md)。
 
 ## 从这里看起
 
-这份项目自身的展示使用隔离、只读的目标克隆，分析范围为 `a4576ec..688fc5f`：它修复了“仅因重新验证而更换提交号的静态导入边被误判为变化”的问题。生成结果确认 2 个模块变更、0 条新增/删除/修改的结构边，并保留“运行时影响尚未知”的边界。完整的可复核记录在 [自举展示记录](docs/showcase/change-passport-self-688fc5f.md)。
+这份项目自身的展示使用隔离、只读的目标克隆，分析范围为 `a4576ec..688fc5f`：它修复了“仅因重新验证而更换提交号的静态导入边被误判为变化”的问题。生成结果确认 2 个模块变更、0 条新增/删除/修改的结构边，并保留“运行时影响尚未知”的边界。完整的可复核记录在 [自举展示记录](docs/showcase/change-passport-self-688fc5f.md)。该固定样本早于 PlainChange 改名，因此历史文件名和证据身份继续保留原名。
 
 这个样本很适合检查工具是否把已知任务和真实代码变化对上；它不适合证明陌生项目上的泛化能力。后者仍需要独立样本、人工标注和评分。
 
@@ -34,17 +40,25 @@ uv run change-passport start
 
 ```powershell
 uv sync --extra dev
-uv run change-passport --help
+uv run plainchange --help
 uv run pytest -q
 ```
 
-新项目优先使用一条命令生成可打开的候选报告：
+新项目优先直接在项目目录运行：
 
 ```powershell
-uv run change-passport analyze path\to\sample-manifest.json --output artifacts\sample
+plainchange analyze .
+# 等价简写
+plainchange .
 ```
 
-这条命令会先检查固定 Git 版本所需对象；对象不完整时只在 Change Passport 受管缓存中补齐，不写目标仓库。随后读取固定版本中有限的根目录项目说明，把它当作“项目自述”而不是事实，并分别核对工作步骤是否有代码位置支持、声明的先后顺序是否有编排代码支持。找不到、对不上或存在歧义时会保留“仅项目说明”“自动候选”或“顺序未验证”，不会为了补齐流程而伪造结论。最后生成项目分区初稿、四步总览、可展开的详细工作图、负责人候选说明和 `review.html`。阶段进度会同时输出到终端并持续写入 `run-receipt.json`。重复分析按不可变 blob 内容复用解析缓存；可用 `CHANGE_PASSPORT_CACHE_DIR` 指定缓存位置，否则优先使用 `E:\DevCache\change-passport`。
+高级流程仍可传入 manifest 和显式输出目录：
+
+```powershell
+plainchange analyze path\to\sample-manifest.json --output artifacts\sample
+```
+
+这条命令会先检查固定 Git 版本所需对象；对象不完整时只在 PlainChange 受管缓存中补齐，不写目标仓库。随后读取固定版本中有限的根目录项目说明，把它当作“项目自述”而不是事实，并分别核对工作步骤是否有代码位置支持、声明的先后顺序是否有编排代码支持。找不到、对不上或存在歧义时会保留“仅项目说明”“自动候选”或“顺序未验证”，不会为了补齐流程而伪造结论。最后生成项目分区初稿、四步总览、可展开的详细工作图、负责人候选说明和 `review.html`。阶段进度会同时输出到终端并持续写入 `run-receipt.json`。重复分析按不可变 blob 内容复用解析缓存；可用 `PLAINCHANGE_CACHE_DIR` 指定缓存位置，否则优先使用 `E:\DevCache\plainchange`。
 
 默认的自动说明不调用模型，也不上传源码。它会把自动业务语义标成“候选说明”，把 README 自述、代码位置支持、静态顺序支持、真实运行和负责人确认分开。即使某一步显示“代码支持”，也只表示固定版本中找到了对应实现位置，不表示软件已经真实运行或 README 一定正确。
 
@@ -52,8 +66,8 @@ uv run change-passport analyze path\to\sample-manifest.json --output artifacts\s
 
 ```powershell
 Copy-Item examples\model-provider.template.json model-provider.local.json
-$env:CHANGE_PASSPORT_MODEL_API_KEY = "你的密钥"
-uv run change-passport analyze path\to\sample-manifest.json --output artifacts\sample-model --generator model --model-config model-provider.local.json
+$env:PLAINCHANGE_MODEL_API_KEY = "你的密钥"
+uv run plainchange analyze path\to\sample-manifest.json --output artifacts\sample-model --generator model --model-config model-provider.local.json
 ```
 
 接口使用通用的 OpenAI-compatible Chat Completions 协议，不绑定具体国内、国外或本地厂商。配置中的 `base_url` 可以填写 `/v1` 根地址或完整的 `/chat/completions` 地址；`model` 完全由用户决定。密钥只从 `api_key_env` 指定的环境变量读取，不能写入配置文件。
@@ -70,19 +84,19 @@ uv run change-passport analyze path\to\sample-manifest.json --output artifacts\s
 
 ```powershell
 # 1. 只读采集 Git 与显式输入证据，并建立结构变化事实
-uv run change-passport prepare examples\sample-manifest.json --output artifacts\sample
+uv run plainchange prepare examples\sample-manifest.json --output artifacts\sample
 
 # 2. 让人工或外部流程只读取 generator-packet.json，写出严格 JSON
 #    （不使用上面的配置接口时，文件桥本身不会发送任何内容）
 
 # 3. 校验引用和权威类型，再生成说明与可交互 HTML
-uv run change-passport finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample
+uv run plainchange finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample
 ```
 
 如已准备符合 `change-passport.software-control.v1` 的负责人解释层，可用同一条通用入口生成两屏报告；渲染器不按项目名分支：
 
 ```powershell
-uv run change-passport finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample --software-control path\to\software-control.json
+uv run plainchange finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample --software-control path\to\software-control.json
 ```
 
 要让同一套工具适配另一仓库，可在 manifest 中显式引用目标配置：
@@ -90,12 +104,12 @@ uv run change-passport finalize artifacts\sample\generator-packet.json artifacts
 ```json
 {
   "target_profile": {
-    "path": "examples/target-profiles/change-passport.v1.json"
+    "path": "examples/target-profiles/plainchange.v1.json"
   }
 }
 ```
 
-配置可定义阅读分区、中文职责标签、术语、品牌，以及明确标注来源的产品/流程架构；它不能改变 Git、模块、静态边、影响路径或 baseline 的事实。每份结构快照都会记录配置 ID 和 SHA-256，并把该指纹绑定到每个分区来源。可参考 [项目自身展示 manifest 模板](examples/showcase/change-passport-self-688fc5f.manifest.json)、[本项目配置](examples/target-profiles/change-passport.v1.json) 与 [通用默认配置](src/change_passport/assets/default-target-profile.json)。
+配置可定义阅读分区、中文职责标签、术语、品牌，以及明确标注来源的产品/流程架构；它不能改变 Git、模块、静态边、影响路径或 baseline 的事实。每份结构快照都会记录配置 ID 和 SHA-256，并把该指纹绑定到每个分区来源。可参考 [项目自身展示 manifest 模板](examples/showcase/change-passport-self-688fc5f.manifest.json)、[本项目配置](examples/target-profiles/plainchange.v1.json) 与 [通用默认配置](src/plainchange/assets/default-target-profile.json)。
 
 ## 产物与边界
 
@@ -117,7 +131,7 @@ uv run change-passport finalize artifacts\sample\generator-packet.json artifacts
 目标仓库必须保持只读。分析产物写入分析项目自己的 `artifacts/`，而非目标仓库；`artifacts/` 默认不入版本控制。真正的 baseline 只有在有人填写并明确批准 decision 后才会生成：
 
 ```powershell
-uv run change-passport approve-baseline artifacts\sample\architecture-baseline.proposal.json artifacts\sample\baseline-decision.json --output artifacts\sample\architecture-baseline.approved.json
+uv run plainchange approve-baseline artifacts\sample\architecture-baseline.proposal.json artifacts\sample\baseline-decision.json --output artifacts\sample\architecture-baseline.approved.json
 ```
 
 ## 项目治理

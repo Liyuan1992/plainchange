@@ -1,6 +1,6 @@
 # TASK-20260910-038: Freeze the first Alpha and add a guided local start
 
-State: IMPLEMENTING
+State: DONE
 Tier: high-risk
 
 ## Trigger and authority
@@ -13,11 +13,11 @@ tag, local package builds, documentation, and the guided local UI. It does not
 authorize a remote, push, deployment, account/cloud service, telemetry, automatic
 model request, target-repository write, or public release.
 
-The owner subsequently chose direct open source distribution. The project now uses
-the OSI-approved MIT license. The product name must change before the final release
-because `Change Passport` is already occupied; the replacement name remains an
-explicit owner decision because it changes the product, package, CLI, documentation,
-and tag identity together.
+The owner subsequently chose direct open source distribution and the OSI-approved
+MIT license. The owner then selected `PlainChange` as the product/package/CLI identity
+and retained `Change Passport` as the core generated artifact and protocol family.
+This authorizes the coordinated local rename but still does not authorize a remote,
+registry publication, deployment, or public account action.
 
 ## Baseline facts
 
@@ -63,8 +63,9 @@ progress, and open the result without authoring JSON.
    loopback hosts, validate Git/revision/output paths with fixed subprocess arguments,
    never serve arbitrary files, and never enable model generation from the beginner
    screen in this Alpha.
-4. Add CLI `change-passport start`, packaged onboarding HTML/CSS/JS, a Windows source
-   launcher, focused unit/HTTP tests, and concise user-facing failure language.
+4. Add CLI `plainchange serve`, direct `plainchange analyze .`, shorthand
+   `plainchange .`, packaged onboarding HTML/CSS/JS, a Windows source launcher,
+   focused unit/HTTP tests, and concise user-facing failure language.
 5. Update package metadata to `0.1.0a1`, replace the experiment description, add an
    installation/first-run guide, changelog, security/privacy boundary, and release
    checklist. Add the owner-selected license only after the explicit choice arrives.
@@ -108,7 +109,7 @@ progress, and open the result without authoring JSON.
   validation, `git diff --check`, secret-pattern scan, ignored-artifact check, and
   package-content inspection.
 - Build wheel/sdist; install wheel in a fresh temporary virtual environment; assert
-  version, CLI help, `change-passport start --help`, bundled resources, and a
+  version, CLI help, `plainchange serve --help`, bundled resources, and a
   loopback HTTP smoke test.
 - Run the guided path on an isolated two-commit fixture, assert target Git status is
   unchanged, report exists, progress succeeds, and the report opens through the
@@ -129,7 +130,7 @@ decision.
 - Created local release branch `release/alpha-0.1.0a1` and froze the previously
   approved implementation at commit `c09652efb34f` after 82 tests, compileall,
   report JavaScript syntax, credential-signature, and staged-diff checks passed.
-- Added `change-passport start`, a dependency-free loopback onboarding server and
+- Added `plainchange serve`, a dependency-free loopback onboarding server and
   packaged Chinese HTML/CSS/JS. The page selects a Git directory, defaults to the
   newest commit and its predecessor, accepts optional task context, writes a managed
   manifest outside the target, follows `run-receipt.json`, and serves only the
@@ -152,6 +153,45 @@ decision.
   and reproducible SHA-256 build script. The sdist manifest was narrowed to public
   runtime/documentation material rather than internal governance and design evidence.
 
-The final package hashes, release commit, `DONE` state, and annotated tag remain
-blocked only on the replacement product/package/CLI name. Current build hashes are
-provisional because the rename changes distribution bytes.
+The owner selected PlainChange and approved the brand/artifact split recorded in
+ADR-0005. The distribution/import namespace, CLI, cache, guided UI, launcher, current
+self-profile, installation copy, and README now use PlainChange; existing
+`change-passport.*` schema identifiers remain the stable Change Passport artifact
+contracts. Direct project analysis works through `plainchange analyze .` and the
+equivalent `plainchange .`, while the browser UI is `plainchange serve`.
+
+During the rename, a clean editable rebuild exposed a current-setuptools PEP 639
+conflict between the SPDX MIT expression and its redundant legacy classifier. The
+classifier was removed and BUG-20260910-023 records the confirmed release defect.
+Final package hashes, the release commit, `DONE` state, and annotated tag still wait
+for the complete renamed-package, clean-install, browser, and privacy gates.
+
+## Final acceptance evidence
+
+- Full suite: 90 tests passed. Python compilation, report/onboarding/verification
+  JavaScript syntax, and `git diff --check` passed; Git emitted only line-ending
+  normalization notices.
+- The final wheel installs into a clean Python 3.12 environment as `plainchange
+  0.1.0a1`. Both `plainchange --help` and `python -m plainchange --help` expose
+  `serve`, `analyze`, and the retained advanced commands.
+- The clean-installed shorthand analyzed this repository's fixed last two commits in
+  0.612 seconds, generated `review.html`, printed readable Chinese UTF-8 progress,
+  and left the target worktree byte-for-byte unchanged according to before/after Git
+  status output.
+- The final wheel contains 35 entries and all six packaged HTML/CSS/JS report and
+  onboarding assets. The 56-entry sdist excludes tests, design files, generated
+  artifacts, internal product/governance documents, target profiles, and showcase
+  fixtures. Package scans found no old `change_passport` import package, local
+  `C:\Users\Administrator` / `D:\Dev\Projects` paths, or old secret variable.
+- Headless real Edge checks against the clean-installed loopback server pass at
+  1280×900 and 390×844: PlainChange title/brand and required controls are present,
+  horizontal overflow is false, and console/network problems are zero. A missing
+  favicon 404 found in the first pass was fixed before the final build.
+- Final package SHA-256 values are
+  `7143117072aa0358849aae1323452dddfed673e2a5116ea384bcfb9047e21177`
+  for the wheel and
+  `3c92cfe292cb5220b0b4d977b3cd0862131fb0f42deebca54f3fac9996f74c49`
+  for the sdist. `dist/SHA256SUMS.txt` contains only these PlainChange artifacts.
+- The release is committed on `release/plainchange-0.1.0a1` and the annotated local
+  tag is `v0.1.0-alpha.1`. No Git remote, push, deployment, registry publication,
+  telemetry, target write, or model request occurred.

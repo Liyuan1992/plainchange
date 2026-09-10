@@ -249,7 +249,7 @@ class OpenAICompatibleRawBriefProvider:
     def _headers(self) -> dict[str, str]:
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "change-passport/0.1",
+            "User-Agent": "plainchange/0.1",
         }
         if self.config.api_key_env is not None:
             api_key = os.environ.get(self.config.api_key_env)
@@ -264,7 +264,7 @@ class OpenAICompatibleRawBriefProvider:
         validated = validate_packet(packet)
         schema = raw_brief_json_schema(list(validated["allowed_evidence_ids"]))
         system_prompt = (
-            "你是 Change Passport 的受约束说明生成器。只依据用户消息中的证据包生成 JSON。"
+            "你是 PlainChange 的受约束说明生成器。只依据用户消息中的证据包生成 Change Passport JSON。"
             "不得推测未提供的运行行为、用户影响、历史决定或测试结果。"
             "所有面向人的文本必须使用简体中文（代码标识符除外）。"
             "必须覆盖 function、architecture、history、attention 四个 section，且前四条按这个顺序各一条；"
@@ -286,7 +286,7 @@ class OpenAICompatibleRawBriefProvider:
             request_payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
-                    "name": "change_passport_raw_brief",
+                    "name": "plainchange_raw_brief",
                     "strict": True,
                     "schema": schema,
                 },

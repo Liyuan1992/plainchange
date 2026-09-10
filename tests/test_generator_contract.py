@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.generator_contract import build_generator_packet, validate_packet
-from change_passport.git_evidence import collect_git_evidence
-from change_passport.models import ManifestError, SampleManifest
+from plainchange.generator_contract import build_generator_packet, validate_packet
+from plainchange.git_evidence import collect_git_evidence
+from plainchange.models import ManifestError, SampleManifest
 
 
 def test_generator_packet_excludes_hidden_ground_truth(

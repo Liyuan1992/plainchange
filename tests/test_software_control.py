@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.models import ManifestError, canonical_json_bytes, sha256_bytes
-from change_passport.software_control import validate_software_control
+from plainchange.models import ManifestError, canonical_json_bytes, sha256_bytes
+from plainchange.software_control import validate_software_control
 
 
 ROOT = Path(__file__).resolve().parents[1]

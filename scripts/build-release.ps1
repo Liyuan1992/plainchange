@@ -10,10 +10,10 @@ Push-Location $projectRoot
 try {
     uv build --out-dir $destination
     $artifacts = Get-ChildItem -LiteralPath $destination -File |
-        Where-Object { $_.Extension -in @(".whl", ".gz") } |
+        Where-Object { $_.Name -like "plainchange-*.whl" -or $_.Name -like "plainchange-*.tar.gz" } |
         Sort-Object Name
-    if (-not $artifacts) {
-        throw "No wheel or source archive was built."
+    if ($artifacts.Count -ne 2) {
+        throw "Expected exactly one PlainChange wheel and one source archive."
     }
     $rows = foreach ($artifact in $artifacts) {
         $hash = (Get-FileHash -LiteralPath $artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()

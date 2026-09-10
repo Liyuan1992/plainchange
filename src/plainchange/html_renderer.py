@@ -40,7 +40,7 @@ EXPECTED_THEME_PROPERTIES = {
 def _resource_text(relative_path: str) -> str:
     try:
         return (
-            resources.files("change_passport")
+            resources.files("plainchange")
             .joinpath(relative_path)
             .read_text(encoding="utf-8")
         )

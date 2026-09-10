@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from change_passport.generator_contract import build_generator_packet
-from change_passport.git_evidence import collect_git_evidence
-from change_passport.models import SampleManifest
-from change_passport.validator import render_markdown, validate_raw_brief
+from plainchange.generator_contract import build_generator_packet
+from plainchange.git_evidence import collect_git_evidence
+from plainchange.models import SampleManifest
+from plainchange.validator import render_markdown, validate_raw_brief
 
 
 def _packet(sample_repo, manifest_factory, tmp_path: Path):

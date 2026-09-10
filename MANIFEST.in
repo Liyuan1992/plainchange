@@ -2,13 +2,13 @@ include README.md
 include CHANGELOG.md
 include SECURITY.md
 include LICENSE
-include start-change-passport.cmd
+include start-plainchange.cmd
 include docs/INSTALL.md
 include docs/RELEASE_CHECKLIST.md
 include examples/model-provider.template.json
 include examples/sample-manifest.json
-recursive-include src/change_passport/templates *.html *.css *.js
-recursive-include src/change_passport/assets *.json
+recursive-include src/plainchange/templates *.html *.css *.js
+recursive-include src/plainchange/assets *.json
 prune artifacts
 prune build
 prune design

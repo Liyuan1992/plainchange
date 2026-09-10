@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.models import ManifestError
-from change_passport.pipeline import finalize_brief, prepare_sample
-from change_passport.target_profile import load_target_profile
+from plainchange.models import ManifestError
+from plainchange.pipeline import finalize_brief, prepare_sample
+from plainchange.target_profile import load_target_profile
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -269,7 +269,7 @@ def test_profile_accepts_branch_merge_and_multiple_human_gates(tmp_path: Path):
 
 
 def test_profile_consumers_have_no_embedded_target_or_self_sample_identity():
-    source_root = Path(__file__).parents[1] / "src" / "change_passport"
+    source_root = Path(__file__).parents[1] / "src" / "plainchange"
     source = "\n".join(
         (source_root / name).read_text(encoding="utf-8")
         for name in (

@@ -4,8 +4,8 @@ import copy
 
 import pytest
 
-from change_passport.models import ManifestError
-from change_passport.review_model import (
+from plainchange.models import ManifestError
+from plainchange.review_model import (
     build_beginner_review_model,
     validate_beginner_review_model,
 )

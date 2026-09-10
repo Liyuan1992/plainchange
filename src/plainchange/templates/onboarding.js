@@ -1,5 +1,5 @@
 (() => {
-  const token = document.querySelector('meta[name="change-passport-session"]').content;
+  const token = document.querySelector('meta[name="plainchange-session"]').content;
   const byId = (id) => document.getElementById(id);
   const pathInput = byId("repository-path");
   const inspectButton = byId("inspect-button");
@@ -25,7 +25,7 @@
   async function api(path, payload, method = "POST") {
     const response = await fetch(path, {
       method,
-      headers: { "Content-Type": "application/json", "X-Change-Passport-Token": token },
+      headers: { "Content-Type": "application/json", "X-PlainChange-Token": token },
       body: method === "POST" ? JSON.stringify(payload || {}) : undefined,
     });
     const data = await response.json();

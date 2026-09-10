@@ -559,3 +559,14 @@ Impact / tradeoff: The product now has a real entry experience while preserving 
 Verification: 88 tests pass, including token/origin/output guards and a complete HTTP analysis journey. The wheel contains all onboarding assets, a clean Python 3.12 environment starts it successfully, and real browser checks at 1280 px and 390 px show no horizontal overflow or console errors.
 Links: `src/change_passport/onboarding.py`, `src/change_passport/templates/onboarding.html`, `docs/INSTALL.md`, `TASK-20260910-038`
 Needs curation: yes
+
+ID: EVO-20260910-022
+Date: 2026-09-10
+Domain: distribution
+Type: product-identity
+What changed: Renamed the distributable product, Python package, import namespace, CLI, guided UI, cache, and current self-profile to PlainChange while retaining Change Passport as the evidence-backed generated artifact and stable report protocol family. Added direct `plainchange analyze .`, shorthand `plainchange .`, and the distinct web command `plainchange serve`.
+Why now: The owner decided to open source the Alpha but found the former product name occupied, then clarified that a global Chinese-only translation and `start` server command would misstate both the international product and the user action.
+Impact / tradeoff: The brand can grow beyond one report while existing artifact schemas retain continuity. The pre-public Alpha intentionally makes a clean package/CLI break; historical evidence keeps its original names and paths where rewriting would falsify history.
+Verification: Distribution, clean-install, direct-project CLI, shorthand CLI, loopback UI, report generation, browser branding, full tests, compilation, JavaScript syntax, package-content, and checksum checks are required before the local Alpha tag.
+Links: `ADR-0005`, `pyproject.toml`, `src/plainchange/cli.py`, `src/plainchange/onboarding.py`, `README.md`, `TASK-20260910-038`
+Needs curation: yes

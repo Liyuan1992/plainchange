@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from change_passport.auto_draft import draft_target_profile
-from change_passport.target_profile import load_target_profile
+from plainchange.auto_draft import draft_target_profile
+from plainchange.target_profile import load_target_profile
 from conftest import run_git
 
 

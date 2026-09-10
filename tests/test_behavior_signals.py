@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from change_passport.behavior_signals import (
+from plainchange.behavior_signals import (
     behavior_signal_evidence,
     extract_behavior_signals,
 )

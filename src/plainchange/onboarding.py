@@ -110,7 +110,7 @@ def inspect_repository(value: str | Path, *, limit: int = 20) -> dict[str, Any]:
         "default_head": commits[0]["id"],
         "default_base": commits[1]["id"],
         "default_output": str(_default_output(repo, commits[1]["id"], commits[0]["id"])),
-        "output_root": str(repo.parent / "change-passport-reports"),
+        "output_root": str(repo.parent / "plainchange-reports"),
         "output_stem": _safe_sample_id(repo, "0000000", "0000000").rsplit("-0000000-to-0000000", 1)[0],
         "read_only": True,
     }
@@ -124,7 +124,7 @@ def _safe_sample_id(repo: Path, base: str, head: str) -> str:
 
 
 def _default_output(repo: Path, base: str, head: str) -> Path:
-    return repo.parent / "change-passport-reports" / _safe_sample_id(repo, base, head)
+    return repo.parent / "plainchange-reports" / _safe_sample_id(repo, base, head)
 
 
 def _verified_oid(repo: Path, value: str, label: str) -> str:
@@ -165,7 +165,7 @@ def build_guided_manifest(
     if destination == Path(destination.anchor) or destination.parent == destination:
         raise OnboardingError("不能把磁盘根目录作为报告目录。")
     sample_id = _safe_sample_id(repo, base_oid, head_oid)
-    marker = destination / ".change-passport-owned.json"
+    marker = destination / ".plainchange-owned.json"
     if destination.exists():
         entries = list(destination.iterdir())
         if entries and not marker.is_file():
@@ -207,7 +207,7 @@ def build_guided_manifest(
     }
     marker.write_bytes(
         canonical_json_bytes(
-            {"schema_version": "change-passport.output-owner.v1", "sample_id": sample_id}
+            {"schema_version": "plainchange.output-owner.v1", "sample_id": sample_id}
         )
         + b"\n"
     )
@@ -291,12 +291,12 @@ class OnboardingState:
             else:
                 job.status = "succeeded"
 
-        threading.Thread(target=run, name=f"change-passport-{job.job_id}", daemon=True).start()
+        threading.Thread(target=run, name=f"plainchange-{job.job_id}", daemon=True).start()
         return job
 
 
 def _asset_text(name: str) -> str:
-    return resources.files("change_passport").joinpath("templates", name).read_text(encoding="utf-8")
+    return resources.files("plainchange").joinpath("templates", name).read_text(encoding="utf-8")
 
 
 class OnboardingServer(ThreadingHTTPServer):
@@ -348,7 +348,7 @@ class OnboardingHandler(BaseHTTPRequestHandler):
         self._send_bytes(canonical_json_bytes(value), "application/json; charset=utf-8", status)
 
     def _authorized(self) -> bool:
-        token = self.headers.get("X-Change-Passport-Token", "")
+        token = self.headers.get("X-PlainChange-Token", "")
         if not secrets.compare_digest(token, self.server.state.token):
             self._json({"ok": False, "error": "本地会话已失效，请刷新页面。"}, HTTPStatus.FORBIDDEN)
             return False

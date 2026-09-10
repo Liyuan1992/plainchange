@@ -680,3 +680,33 @@ Verification: 82 tests pass. The regenerated VideoFactory report renders `来自
 Links: `src/change_passport/project_declarations.py`, `src/change_passport/auto_draft.py`, `src/change_passport/templates/review.html`, `src/change_passport/templates/review.js`, `src/change_passport/templates/review.css`
 Follow-up: Preserve `已经运行验证` as a separate future state; never infer it from a source-location match.
 Needs curation: yes
+
+ID: BUG-20260910-023
+Date: 2026-09-10
+Status: fixed
+Domain: distribution
+Severity: medium
+Symptom fingerprint: Building the renamed Alpha with current setuptools fails because `license = "MIT"` and the legacy `License :: OSI Approved :: MIT License` classifier are declared together.
+Trigger / reproduction: Run `uv build` or allow `uv run` to rebuild the editable package after the PlainChange metadata change.
+Impact: A source checkout or release package cannot be built, so the approved open-source Alpha cannot be installed.
+Root cause: Current setuptools implements PEP 639 license expressions and rejects the redundant legacy license classifier.
+Change made: Retain the SPDX `MIT` license expression and remove the superseded classifier.
+Verification: Editable installation and the complete pytest suite rebuild successfully; final wheel/sdist and clean-environment installation remain release-gate checks.
+Links: `pyproject.toml`, `LICENSE`, `TASK-20260910-038`
+Follow-up: Keep build-backend compatibility in the clean-package release check rather than relying only on an existing development environment.
+Needs curation: yes
+
+ID: BUG-20260910-024
+Date: 2026-09-10
+Status: fixed
+Domain: distribution
+Severity: medium
+Symptom fingerprint: The clean-installed Windows CLI completes analysis but Chinese stage labels are emitted using the host code page and appear garbled in UTF-8 consumers.
+Trigger / reproduction: Run the wheel-installed `python -m plainchange .` through a non-interactive PowerShell/PTY capture and inspect progress JSON.
+Impact: The generated Change Passport is valid, but the terminal experience is unreadable for the primary Chinese Alpha audience.
+Root cause: Python inherited the Windows stream encoding while the consuming terminal decoded command output as UTF-8.
+Change made: Reconfigure stdout and stderr to UTF-8 at the PlainChange CLI boundary when the stream supports it, with a fail-safe for test and embedded streams.
+Verification: Clean-wheel direct-project analysis must show readable Chinese stage labels and finish with the human-facing Change Passport path.
+Links: `src/plainchange/cli.py`, `TASK-20260910-038`
+Follow-up: Preserve machine-readable receipts as UTF-8 JSON and test future native launchers on their actual console hosts.
+Needs curation: yes

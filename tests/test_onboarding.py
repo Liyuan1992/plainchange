@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from change_passport.onboarding import (
+from plainchange.onboarding import (
     OnboardingError,
     OnboardingServer,
     OnboardingState,
@@ -60,7 +60,7 @@ def test_guided_manifest_stays_outside_target_and_preserves_task(sample_repo) ->
     assert manifest["repository"]["base"] == base
     assert manifest["repository"]["head"] == head
     assert manifest["evidence_inputs"][0]["source"]["text"] == "让问候支持姓名。"
-    assert (output / ".change-passport-owned.json").is_file()
+    assert (output / ".plainchange-owned.json").is_file()
     assert _status(repo) == ""
 
 
@@ -111,7 +111,7 @@ def _request(
         headers["Content-Type"] = "application/json"
         method = "POST"
     if token:
-        headers["X-Change-Passport-Token"] = token
+        headers["X-PlainChange-Token"] = token
     if extra_headers:
         headers.update(extra_headers)
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
@@ -128,6 +128,7 @@ def test_browser_shell_is_packaged_and_api_requires_session(onboarding_server) -
     assert status == 200
     html = body.decode("utf-8")
     assert "选一个项目，看看 AI 到底改了什么" in html
+    assert 'rel="icon" href="data:,"' in html
     assert state.token in html
     assert "default-src 'self'" in headers["Content-Security-Policy"]
 

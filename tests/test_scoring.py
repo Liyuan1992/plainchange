@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from change_passport.models import ManifestError
-from change_passport.scoring import build_annotation_template, score_annotations
+from plainchange.models import ManifestError
+from plainchange.scoring import build_annotation_template, score_annotations
 
 
 def _brief():

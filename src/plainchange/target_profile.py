@@ -649,7 +649,7 @@ def load_target_profile(path: Path | None) -> TargetProfile:
     if path is None:
         try:
             raw = (
-                resources.files("change_passport")
+                resources.files("plainchange")
                 .joinpath("assets/default-target-profile.json")
                 .read_bytes()
             )

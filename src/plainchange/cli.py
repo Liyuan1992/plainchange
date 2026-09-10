@@ -3,11 +3,17 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Sequence
 
 from .git_evidence import GitEvidenceError
 from .models import ManifestError
-from .onboarding import OnboardingError, serve_onboarding
+from .onboarding import (
+    OnboardingError,
+    build_guided_manifest,
+    inspect_repository,
+    serve_onboarding,
+)
 from .pipeline import (
     analyze_sample,
     approve_baseline_proposal,
@@ -19,15 +25,17 @@ from .pipeline import (
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="change-passport",
-        description="Evidence-bound change brief experiment",
+        prog="plainchange",
+        description=(
+            "Know what AI changed, what it affects, and what still needs verification."
+        ),
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
 
-    start = subcommands.add_parser("start", help="open the guided local first-run experience")
-    start.add_argument("--host", default="127.0.0.1")
-    start.add_argument("--port", type=int, default=8765)
-    start.add_argument("--no-open", action="store_true", help="do not open the browser automatically")
+    serve = subcommands.add_parser("serve", help="open the guided local web interface")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--no-open", action="store_true", help="do not open the browser automatically")
 
     prepare = subcommands.add_parser("prepare", help="collect evidence and write a generator packet")
     prepare.add_argument("manifest")
@@ -35,10 +43,11 @@ def _parser() -> argparse.ArgumentParser:
 
     analyze = subcommands.add_parser(
         "analyze",
-        help="run the deterministic local path and create an owner-facing candidate report",
+        help="analyze a Git project or an advanced manifest and create a Change Passport",
     )
-    analyze.add_argument("manifest")
-    analyze.add_argument("--output", required=True)
+    analyze.add_argument("target", help="Git project directory or sample manifest JSON")
+    analyze.add_argument("--output", help="report directory; project mode uses a safe sibling folder")
+    analyze.add_argument("--task", default="", help="optional original task or intent")
     analyze.add_argument(
         "--generator",
         choices=("deterministic", "model"),
@@ -74,17 +83,54 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _normalized_argv(argv: Sequence[str] | None) -> list[str]:
+    values = list(sys.argv[1:] if argv is None else argv)
+    commands = {"serve", "prepare", "analyze", "finalize", "score", "approve-baseline"}
+    if values and not values[0].startswith("-") and values[0] not in commands:
+        values.insert(0, "analyze")
+    return values
+
+
+def _configure_utf8_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8")
+            except (OSError, ValueError):
+                pass
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _configure_utf8_output()
     parser = _parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(_normalized_argv(argv))
+    direct_project = False
     try:
-        if args.command == "start":
+        if args.command == "serve":
             serve_onboarding(args.host, args.port, open_browser=not args.no_open)
             return 0
         if args.command == "analyze":
+            target = Path(args.target).expanduser()
+            if target.is_dir():
+                direct_project = True
+                repository = inspect_repository(target)
+                manifest, output, _payload = build_guided_manifest(
+                    repository["path"],
+                    repository["default_base"],
+                    repository["default_head"],
+                    task=args.task,
+                    output=args.output,
+                )
+            else:
+                if not args.output:
+                    raise OnboardingError(
+                        "使用 manifest 时请通过 --output 指定报告目录；直接分析项目可运行 plainchange analyze ."
+                    )
+                manifest, output = target, Path(args.output)
             result = analyze_sample(
-                args.manifest,
-                args.output,
+                manifest,
+                output,
                 generator=args.generator,
                 model_config_path=args.model_config,
             )
@@ -112,5 +158,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 2
-    print(json.dumps({"ok": True, **result}, ensure_ascii=False))
+    if direct_project:
+        print("\nChange Passport generated:")
+        print(result["review_html"])
+    else:
+        print(json.dumps({"ok": True, **result}, ensure_ascii=False))
     return 0

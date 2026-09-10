@@ -1,0 +1,96 @@
+{
+  "schema_version": "change-passport.target-profile.v1",
+  "profile_id": "plainchange",
+  "display_name": "PlainChange",
+  "brand_mark": "P",
+  "sections": [
+    {
+      "id": "evidence_pipeline",
+      "label": "证据与分析核心",
+      "responsibility": "采集只读 Git 事实，建立变化、架构和验证合同。",
+      "lane": "main",
+      "path_prefixes": ["src/plainchange"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "quality_safety",
+      "label": "测试与质量保障",
+      "responsibility": "用独立夹具和回归测试保护事实边界。",
+      "lane": "support",
+      "path_prefixes": ["tests"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "engineering_delivery",
+      "label": "工程与演示素材",
+      "responsibility": "承载示例、设计记录和可复现的展示辅助。",
+      "lane": "support",
+      "path_prefixes": ["scripts", "design"],
+      "exact_paths": [],
+      "basename_prefixes": []
+    },
+    {
+      "id": "unclassified",
+      "label": "待归类",
+      "responsibility": "这些代码尚未命中当前配置的分区规则，需要人工确认。",
+      "lane": "support",
+      "path_prefixes": [],
+      "exact_paths": [],
+      "basename_prefixes": []
+    }
+  ],
+  "node_label_rules": [
+    {"pattern": "architecture", "label": "静态架构提取与变化比较"},
+    {"pattern": "git_evidence", "label": "只读 Git 证据采集"},
+    {"pattern": "generator_contract", "label": "受约束生成输入合同"},
+    {"pattern": "validator", "label": "证据与引用校验"},
+    {"pattern": "pipeline", "label": "准备与收口流程"},
+    {"pattern": "models", "label": "样本与输入合同"},
+    {"pattern": "scoring", "label": "人工标注与评分"},
+    {"pattern": "review_model", "label": "小白阅读视图"},
+    {"pattern": "html_renderer", "label": "本地单页报告"},
+    {"pattern": "cli", "label": "命令行入口"},
+    {"pattern": "test_", "label": "回归验证"}
+  ],
+  "module_areas": [
+    {"id": "evidence", "order": 1, "path_prefixes": [], "exact_paths": ["src/plainchange/git_evidence.py", "src/plainchange/models.py", "src/plainchange/generator_contract.py", "src/plainchange/validator.py"], "basename_prefixes": [], "label": "证据与合同", "description": "采集只读事实并校验输入、证据和约束。"},
+    {"id": "static_architecture", "order": 2, "path_prefixes": [], "exact_paths": ["src/plainchange/architecture.py"], "basename_prefixes": [], "label": "静态架构", "description": "提取模块、静态 import、变化和影响关系。"},
+    {"id": "reader_projection", "order": 3, "path_prefixes": [], "exact_paths": ["src/plainchange/review_model.py", "src/plainchange/html_renderer.py"], "basename_prefixes": [], "label": "阅读报告", "description": "把已验证事实投影为本地可读报告。"},
+    {"id": "orchestration", "order": 4, "path_prefixes": [], "exact_paths": ["src/plainchange/pipeline.py", "src/plainchange/scoring.py", "src/plainchange/cli.py", "src/plainchange/target_profile.py"], "basename_prefixes": [], "label": "流程与配置", "description": "组织命令流程、人工标注和显示配置。"},
+    {"id": "core", "order": 9, "path_prefixes": ["src/plainchange/"], "exact_paths": [], "basename_prefixes": [], "label": "其他证据与分析核心", "description": "尚未细分的核心实现，保持显式可见。"},
+    {"id": "tests", "order": 2, "path_prefixes": ["tests/"], "label": "测试与回归", "description": "用隔离夹具验证事实边界和行为回归。"},
+    {"id": "engineering", "order": 3, "path_prefixes": ["scripts/", "design/"], "label": "工程与演示素材", "description": "承载辅助脚本、设计验证和演示材料。"}
+  ],
+  "conceptual_architecture": {
+    "title": "从代码变化到可核对说明",
+    "description": "系统把固定的代码范围和明确证据变成可审查的变化说明；每一步都保留来源与边界。",
+    "boundary_note": "这是一份由目标配置声明的产品/流程架构，用于解释系统如何工作；它不等于静态 import 图，也不证明运行时顺序。",
+    "components": [
+      {"id": "fixed_change", "type": "input", "label": "固定代码变化", "description": "选择不可变的 Git base 与 head，作为本次分析的边界。", "grid_column": 1, "grid_row": 1, "group_ids": []},
+      {"id": "explicit_evidence", "type": "input", "label": "任务与测试证据", "description": "只接收明确提供的任务文本、测试收据和已批准历史。", "grid_column": 1, "grid_row": 2, "group_ids": []},
+      {"id": "evidence_spine", "type": "process", "label": "只读证据主干", "description": "采集 Git 事实并建立受约束的证据包；不写入目标仓库。", "grid_column": 2, "grid_row": 1, "group_ids": ["evidence_pipeline"]},
+      {"id": "static_extraction", "type": "process", "label": "静态结构提取", "description": "从冻结源码得到模块、静态依赖、变化 overlay 与限制。", "grid_column": 3, "grid_row": 1, "group_ids": ["evidence_pipeline"]},
+      {"id": "guarded_explanation", "type": "process", "label": "受约束解释与校验", "description": "生成者只能读取证据包；校验器会降级不能支持的陈述。", "grid_column": 3, "grid_row": 2, "group_ids": ["evidence_pipeline"]},
+      {"id": "reader_outputs", "type": "output", "label": "人类可读报告", "description": "输出变化说明、影响视图、结构图和仍需确认的事项。", "grid_column": 4, "grid_row": 1, "group_ids": ["evidence_pipeline"]},
+      {"id": "human_gate", "type": "human_gate", "label": "人工批准闸门", "description": "只有可归因的人工决定才能批准 baseline；自动流程不能跨越此处。", "grid_column": 4, "grid_row": 2, "group_ids": []},
+      {"id": "approved_baseline", "type": "state", "label": "可复用 baseline", "description": "经批准后才能作为下一次分析的候选起点；默认仍是 pending。", "grid_column": 4, "grid_row": 3, "group_ids": ["evidence_pipeline"]}
+    ],
+    "flows": [
+      {"from": "fixed_change", "to": "evidence_spine", "label": "固定范围"},
+      {"from": "explicit_evidence", "to": "evidence_spine", "label": "明确输入"},
+      {"from": "evidence_spine", "to": "static_extraction", "label": "不可变源码事实"},
+      {"from": "evidence_spine", "to": "guarded_explanation", "label": "受约束证据包"},
+      {"from": "static_extraction", "to": "guarded_explanation", "label": "结构变化事实"},
+      {"from": "guarded_explanation", "to": "reader_outputs", "label": "校验后输出"},
+      {"from": "reader_outputs", "to": "human_gate", "label": "提交人工决定"},
+      {"from": "human_gate", "to": "approved_baseline", "label": "明确批准"}
+    ]
+  },
+  "term_replacements": [
+    {"from": "actual_test_receipt", "to": "可核对的独立测试收据"},
+    {"from": "缺少权威类型:", "to": "缺少所需证据："},
+    {"from": "校验原因：", "to": "原因："}
+  ]
+}

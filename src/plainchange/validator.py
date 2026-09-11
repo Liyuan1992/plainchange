@@ -84,13 +84,18 @@ def validate_raw_brief(packet_value: Any, raw_value: Any) -> dict[str, Any]:
     else:
         if not isinstance(metadata_value, Mapping):
             raise ManifestError("raw brief generator_metadata must be an object")
-        allowed_metadata = {"provider", "model", "mode", "generated_at"}
+        allowed_metadata = {"provider", "model", "mode", "human_language", "generated_at"}
         if set(metadata_value) - allowed_metadata:
             raise ManifestError("raw brief generator_metadata contains unknown fields")
         generator_metadata = {
             "provider": _short_string(metadata_value.get("provider"), "generator_metadata.provider", max_length=120),
             "model": _short_string(metadata_value.get("model"), "generator_metadata.model", max_length=120),
             "mode": _short_string(metadata_value.get("mode"), "generator_metadata.mode", max_length=120),
+            "human_language": (
+                _short_string(metadata_value.get("human_language"), "generator_metadata.human_language", max_length=16)
+                if metadata_value.get("human_language") is not None
+                else None
+            ),
             "generated_at": (
                 _short_string(metadata_value.get("generated_at"), "generator_metadata.generated_at", max_length=120)
                 if metadata_value.get("generated_at") is not None

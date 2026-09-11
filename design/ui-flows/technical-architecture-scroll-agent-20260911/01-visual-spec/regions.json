@@ -1,0 +1,21 @@
+{
+  "technical_concept_canvas": {
+    "target": "technical architecture conceptual component strip",
+    "must_match": [
+      "existing card size and order",
+      "inner horizontal scroll ownership",
+      "visible access to every clipped card",
+      "no document-level horizontal overflow"
+    ],
+    "allowed_deviation_px": 4
+  },
+  "technical_inspector": {
+    "target": "right technical inspector",
+    "must_match": [
+      "width",
+      "sticky placement",
+      "independent relation-list scrolling"
+    ],
+    "allowed_deviation_px": 2
+  }
+}

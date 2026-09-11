@@ -263,6 +263,21 @@ Links: `src/change_passport/templates/review.html`, `src/change_passport/templat
 Follow-up: Validate the story map through an independent non-coder retelling; geometric non-overlap is not comprehension evidence by itself.
 Needs curation: yes
 
+ID: BUG-20260911-033
+Date: 2026-09-11
+Status: fixed
+Domain: report-localization
+Severity: high
+Symptom fingerprint: English mode translates the report shell but leaves PlainChange's own automatically generated owner headline, impact, risk and action text in Chinese whenever the target has no complete reviewed translation pack.
+Trigger / reproduction: Generate the fixed DigitalSelf report with deterministic generation and no `report-translations.json`, switch `review.html` to English, and inspect the first-screen conclusion. Dynamic text containing 14 unsupported changes and `settings.json` remains Chinese even though its meaning already exists as deterministic state.
+Impact: English readers cannot understand the decision layer, and the interface incorrectly makes PlainChange-authored Chinese look indistinguishable from project-provided source wording. Adding exact phrases per sample would fail again when counts, filenames or projects change.
+Root cause: `auto_draft.py` composed final Chinese sentences directly into `software-control.json`; `html_renderer.py` could produce a body translation only from a complete authored pack. The browser dictionary could translate fixed shell strings but had no language-neutral ownership or semantic arguments for dynamic report text.
+Change made: Add `plainchange.owner-presentation.v1` descriptors that bind stable message keys and bounded arguments to approved presentation paths only. Render a built-in English owner projection from those descriptors, keep project declarations/source text explicit and unchanged, and let complete identity-bound reviewed packs override the automatic projection. Reject descriptors that target identity, truth state, basis, evidence, source references or topology.
+Verification: 113 tests pass, including dynamic count/filename rendering, blocked evidence paths, canonical immutability, generated responsibility translation and reviewed-pack precedence. Fresh fixed-range DigitalSelf generation completed in 2.111 seconds with 317 owned messages and 49 source-language paths. Real Edge passed both tabs, all capability expansions, desktop/390 px overflow, console and technical-canvas scrolling; the English headline is translated and the boundary states that project/source text remains original.
+Links: `TASK-20260911-044`, `src/plainchange/owner_presentation.py`, `src/plainchange/auto_draft.py`, `src/plainchange/html_renderer.py`, `tests/test_owner_presentation.py`, `tests/test_pipeline.py`
+Follow-up: Model-authored prose and project text still need an identity-bound reviewed translation when a translated view is desired. Do not silently machine-translate them or relabel them as PlainChange-owned deterministic text.
+Needs curation: yes
+
 ID: BUG-20260910-009
 Date: 2026-09-10
 Status: fixed
@@ -709,4 +724,403 @@ Change made: Reconfigure stdout and stderr to UTF-8 at the PlainChange CLI bound
 Verification: Clean-wheel direct-project analysis must show readable Chinese stage labels and finish with the human-facing Change Passport path.
 Links: `src/plainchange/cli.py`, `TASK-20260910-038`
 Follow-up: Preserve machine-readable receipts as UTF-8 JSON and test future native launchers on their actual console hosts.
+Needs curation: yes
+
+ID: BUG-20260910-025
+Date: 2026-09-10
+Status: fixed
+Domain: report-localization
+Severity: medium
+Symptom fingerprint: English-selected report still contains Chinese workflow headings, node labels and inspector paragraphs.
+Trigger / reproduction: Open the vLLM report, select English, then inspect the software workflow and expand nodes.
+Impact: English readers cannot understand the owner-facing report despite a successful-looking language switch.
+Root cause: The locale dictionary translated the UI shell but the renderer still consumed monolingual owner data; composed inspector sentences also bypassed exact phrase translation.
+Change made: Add complete source-bound translation packs, select a translated presentation before rendering, localize composed context, and exclude evidence/script/style contents from DOM translation.
+Verification: Real Edge checks cover both tabs, four overview nodes, eight detail nodes and inspector expansions at 1280/390 px: 28 states without Chinese owner-text remnants; language defaults, persistence and console checks pass.
+Links: `TASK-20260910-040`, `src/plainchange/report_localization.py`, `scripts/verify-review-i18n.cjs`
+Follow-up: New report packs require authored/reviewed translations; automatic model translation and semantic translation evaluation remain out of scope.
+Needs curation: yes
+
+ID: BUG-20260910-026
+Date: 2026-09-10
+Status: fixed
+Domain: report-localization
+Severity: medium
+Symptom fingerprint: System workflow and Why this conclusion / technical details remain Chinese after owner-body translation.
+Trigger / reproduction: Select English, expand technical explanations and technical implementation.
+Impact: English readers cannot inspect the reasoning behind the translated owner summary.
+Root cause: Translation covered software-control only, not beginner-review or lazy snapshot presentation; the browser checker explicitly excluded both legacy hosts. Several generated explanation strings were incorrectly protected as original evidence.
+Change made: Add a review-identity-bound presentation translation set, apply it after snapshot integrity verification, expose original claims separately, localize dynamic wrappers, and include both disclosures in regression checks.
+Verification: Script/DOM checks pass in 11 states including 8 workflow selections and expanded claims. Original JSON is unchanged. Browser launch was policy-blocked and the connector unavailable; no new browser-layout acceptance is claimed.
+Links: `TASK-20260910-040`, `src/plainchange/report_localization.py`, `scripts/verify-review-dom.cjs`
+Follow-up: Keep generated explanation translation separate from source quotations. Do not exclude whole technical panels from language coverage checks.
+Needs curation: yes
+
+ID: BUG-20260910-027
+Date: 2026-09-10
+Status: fixed
+Domain: report-localization
+Severity: medium
+Symptom fingerprint: Change graph view instructions and decorated direct-code relationship labels remain Chinese in English mode.
+Trigger / reproduction: Expand change details and switch before/after/diff views.
+Impact: Readers cannot understand graph guidance despite translated summaries.
+Root cause: Three view instructions were absent from the dictionary; arrow decoration prevented exact translation of relation labels. Prior DOM checks inspected summary/technical content but did not select change graph nodes.
+Change made: Add all three instructions and translate relationship text before arrow composition; extend DOM checks across every displayed node in all three views.
+Verification: 48 DOM states pass, 16 focused Python tests pass, JS syntax passes. The vLLM HTML is regenerated. No real-browser layout claim.
+Links: `TASK-20260910-040`, `scripts/verify-review-dom.cjs`
+Follow-up: Include all interactive graph views in translation coverage, not just summary panels.
+Needs curation: yes
+
+ID: BUG-20260910-028
+Date: 2026-09-10
+Status: fixed
+Domain: report-localization
+Severity: low
+Symptom fingerprint: Expanded implementation badge remains Chinese in English mode.
+Root cause: CSS ::after content bypassed DOM translation and text scanning.
+Change made: Replace generated wording with a localized DOM span controlled by aria-expanded; retain its placement and styling.
+Verification: 48 DOM states pass including an explicit English badge assertion; 17 focused tests pass, including a guard against Chinese CSS content. Report regenerated.
+Links: `TASK-20260910-040`, `tests/test_html_renderer.py`
+Follow-up: Keep user-facing wording out of CSS-generated content.
+Needs curation: yes
+
+ID: BUG-20260910-029
+Date: 2026-09-10
+Status: open
+Domain: target-profile
+Severity: high
+Symptom fingerprint: Capability-rich projects without a short explicit README workflow render a generic four-step input/process/output map even when the README identifies the product clearly.
+Trigger / reproduction: Analyze memdsl `7fc1d0b..a061bc4` or DigitalSelf `4da99fc..a662719`; compare the purpose answer with the software workflow.
+Impact: Non-technical owners can see what the product calls itself but cannot understand how it works or where a change belongs. The visual arrows may look more informative than the explicit unverified label warrants.
+Root cause: The deterministic declaration parser intentionally accepts only bounded explicit workflow forms. It does not reconcile narrative capability descriptions, recommended operating sequences, CLI/MCP surfaces, release/distribution boundaries or broader documentation into a workflow.
+Current behavior: Fail-safe labels remain `自动候选` and `顺序未验证`; no changed step is invented. This protects evidence strength but does not meet the product comprehension promise.
+Verification: memdsl produced 52 modules/215 edges in 1.28 s; DigitalSelf produced 1,140/2,058 in 5.16 s. Both browser checks pass technically but show the same generic four-step map. VideoFactory is the counterexample with an explicit declared workflow and a mapped changed step.
+Links: `TASK-20260910-041`, `artifacts/memdsl-7fc1d0b-to-a061bc4`, `artifacts/digitalself-4da99fc-to-a662719-current`
+Follow-up: Design a repository-neutral fallback that distinguishes capability maps from ordered workflows and can use model-generated candidates only through the existing evidence-constrained provider boundary. Do not add memdsl or DigitalSelf name rules.
+Needs curation: yes
+
+ID: BUG-20260910-030
+Date: 2026-09-10
+Status: fixed
+Domain: target-profile
+Severity: high
+Symptom fingerprint: Projects that declare parallel capabilities are presented as a generic ordered four-step workflow.
+Trigger / reproduction: Run the unchanged analyzer on memdsl `7fc1d0b..a061bc4` or DigitalSelf `4da99fc..a662719`, then compare their structured README capability material with the directional owner map. This follows and resolves BUG-20260910-029.
+Impact: The arrows manufacture a mental model that is not supported by project or runtime evidence, while hiding information the repository already gives to its owner.
+Root cause: The declaration boundary had only `workflow` or a fabricated generic workflow fallback. It could not represent parallel capability structure, and the software-control contract required exactly four overview nodes and directional flow semantics.
+Change made: Added bounded README capability-list/table extraction, independent code-anchor reconciliation, an explicit flow-free `capability_map` contract, code-area orientation fallback, capability-aware owner copy/layout, and fail-closed change mapping for broad code-only areas. No repository-name branch was added.
+Verification: 107 tests pass. Fresh memdsl and DigitalSelf reports render 5/10 capabilities and zero arrows; VideoFactory retains 7 ordered detail steps, four overview stages and its mapped quality-check change. Headless Edge passes every expansion at 1280/390 px without console errors or overflow. All target HEAD/status hashes are unchanged.
+Links: `TASK-20260910-042`, `BUG-20260910-029`, `artifacts/memdsl-capability-fix`, `artifacts/digitalself-capability-fix`, `artifacts/videofactory-workflow-regression`
+Follow-up: Test free-form capability prose and mixed workflow/capability projects separately; do not infer order from imports, path order or list order.
+Needs curation: yes
+
+ID: BUG-20260910-031
+Date: 2026-09-10
+Status: fixed
+Domain: target-profile
+Severity: high
+Symptom fingerprint: Expanding a capability repeats the same broad capability instead of showing how it works, while loose token/prefix matching can attach unrelated benchmark, design or packaging files as corresponding code.
+Trigger / reproduction: Expand `主聊天运行时` in the fixed DigitalSelf capability report; inspect its single identical child and broad source references. Compare a README capability containing generic words such as runtime or core against unrelated filenames.
+Impact: The map looks interactive but does not increase understanding. False code support can make a detailed but fabricated explanation appear more trustworthy to a non-technical owner.
+Root cause: The capability contract created one detail node per overview, and reconciliation accepted broad name resemblance without requiring an explicit capability code scope or multiple distinct responsibilities.
+Change made: Preserve explicit Markdown code references, resolve exact files/directories or unique exact identifiers, ignore weak generic tokens, derive bounded unordered responsibility families only inside that scope, require at least two distinct children, and render unsupported capabilities as non-expandable leaves. Code-derived children are labelled separately from project declarations.
+Verification: Synthetic positive and false-positive fixtures pass. Fresh fixed-range DigitalSelf, memdsl and VideoFactory reports show respectively 3 evidence-supported expandable capabilities, 5 honest leaf capabilities, and the unchanged declared workflow. Real Edge passes every node at 1280/390 px with zero console errors or horizontal overflow.
+Links: `TASK-20260910-043`, `src/plainchange/project_declarations.py`, `src/plainchange/target_profile.py`, `src/plainchange/templates/review.js`, `tests/test_auto_draft.py`
+Follow-up: Broader semantic decomposition may use a configured model only through the evidence-constrained candidate boundary; do not relax exact matching or convert candidates into facts.
+Needs curation: yes
+
+ID: BUG-20260911-032
+Date: 2026-09-11
+Status: fixed
+Domain: report-ui
+Severity: medium
+Symptom fingerprint: The technical architecture conceptual row is visibly clipped, but the user cannot scroll horizontally to reach the remaining nodes.
+Trigger / reproduction: Open the fixed DigitalSelf report, enter `这个软件怎么工作`, expand `查看技术实现结构`, and inspect the conceptual component canvas. At 1386 px viewport it has about 774 px client width and 2336 px content width while computed `overflow-x` is `hidden`.
+Impact: Most conceptual nodes are rendered but unreachable, so the technical graph appears incomplete and its click-through implementation cannot be used.
+Root cause: The unified-canvas override replaced the generic scrollable canvas rule with `overflow: hidden`, unintentionally suppressing horizontal user scrolling for every wide project graph.
+Change made: Give the inner conceptual canvas `overflow-x: auto` and contained inline overscroll, retain vertical page ownership, and style the horizontal scrollbar with existing tokens. Extend the real-browser multi-project harness to require a scrollable computed style and non-zero movement from horizontal wheel input whenever content is wider than the canvas.
+Verification: The regenerated DigitalSelf report reports 687 px client width, 2336 px scroll width and computed `overflow-x: auto`; real Edge horizontal input moves scrollLeft from 0 to 280. Desktop and 390 px document overflow remain false, console errors remain zero, and 110 tests plus JavaScript syntax checks pass.
+Links: `src/plainchange/templates/review.css`, `scripts/verify-multi-project-browser.cjs`, `tests/test_html_renderer.py`, `design/ui-flows/technical-architecture-scroll-agent-20260911`
+Follow-up: Preserve inner scroll ownership in future unified-canvas changes; do not solve wide graph content by reintroducing document-level horizontal overflow.
+Needs curation: yes
+
+ID: BUG-20260911-034
+Date: 2026-09-11
+Status: fixed
+Domain: project-governance
+Severity: low
+Symptom fingerprint: The new BUG-20260911-033 source record was inserted after an earlier repeated `Needs curation: yes` line instead of at the physical end of the append-only ledger.
+Trigger / reproduction: Search the ledger for BUG-20260911-033; its ID and date are correct, but its physical position precedes later historical entries.
+Impact: No localization implementation fact or evidence was lost, but physical order again differs from ID/date order and can mislead a sequential reader.
+Root cause: The patch used a repeated ledger line as its insertion anchor instead of the unique current tail, recurring the failure pattern already recorded in BUG-20260904-001.
+Change made: Preserve BUG-20260911-033 unchanged as a source record and append this corrective record at the unique current tail. Treat IDs and dates as ordering authority when reading the ledger.
+Verification: `rg -n "BUG-20260911-033|BUG-20260911-034" docs/project-governance/BUGLOG.md` retains both records; BUG-034 is physically last.
+Links: `BUG-20260904-001`, `BUG-20260911-033`, `TASK-20260911-044`
+Follow-up: Ledger patches must anchor on the unique final entry content or use an append-only helper; never anchor on repeated template fields.
+Needs curation: yes
+
+ID: BUG-20260911-035
+Date: 2026-09-11
+Status: fixed
+Domain: report-localization
+Severity: medium
+Symptom fingerprint: English technical architecture still contains a generated Chinese title, candidate snapshot status and implementation-category labels while the owner screen is translated.
+Trigger / reproduction: Open the fixed DigitalSelf v2 report in English mode, expand technical implementation and inspect the conceptual title, orange static-snapshot notice and `Implementation:` mappings.
+Impact: The language boundary appears inconsistent and an English reader cannot distinguish intentionally preserved project declarations from PlainChange-owned untranslated text.
+Root cause: TASK-044 projected only `software-control.json`. The technical view reads separate PlainChange-owned presentation fields from compact `beginner-review.json` and the lazy `system-architecture.json` payload; phrase translation also preserved nested category labels inside a translated wrapper.
+Change made: Added an identity-bound generated-review presentation using stable map kind, snapshot status, automatic-profile origin and category/responsibility IDs. Apply compact-review patches before rendering and lazy-architecture patches after payload hash verification; use locale-appropriate implementation-list separators.
+Verification: 114 tests pass, including a mutated-source-wording regression. Fresh DigitalSelf v3 completes in 2.192 s. Real Edge at 1280/390 px shows English conceptual title, boundary, candidate status and implementation categories, with no console/document-overflow failures and retained technical horizontal scrolling.
+Links: `TASK-20260911-045`, `src/plainchange/review_presentation.py`, `src/plainchange/html_renderer.py`, `src/plainchange/templates/review.js`, `scripts/verify-multi-project-browser.cjs`
+Follow-up: Project-authored source text needs a complete reviewed translation pack or a separately approved model-assisted translation workflow; do not disguise source text as deterministic English.
+Needs curation: yes
+
+ID: BUG-20260911-036
+Date: 2026-09-11
+Status: fixed
+Domain: report-localization
+Severity: low
+Symptom fingerprint: A pure-English project still shows the Chinese character `能` inside every capability-card icon after switching the report to English.
+Trigger / reproduction: Generate the generic automatic FastAPI `0.136.2..0.136.3` report with English-only task input, switch to English, and scan visible text on the system page.
+Impact: One PlainChange-owned visual mark contradicts the promise that generated presentation follows the selected language and makes source-language attribution ambiguous.
+Root cause: The capability node number slot used a hard-coded Chinese abbreviation as a decorative icon; it was outside the message-key and phrase-translation paths.
+Change made: Replaced the abbreviation with the language-neutral `◆` mark, added a renderer regression assertion, and extended the real-browser harness with optional per-tab visible-Han scanning.
+Verification: The regenerated FastAPI report has zero visible Han-bearing lines on both English tabs including lazy technical disclosure, excluding only the intentional native selector label `中文`. Real Edge desktop/narrow checks, 114 tests, compilation and JavaScript syntax pass.
+Links: `TASK-20260911-046`, `src/plainchange/templates/review.js`, `scripts/verify-multi-project-browser.cjs`, `tests/test_html_renderer.py`
+Follow-up: Keep source-language project text distinct from PlainChange-owned UI; validate what the user can see, not dormant bilingual resources in the offline file.
+Needs curation: yes
+
+ID: BUG-20260911-037
+Date: 2026-09-11
+Status: open
+Domain: target-profile
+Severity: medium
+Symptom fingerprint: Automatic analysis of a bare public Git clone displays the managed/local directory name as the software name instead of the canonical project name.
+Trigger / reproduction: Analyze the fixed FastAPI bare clone without a target profile; the owner headline says `change-passport-fastapi-0.136.3.git` rather than `FastAPI`.
+Impact: A non-technical owner may not immediately know which product the report describes even though repository metadata, origin URL or package metadata can identify it.
+Root cause: Automatic display-name selection falls back to the repository path basename and does not yet reconcile Git origin, package metadata and fixed-revision project documentation.
+Current behavior: Localization is complete and evidence boundaries are honest, but the owner-facing name is awkward. No FastAPI-specific override was added.
+Verification: Reproduced in `artifacts/fastapi-english-source-v3/review.html`; both fixed commits come from `https://github.com/fastapi/fastapi.git`.
+Links: `TASK-20260911-046`, `artifacts/fastapi-english-source-v3`
+Follow-up: Add a generic, fixed-revision project-identity resolver with explicit source precedence and provenance; do not branch on repository names.
+Needs curation: yes
+
+ID: BUG-20260911-038
+Date: 2026-09-11
+Status: fixed
+Domain: report-localization
+Severity: high
+Symptom fingerprint: The English change tab appears translated until its technical disclosure is opened; summary cards, relationship nodes and inspector explanations then contain substantial PlainChange-owned Chinese text.
+Trigger / reproduction: Open the pure-English FastAPI report in English, expand `Why this conclusion? View technical details`, switch relationship views and click nodes. The pre-fix strict browser scan reports Chinese headings, states, impact text, relationship labels and evidence-boundary prose.
+Impact: An English owner encounters a mixed-language core decision path, while the previous acceptance result incorrectly reported complete language coverage because it scanned only the first tab's default state.
+Root cause: Identity-bound generated presentation covered the system architecture but not several first-tab dynamic data paths. The browser harness opened only the system technical disclosure and did not accumulate findings across first-tab interaction states.
+Change made: Extended generic presentation projection to summaries, task context, views, node details, branch groups and known automatic claims using stable IDs/counts/states. Added explicit before/after semantic states and strengthened real-browser coverage to expand, switch and click through the change view before scanning both tabs.
+Verification: The failing browser evidence was preserved before the fix. The regenerated FastAPI report completes in 1.301 seconds with 2,242 cache hits; enhanced real Edge checks find zero visible Han-bearing lines across both English tabs, excluding only the native selector label `中文`. Focused presentation/render/model tests pass; full verification is recorded by TASK-047.
+Links: `TASK-20260911-047`, `src/plainchange/review_presentation.py`, `src/plainchange/review_model.py`, `scripts/verify-multi-project-browser.cjs`, `tests/test_owner_presentation.py`
+Follow-up: Every future localization acceptance must enumerate hidden disclosures and meaningful interactive states; never infer full report coverage from the initial viewport.
+Needs curation: yes
+
+ID: BUG-20260911-039
+Date: 2026-09-11
+Status: open
+Domain: owner-explanation
+Severity: high
+Symptom fingerprint: A large product-feature commit is summarized primarily as several newly added exception branches, while its named product capability and dominant new backend/frontend surfaces are absent from the owner headline.
+Trigger / reproduction: Analyze ChestnutDogAiThink `f76838f..0883fe0` (`feat: add product recommendation overview`). The 120-file, 10,159-insertion change produces the headline “新增了会抛出错误并提前停止处理的代码分支” and no change-to-capability mapping.
+Impact: A non-technical owner is directed toward incidental defensive checks instead of the software behavior the change was mainly intended to add, so the central “what changed” promise fails despite factually valid low-level signals.
+Root cause: Deterministic prioritization promotes available exception/signature behavior signals without first forming and comparing evidence-bound change themes across new public modules, changed surfaces, file/line distribution, fixed commit metadata and source declarations.
+Current behavior: The report honestly says capability location, runtime behavior and user impact are unknown; no fabricated mapping is created. No fix or target-specific override was applied in this validation task.
+Verification: Four syntactic signals come from `backend/app/clients/bigdata.py`, `backend/app/config.py` and `backend/app/llm/router.py`, while new `backend/app/tasks/product_recommendation_overview.py`, related services/tests and large frontend cards are present in the same fixed diff.
+Links: `TASK-20260911-048`, `artifacts/chestnutdogaithink-product-recommendation/raw-brief.auto.json`, `artifacts/chestnutdogaithink-product-recommendation/review.html`
+Follow-up: Add repository-neutral change-theme extraction and salience comparison before selecting a headline. Model output may explain a bounded packet but must not become evidence or hide unsupported surfaces.
+Needs curation: yes
+
+ID: BUG-20260911-040
+Date: 2026-09-11
+Status: open
+Domain: project-declarations
+Severity: high
+Symptom fingerprint: A Markdown capability table is recognized, but its numeric count column is rendered as the visible capability description.
+Trigger / reproduction: The fixed ChestnutDogAiThink README table uses columns `模块 | 数量 | 覆盖功能`. The generated eight-card capability map correctly labels `会员/订单/商品/...` but displays `4/5/3/...` as the description and inspector responsibility.
+Impact: The owner can identify area names but cannot learn what any area does; the interface looks broken and fails the beginner-readable system-model goal.
+Root cause: Generic table extraction treats the first non-label value as description and does not use normalized header semantics to prefer a purpose/responsibility/coverage column over count/status metadata.
+Current behavior: Fixed-commit README identity and code-anchor states are preserved, but extracted presentation meaning is wrong. No ChestnutDogAiThink phrase or table override was added.
+Verification: All eight overview descriptions equal the README count values: `4, 5, 3, 4, 5, 4, 12, 2`; the adjacent `覆盖功能` text is not used.
+Links: `TASK-20260911-048`, `src/plainchange/project_declarations.py`, `artifacts/chestnutdogaithink-product-recommendation/software-control.json`
+Follow-up: Select table fields by generic header roles, retain unused columns as metadata, and fail closed when no semantic description column exists.
+Needs curation: yes
+
+ID: BUG-20260911-041
+Date: 2026-09-11
+Status: open
+Domain: architecture-coverage
+Severity: high
+Symptom fingerprint: A Vue full-stack change reports backend structure but omits the changed Vue single-file components and an MJS test from the architecture/change-location model.
+Trigger / reproduction: Analyze ChestnutDogAiThink `f76838f..0883fe0`. Architecture unknowns list 43 unsupported changed files, including `ProductRecommendationOverviewCard.vue`, `ProductReplacementPlanCard.vue`, `ChatView.vue` and `frontend/tests/productReplacementPlan.test.mjs`.
+Impact: The largest user-visible part of the feature is absent, preventing the report from connecting backend recommendation work to what store staff see and interact with.
+Root cause: Current static architecture coverage is limited to module-level Python/JavaScript and does not parse Vue SFC script/import/component boundaries or the MJS extension.
+Current behavior: Unsupported paths are disclosed and runtime/user impact stays unknown. No regex-only Vue guess or target-specific mapping was introduced.
+Verification: The fixed diff contains 120 files and the report records 43 unsupported changed paths; the two new Vue product cards alone account for roughly 2,000 added lines but do not appear as architecture nodes.
+Links: `TASK-20260911-048`, `artifacts/chestnutdogaithink-product-recommendation/architecture-delta.json`, `src/plainchange/architecture.py`
+Follow-up: Add a bounded Vue SFC extractor and standard JavaScript module-extension support with source locations, import parity and explicit unsupported-language fallback tests.
+Needs curation: yes
+
+ID: BUG-20260911-042
+Date: 2026-09-11
+Status: open
+Domain: architecture-scope
+Severity: high
+Symptom fingerprint: Tracked package dependencies are counted and grouped as first-party project modules in the system architecture.
+Trigger / reproduction: Analyze the fixed ChestnutDogAiThink revision, which historically tracks `frontend/node_modules`. The system snapshot contains 868 nodes, of which 432 paths are under `frontend/node_modules`; all 432 land in `调用与用户入口`.
+Impact: Half the architecture graph is third-party implementation noise, distorting module counts, group size, relationships and the apparent entry surface for a non-technical owner.
+Root cause: Supported-file enumeration follows tracked paths but lacks repository-neutral dependency/build/generated-tree exclusion before parsing and grouping.
+Current behavior: Oversized dependency files are disclosed as unknowns, but parseable dependency files still enter the authoritative static snapshot. No cleanup or target-repository change was performed.
+Verification: Direct snapshot count finds `vendor_nodes=432` of `nodes=868`; the user-entry group has 463 nodes, 432 of them under `frontend/node_modules`.
+Links: `TASK-20260911-048`, `artifacts/chestnutdogaithink-product-recommendation/system-architecture.json`, `src/plainchange/architecture.py`
+Follow-up: Add explicit, auditable scope exclusions for standard dependency/build/generated roots before parsing; retain excluded-path counts and reasons so scope reduction remains visible.
+Needs curation: yes
+
+ID: BUG-20260911-043
+Date: 2026-09-11
+Status: fixed
+Domain: project-declarations
+Severity: high
+Symptom fingerprint: A recognized capability table displays a numeric count instead of the semantic capability description.
+Trigger / reproduction: Re-run the fixed ChestnutDogAiThink sample whose README uses `模块 | 数量 | 覆盖功能`.
+Impact: The owner-facing capability cards previously named business areas but failed to explain what they do.
+Root cause: Table extraction chose a positional non-label column rather than a column with a semantic header role.
+Change made: Normalize table headers and prefer generic description/purpose/responsibility/coverage roles; retain conservative fallback behavior when no semantic field exists.
+Verification: The generic rerun shows all eight `覆盖功能` descriptions, including customer, order, goods, stock, service, activity, report and payment responsibilities. Header-role regressions pass without target-name branches.
+Links: `TASK-20260911-049`, `BUG-20260911-040`, `src/plainchange/project_declarations.py`, `tests/test_source_scope.py`
+Follow-up: Exercise additional Markdown table layouts during real-model cross-project validation.
+Needs curation: yes
+
+ID: BUG-20260911-044
+Date: 2026-09-11
+Status: fixed
+Domain: architecture-coverage
+Severity: high
+Symptom fingerprint: Vue single-file components and standard MJS/CJS modules are omitted from the static architecture model.
+Trigger / reproduction: Re-run the fixed ChestnutDogAiThink full-stack sample containing Vue product cards and an MJS test.
+Impact: User-visible frontend surfaces could not participate in source-bound project understanding or change-location validation.
+Root cause: Supported-source selection was narrower than the existing JavaScript import/interface parser.
+Change made: Centralized supported-source scope and route `.vue`, `.mjs` and `.cjs` through the bounded static JavaScript extractor. The result remains a source/import snapshot and does not claim Vue runtime behavior.
+Verification: The rerun contains 79 Vue nodes and 3 MJS nodes; source-scope and full-suite regressions pass. Unsupported runtime, injection and network behavior remain explicit limitations.
+Links: `TASK-20260911-049`, `BUG-20260911-041`, `src/plainchange/source_scope.py`, `src/plainchange/architecture.py`, `tests/test_source_scope.py`
+Follow-up: Add framework-specific runtime evidence only through a separate evidence adapter, never by upgrading static syntax matches.
+Needs curation: yes
+
+ID: BUG-20260911-045
+Date: 2026-09-11
+Status: fixed
+Domain: architecture-scope
+Severity: high
+Symptom fingerprint: Tracked dependency/build/generated trees are parsed as first-party architecture nodes.
+Trigger / reproduction: Re-run a repository that tracks `frontend/node_modules` and other generated roots.
+Impact: Module counts, group proportions and owner-facing architecture were dominated by third-party noise.
+Root cause: Fixed-Git enumeration lacked a shared first-party source-scope predicate before parsing.
+Change made: Exclude standard dependency/build/generated path segments before both full and incremental static parsing, and record the excluded file count in snapshot limitations.
+Verification: The ChestnutDogAiThink rerun falls from 868 to 518 nodes, contains zero dependency/build-tree nodes and reports `excluded vendored/generated source files: 480`; generic exclusion regressions and the full suite pass.
+Links: `TASK-20260911-049`, `BUG-20260911-042`, `src/plainchange/source_scope.py`, `src/plainchange/architecture.py`, `tests/test_source_scope.py`
+Follow-up: Make project-specific generated directories configurable only as auditable source-scope input, not hidden name rules.
+Needs curation: yes
+
+ID: BUG-20260911-046
+Date: 2026-09-11
+Status: fixed
+Domain: semantic-analysis
+Severity: medium
+Symptom fingerprint: A real structured project-understanding response chooses `capability_map` but emits a workflow role in one component's redundant `type` field, causing the entire source-bound result to fail validation.
+Trigger / reproduction: Run the first model stage through the configured compatible provider on the fixed ChestnutDogAiThink context; the provider returns a capability map whose first component type is not `capability`.
+Impact: Harmless disagreement in derived presentation metadata prevents a valid project model from reaching the report, even though the parent structure already determines every node's type.
+Root cause: The contract represented capability kind twice and required the model to keep both copies synchronized; JSON schema enumerated both values but could not express the cross-field rule reliably across compatible gateways.
+Change made: Derive every capability-map component type from `structure_kind` before validation and state the cross-field rule explicitly in the prompt. Workflow role values remain model-proposed and fail closed when invalid.
+Verification: A regression supplies `process` types under a capability map and receives canonical `capability` types; focused semantic and mocked-provider tests pass. The subsequent real provider project-understanding stage succeeds and remains source-bound.
+Links: `TASK-20260911-050`, `src/plainchange/semantic_analysis.py`, `src/plainchange/model_adapter.py`, `tests/test_semantic_analysis.py`
+Follow-up: Remove other redundant model fields when their value is fully determined by a validated parent contract.
+Needs curation: yes
+
+ID: BUG-20260911-047
+Date: 2026-09-11
+Status: fixed
+Domain: model-provider
+Severity: high
+Symptom fingerprint: Project understanding succeeds, but change interpretation repeatedly returns HTTP 502 when a complex change sends the complete 622 KB generator packet to a compatible provider.
+Trigger / reproduction: Run model-first analysis on the 120-file ChestnutDogAiThink change through the configured provider. The second stage fails in about 3.5 seconds on repeated attempts while the smaller first stage succeeds.
+Impact: The full product path cannot finish on the exact complex business changes for which semantic interpretation is most valuable; retrying wastes tokens without changing the request shape.
+Root cause: The second model input duplicated the complete evidence collection and architecture delta, including a 194 KB patch and hundreds of evidence records, even though final validation remains local.
+Change made: Build a provider-neutral bounded change context from change facts, highest-churn file records, task/behavior evidence, selected changed architecture nodes, counts, unknowns and limitations. Exclude the full patch and restrict all model evidence enums to the transmitted subset; validate the result against the complete local packet afterward.
+Verification: The mocked request is below 150 KB and excludes `git.patch`. The real retry completes change interpretation in 12.468 seconds and the full report in 17.827 seconds; four claims are accepted, two are safely downgraded and no claim is rejected.
+Links: `TASK-20260911-050`, `src/plainchange/model_adapter.py`, `tests/test_pipeline.py`, `artifacts/chestnutdogaithink-model-first-spark-v3`
+Follow-up: Measure quality/cost across more large projects and make the evidence budget explicit in run telemetry before choosing a long-term default.
+Needs curation: yes
+
+ID: BUG-20260911-048
+Date: 2026-09-11
+Status: fixed
+Domain: owner-presentation
+Severity: medium
+Symptom fingerprint: A valid model short headline is rendered as a long first-screen sentence because the renderer concatenates it with the detailed explanation and runtime boundary.
+Trigger / reproduction: Run a valid model-first analysis whose semantic change summary provides both `headline` and `explanation`.
+Impact: The primary software-owner decision surface violates the result-first, ten-second reading contract even when the model follows the constrained output schema.
+Root cause: The same combined text value was used for both the five-question detail and the first-screen title.
+Change made: Preserve the validated semantic headline as a distinct projection field and use it only for the first-screen title; retain the combined text in detailed explanation surfaces.
+Verification: Mocked pipeline regression asserts the title/detail split. The fixed ChestnutDogAiThink rerun renders a 23-character title, keeps the detailed explanation, has four accepted/two downgraded claims and preserves runtime uncertainty. Full 124-test suite, compilation, JavaScript syntax and diff checks pass.
+Links: `TASK-20260911-052`, `TASK-20260911-053`, `src/plainchange/auto_draft.py`, `tests/test_pipeline.py`, `artifacts/chestnutdogaithink-owner-language-v2-headline`
+Follow-up: Evaluate headline usefulness with software owners across multiple business applications; schema validity alone is not comprehension acceptance.
+Needs curation: yes
+
+ID: BUG-20260911-049
+Date: 2026-09-11
+Status: fixed
+Domain: owner-presentation
+Severity: medium
+Symptom fingerprint: A first-screen card can carry the green `已确认` label while its body says that available evidence is insufficient and includes a validator downgrade reason.
+Trigger / reproduction: Run model-first analysis on the fixed memdsl MCP Registry release range; the valid headline and source-bound audience survive, but the confirmed-change claim body is replaced by an architecture-evidence fallback.
+Impact: A software owner can mistake a safe unknown explanation for a confirmed result because the card's visual state and its rendered body disagree.
+Suspected root cause: First-screen state appears to be selected from the original claim state before projection/validator fallback text is applied. Confirm against other fallback paths before changing the state contract.
+Current mitigation: The detailed text remains honest; no target-specific wording, target modification or presentation suppression was used.
+Links: `TASK-20260911-054`, `artifacts/memdsl-mcp-registry-owner-language-v2/software-control.json`, `src/plainchange/auto_draft.py`
+Follow-up: Trace the generic claim-to-first-screen projection, make state derive from the final rendered statement, and add a regression that forbids confirmed/unknown text mismatch.
+Needs curation: yes
+
+Resolution update (2026-09-11): fixed by TASK-20260911-056. The confirmed card
+now falls back to the deterministic fixed-Git file-change fact whenever no
+accepted function claim exists, rather than carrying a validator-downgraded
+architecture claim. Regression coverage asserts that an unknown architecture
+claim cannot provide the green-card text or claim basis. A real memdsl rerun
+renders the corrected text and preserves the target revision. The model schema
+and prompt now also forbid blank limitation entries that caused the first
+rerun to fail visibly. Needs curation: yes.
+
+ID: BUG-20260911-050
+Date: 2026-09-11
+Status: fixed
+Domain: model-language-contract
+Severity: high
+Symptom fingerprint: An English-labelled owner report and its README GIF can
+still contain Chinese explanation text, candidate-profile labels, or a
+Chinese template suffix.
+Trigger / reproduction: Request `--human-language en` from a compatible
+provider and render the model-assisted report. Some providers treat prompt
+language as advisory; cached model understanding and PlainChange-owned
+deterministic text can then retain a prior/default language. A provider may
+also ignore nested JSON-schema `maxItems` limits.
+Impact: A reader cannot trust the selected language, and an oversized evidence
+list can make an otherwise useful report fail at the provider boundary.
+Root cause: Language was requested but not validated as output contract;
+generated/projection strings were incompletely language-aware; a template
+sentence was split around a translated strong element; and nested cardinality
+was trusted to the provider.
+Resolution: TASK-057 validates English model-owned prose fail-closed while
+excluding source/structural fields, validates cache hits, makes generated and
+deterministic owner text language-aware, fixes the split literal, and bounds
+known evidence arrays loss-only before validation.
+Verification: 40 focused tests and the 130-test full suite pass. A real
+unchanged PlainChange target produces a fully English v9 report; its refreshed
+two-frame English GIF holds each view for 4000 ms. No key, target content, or
+provider configuration is published.
+Links: `TASK-20260911-057`, `src/plainchange/model_adapter.py`,
+`src/plainchange/auto_draft.py`, `src/plainchange/semantic_analysis.py`,
+`src/plainchange/templates/review-i18n.js`, `tests/test_model_adapter.py`,
+`docs/images/plainchange-self-demo-en.gif`
 Needs curation: yes

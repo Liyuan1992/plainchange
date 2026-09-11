@@ -65,8 +65,33 @@
         <section id="generate-section" class="section locked" aria-labelledby="generate-title">
           <div class="section-heading">
             <div><span class="number">03</span><h2 id="generate-title">生成一份看得懂的变化说明</h2></div>
-            <span class="local-chip">本机分析</span>
+            <span class="local-chip">本机取证 · 模型理解</span>
           </div>
+          <fieldset class="analysis-modes">
+            <legend>选择说明深度</legend>
+            <label class="mode-card selected">
+              <input type="radio" name="analysis-mode" value="full_model" checked>
+              <span><strong>完整理解（推荐）</strong><small>模型先理解软件，再结合本机证据解释这次变化。</small></span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="analysis-mode" value="basic_evidence">
+              <span><strong>基础证据模式</strong><small>不调用模型；只列出代码事实和未知项，不代表已理解业务。</small></span>
+            </label>
+          </fieldset>
+          <section id="model-settings" class="model-settings" aria-labelledby="model-settings-title">
+            <div class="model-settings-head">
+              <div><strong id="model-settings-title">模型接口设置</strong><span>支持国内外 OpenAI 兼容接口</span></div>
+              <span class="safe-chip">不保存密钥</span>
+            </div>
+            <div class="model-grid">
+              <label>接口名称<input id="provider-id" type="text" value="my-provider" autocomplete="off"></label>
+              <label>模型名称<input id="model-name" type="text" placeholder="例如：gpt-5 / deepseek-chat" autocomplete="off"></label>
+              <label class="wide">兼容接口地址<input id="model-base-url" type="url" placeholder="https://api.example.com/v1" autocomplete="off"></label>
+              <label>密钥环境变量名<input id="api-key-env" type="text" value="PLAINCHANGE_MODEL_API_KEY" autocomplete="off"></label>
+              <label>输出兼容模式<select id="response-format"><option value="json_schema">JSON Schema</option><option value="json_object">JSON Object</option><option value="prompt_only">Prompt-only JSON</option></select></label>
+            </div>
+            <p class="model-note">这里只填写环境变量的名字，不填写密钥。请在启动 PlainChange 前把密钥放进该环境变量；留空表示接口不需要密钥。</p>
+          </section>
           <div class="promise-grid">
             <div><strong>你会看到</strong><span>AI 改了什么、可能影响谁、该检查什么</span></div>
             <div><strong>你不会被要求</strong><span>阅读所有代码、手写配置文件或理解 Git 命令</span></div>
@@ -88,8 +113,8 @@
     </section>
 
     <aside class="boundary">
-      <strong>这一步不调用大模型</strong>
-      <p>Alpha 首次使用流程先用本地、可复核的规则生成候选说明。需要模型增强时，可在高级命令中配置任意兼容接口。</p>
+      <strong>模型负责理解，工具负责取证和约束</strong>
+      <p>完整模式只把固定版本、经过边界检查的材料发送到你配置的接口；模型不能把推测升级成事实。基础证据模式不会发起网络请求，但也不会假装已经理解这个软件。</p>
     </aside>
   </main>
   <script src="/onboarding.js"></script>

@@ -42,6 +42,33 @@ button:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--f
 }
 
 .top-status { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.language-switch {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+}
+.language-switch button {
+  min-width: 58px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+.language-switch button.active { background: var(--panel); color: var(--blue); box-shadow: 0 1px 4px rgba(18, 46, 86, .12); }
+.language-boundary {
+  margin: -25px 0 22px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: right;
+}
 .chip, .truth, .node-state {
   display: inline-flex;
   align-items: center;
@@ -310,7 +337,8 @@ h2 { margin: 0; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.3; }
 button.concept-component { cursor: pointer; }
 button.concept-component:hover { border-color: var(--blue); }
 button.concept-component[aria-pressed="true"] { box-shadow: var(--focus); border-color: var(--ink); }
-button.concept-component[aria-expanded="true"]::after { content: "实现已展开"; align-self: flex-start; padding: 3px 7px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 9px; font-weight: 850; }
+.concept-expanded-label { display: none; }
+button.concept-component[aria-expanded="true"] .concept-expanded-label { display: inline-block; align-self: flex-start; padding: 3px 7px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 9px; font-weight: 850; }
 .concept-component.input { border-left: 4px solid var(--green); }
 .concept-component.process { border-left: 4px solid var(--blue); }
 .concept-component.output { border-left: 4px solid var(--green); background: var(--green-soft); }
@@ -342,8 +370,17 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
 .unified-architecture-canvas .architecture-concept-canvas {
   min-height: 0;
   padding: 18px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-line) var(--panel-soft);
 }
+.unified-architecture-canvas .architecture-concept-canvas::-webkit-scrollbar { height: 10px; }
+.unified-architecture-canvas .architecture-concept-canvas::-webkit-scrollbar-track { border-radius: 999px; background: var(--panel-soft); }
+.unified-architecture-canvas .architecture-concept-canvas::-webkit-scrollbar-thumb { border: 2px solid var(--panel-soft); border-radius: 999px; background: var(--blue-line); }
+.unified-architecture-canvas .architecture-concept-canvas::-webkit-scrollbar-thumb:hover { background: var(--blue); }
 .unified-architecture-canvas .architecture-story-band { display: none; }
 .unified-architecture-canvas .architecture-implementation { margin-top: 18px; padding: 16px 0 0; }
 .unified-architecture-canvas .architecture-groups { min-width: 0; display: block; }
@@ -643,6 +680,8 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
   background: var(--panel);
   box-shadow: var(--shadow);
 }
+.analysis-mode-banner { margin-bottom: 14px; padding: 13px 16px; border: 1px solid var(--amber-line); border-radius: 12px; color: #714500; background: var(--amber-soft); font-size: 14px; line-height: 1.65; }
+.analysis-mode-banner strong { display: block; color: var(--ink); margin-bottom: 2px; }
 .owner-conclusion { position: relative; overflow: hidden; padding: clamp(24px, 3.2vw, 42px); border-color: var(--blue-line); background: linear-gradient(135deg, var(--panel) 0%, var(--blue-soft) 160%); }
 .owner-conclusion::after { content: ""; position: absolute; width: 220px; height: 220px; right: -90px; top: -120px; border-radius: 50%; background: var(--blue-soft); opacity: .72; pointer-events: none; }
 .owner-conclusion > * { position: relative; z-index: 1; }
@@ -784,10 +823,17 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
 .owner-map-nodes { position: relative; z-index: 1; min-width: 0; min-height: 610px; display: grid; grid-template-columns: repeat(var(--owner-map-columns), minmax(180px, 1fr)); grid-auto-rows: minmax(104px, auto); gap: 32px 54px; align-items: center; }
 .owner-map-nodes.fallback { grid-template-columns: 1fr; min-width: 0; }
 .owner-map-nodes.overview { min-height: 610px; grid-auto-rows: minmax(104px, auto); gap: 30px; }
+.owner-map-nodes.capability { min-height: 0; grid-auto-rows: minmax(132px, auto); gap: 18px; align-items: stretch; }
+.owner-map-nodes.capability .owner-map-overview-group { width: 100%; align-self: start; }
+.owner-map-nodes.capability .owner-map-node { height: auto; }
+.owner-map-nodes.capability .owner-inline-detail-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.owner-map-canvas[data-owner-map-kind="capability"] { min-height: 0; }
 .owner-map-overview-group { min-width: 0; width: min(660px, 92%); justify-self: center; display: grid; gap: 0; align-self: center; }
 .owner-map-overview-group > .owner-map-node { width: 100%; }
 .owner-map-node { min-width: 0; min-height: 104px; padding: 14px 15px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; border: 1px solid var(--line-strong); border-left: 4px solid var(--blue); border-radius: 13px; background: var(--panel); box-shadow: 0 8px 24px rgba(24, 48, 78, .07); cursor: pointer; }
 .owner-map-node:hover { border-color: var(--blue-line); }
+.owner-map-node.leaf { cursor: default; }
+.owner-map-node.leaf:hover { border-color: var(--line-strong); }
 .owner-map-node[aria-pressed="true"] { border-color: var(--ink); box-shadow: var(--focus); }
 .owner-map-node.changed { border-color: var(--amber-line); border-left-color: var(--amber); background: var(--amber-soft); }
 .owner-map-node.changed[aria-pressed="true"] { border-color: var(--ink); border-left-color: var(--amber); }
@@ -801,8 +847,11 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
 .owner-evidence-badge { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--grey-soft); color: var(--muted); font-size: 10px; font-weight: 900; white-space: nowrap; }
 .owner-evidence-badge.declared_and_code_supported { border-color: var(--green-line); background: var(--green-soft); color: var(--green); }
 .owner-evidence-badge.partially_supported { border-color: var(--blue-line); background: var(--blue-soft); color: var(--blue); }
+.owner-evidence-badge.code_discovered { border-color: var(--blue-line); background: var(--blue-soft); color: var(--blue); }
 .owner-evidence-badge.declared_only { border-color: var(--amber-line); background: var(--amber-soft); color: var(--amber); }
 .owner-evidence-badge.generated_candidate { border-style: dashed; }
+.owner-evidence-badge.model_interpreted_code_supported { border-color: var(--green-line); background: linear-gradient(135deg, var(--blue-soft), var(--green-soft)); color: var(--blue); }
+.owner-evidence-badge.model_interpreted_only { border-color: var(--amber-line); background: var(--amber-soft); color: var(--amber); }
 .owner-map-node-copy { min-width: 0; display: grid; gap: 5px; }
 .owner-map-node-copy strong { font-size: 15px; }
 .owner-map-node-copy > span { color: var(--muted); font-size: 12px; line-height: 1.55; }
@@ -857,6 +906,7 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
 .owner-implementation-disclosure { margin-top: 2px; }
 
 @media (max-width: 1080px) {
+  .top-status { display: none; }
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace { grid-template-columns: 1fr; }
   .inspector { position: static; }
@@ -873,9 +923,11 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
 }
 
 @media (max-width: 720px) {
-  .topbar { position: static; padding: 12px 16px; align-items: flex-start; flex-direction: column; }
+  .topbar { position: relative; padding: 12px 16px; align-items: flex-start; flex-direction: column; }
   .topbar-main { width: 100%; align-items: flex-start; flex-direction: column; gap: 10px; }
   .top-status { justify-content: flex-start; }
+  .language-switch { position: absolute; top: 12px; right: 16px; }
+  .language-boundary { margin: -14px 0 18px; text-align: left; }
   .shell { width: min(100% - 24px, 680px); padding: 28px 0 42px; }
   .hero { grid-template-columns: 1fr; gap: 16px; }
   .primary-tabs { width: 100%; }
@@ -944,9 +996,14 @@ button.concept-component[aria-expanded="true"]::after { content: "实现已展�
   .owner-map-nodes { min-width: 0; min-height: 0; grid-template-columns: 1fr; grid-auto-rows: auto; gap: 10px; }
   .owner-map-overview-group { grid-column: 1 !important; grid-row: auto !important; width: 100%; }
   .owner-map-node { min-height: 0; grid-template-columns: 34px minmax(0, 1fr); }
+  .owner-map-node .owner-map-badges,
+  .owner-inline-detail .owner-map-badges { grid-column: 2; min-width: 0; align-items: flex-start; }
+  .owner-map-node-copy strong,
+  .owner-map-node-copy > span { max-width: 100%; overflow-wrap: anywhere; }
   .owner-map-node .owner-change-badge { grid-column: 2; width: fit-content; }
   .owner-map-inline-details { margin-inline: 5px; padding: 11px; }
   .owner-inline-detail { grid-template-columns: 30px minmax(0, 1fr); }
+  .owner-map-nodes.capability .owner-inline-detail-list { grid-template-columns: 1fr; }
   .owner-inline-detail .owner-change-badge { grid-column: 2; width: fit-content; }
   .owner-inline-heading, .owner-inline-flow { align-items: flex-start; }
   .owner-inline-flow { display: grid; }

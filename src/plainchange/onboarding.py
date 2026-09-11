@@ -239,6 +239,7 @@ class GuidedJob:
     status: str = "queued"
     error: str | None = None
     result: dict[str, Any] | None = None
+    analysis_mode: str = "basic_evidence"
 
     def public(self) -> dict[str, Any]:
         receipt: dict[str, Any] | None = None
@@ -253,6 +254,7 @@ class GuidedJob:
             "status": self.status,
             "error": self.error,
             "receipt": receipt,
+            "analysis_mode": self.analysis_mode,
         }
         if self.status == "succeeded":
             value["report_url"] = f"/reports/{self.job_id}/review.html"
@@ -274,14 +276,37 @@ class OnboardingState:
             task=payload.get("task", ""),
             output=payload.get("output"),
         )
-        job = GuidedJob(secrets.token_hex(12), output)
+        # Older API clients did not send a mode; keep those requests local and
+        # conservative. The packaged browser explicitly selects full_model.
+        requested_mode = payload.get("analysis_mode", "basic_evidence")
+        if requested_mode not in {"full_model", "basic_evidence"}:
+            raise OnboardingError("分析方式无效。")
+        provider_config = payload.get("model_config")
+        human_language = payload.get("human_language", "zh-CN")
+        if human_language not in {"zh-CN", "en"}:
+            raise OnboardingError("模型说明语言只能是中文或英文。")
+        if requested_mode == "full_model" and not isinstance(provider_config, dict):
+            raise OnboardingError("完整理解需要先填写模型接口设置。")
+        if requested_mode == "basic_evidence":
+            provider_config = None
+        job = GuidedJob(
+            secrets.token_hex(12),
+            output,
+            analysis_mode=requested_mode,
+        )
         with self.lock:
             self.jobs[job.job_id] = job
 
         def run() -> None:
             job.status = "running"
             try:
-                job.result = analyze_sample(manifest_path, output)
+                job.result = analyze_sample(
+                    manifest_path,
+                    output,
+                    generator="model" if requested_mode == "full_model" else "deterministic",
+                    model_config=provider_config,
+                    human_language=human_language,
+                )
             except (ManifestError, OSError, RuntimeError, ValueError) as exc:
                 job.status = "failed"
                 job.error = str(exc)

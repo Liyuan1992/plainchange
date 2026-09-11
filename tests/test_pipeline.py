@@ -12,6 +12,7 @@ import pytest
 from plainchange.cli import main
 from plainchange.git_evidence import GitEvidenceError
 from plainchange.models import ManifestError
+from plainchange.auto_draft import draft_software_control
 from plainchange.pipeline import analyze_sample, finalize_brief, prepare_sample
 from conftest import run_git
 from test_software_control import resign, software_control_sample
@@ -299,6 +300,8 @@ def test_analyze_builds_candidate_owner_report_without_model(
     result = analyze_sample(manifest, tmp_path / "analysis")
 
     assert _status(repo) == before
+    assert result["requested_generator"] == "auto"
+    assert result["analysis_mode"] == "basic_evidence"
     assert Path(result["target_profile_draft"]).is_file()
     assert Path(result["software_control_auto"]).is_file()
     assert Path(result["review_html"]).is_file()
@@ -319,15 +322,38 @@ def test_analyze_builds_candidate_owner_report_without_model(
     assert receipt["status"] == "succeeded"
     assert receipt["stages"][-1]["name"] == "owner_draft"
     control = json.loads(Path(result["software_control_auto"]).read_text(encoding="utf-8"))
+    localized_match = re.search(
+        r'<script id="localized-control-data" type="application/json">(.*?)</script>',
+        html,
+        flags=re.DOTALL,
+    )
+    assert localized_match is not None
+    english = json.loads(localized_match.group(1))["en"]
     assert control["validation"]["human_comprehension_status"] == "pending_owner_confirmation"
-    assert control["working_map"]["order_status"] == "unverified"
+    assert control["analysis_mode"] == "basic_evidence"
+    assert "基础证据模式：还没有让模型理解这个软件" in html
+    assert control["presentation"]["schema_version"] == "plainchange.owner-presentation.v1"
+    assert "还不能可靠定位" in control["first_screen_summary"]["headline"]
+    assert "cannot yet be reliably mapped" in english["first_screen_summary"]["headline"]
+    assert english["first_screen_summary"]["user_impact"]["state_label"] == "Not assessed yet"
+    assert english["product"]["purpose"] == (
+        f"The business purpose of {control['product']['name']} still needs owner confirmation."
+    )
+    assert all(
+        not re.search(r"[\u3400-\u9fff]", node["label"] + node["description"])
+        for node in english["working_map"]["nodes"]
+        if node["evidence_status"] == "code_discovered"
+    )
+    assert control["working_map"]["map_kind"] == "capability_map"
+    assert control["working_map"]["order_status"] == "not_applicable"
+    assert control["working_map"]["flows"] == []
     assert {item["evidence_label"] for item in control["working_map"]["nodes"]} == {
-        "自动候选"
+        "从代码结构发现"
     }
     assert not [
         item for item in control["working_map"]["nodes"] if item["change_state"] == "changed"
     ]
-    assert "还不能可靠定位到哪个用户操作" in control["first_screen_summary"]["headline"]
+    assert "还不能可靠定位到哪项软件能力" in control["first_screen_summary"]["headline"]
     assert control["first_screen_summary"]["user_impact"]["state_label"] == "还没判断"
     assert "目前没发现" not in control["first_screen_summary"]["user_impact"]["text"]
     assert [item["id"] for item in control["five_questions"][-1]["details"]["actions"]] == [
@@ -378,8 +404,18 @@ archive -> retain the result
 
     result = analyze_sample(manifest, tmp_path / "conditional-analysis")
     control = json.loads(Path(result["software_control_auto"]).read_text(encoding="utf-8"))
+    html = Path(result["review_html"]).read_text(encoding="utf-8")
+    localized_match = re.search(
+        r'<script id="localized-control-data" type="application/json">(.*?)</script>',
+        html,
+        flags=re.DOTALL,
+    )
+    assert localized_match is not None
+    english = json.loads(localized_match.group(1))["en"]
 
     assert "提前停止" in control["first_screen_summary"]["headline"]
+    assert "stop processing early" in english["first_screen_summary"]["headline"]
+    assert english["five_questions"][-1]["details"]["actions"][1]["title"] == "Check the stop condition"
     assert control["first_screen_summary"]["user_impact"]["state_label"] == "还没判断"
     assert [item["id"] for item in control["five_questions"][-1]["details"]["actions"]] == [
         "verify.normal-path",
@@ -410,9 +446,76 @@ def test_analyze_can_use_configured_compatible_model(
         encoding="utf-8",
     )
     monkeypatch.setenv("TEST_MODEL_API_KEY", "test-secret")
+    requested_stages = []
+    change_requests = []
 
     def fake_post(_url, payload, _timeout_seconds, _headers):
-        raw = _raw_brief()
+        request = json.loads(payload["messages"][1]["content"])
+        if request.get("schema_version") == "plainchange.project-context.v1":
+            requested_stages.append("project")
+            source_ids = request["allowed_source_ids"][:1]
+            code_paths = request["source_paths"][:1]
+            raw = {
+                "schema_version": "plainchange.project-understanding.v2",
+                "purpose": {"text": "接收问候并返回整理后的结果。", "source_ids": source_ids},
+                "structure_kind": "workflow",
+                "title": "从问候输入到返回结果",
+                "components": [
+                    {
+                        "id": f"step-{index}",
+                        "label": label,
+                        "description": description,
+                        "type": kind,
+                        "source_ids": source_ids,
+                        "code_paths": code_paths,
+                    }
+                    for index, (label, description, kind) in enumerate(
+                        [
+                            ("接收问候", "接收调用方给出的问候内容。", "input"),
+                            ("检查内容", "检查并整理收到的内容。", "process"),
+                            ("生成问候", "生成要返回给调用方的问候。", "process"),
+                            ("返回结果", "把整理后的问候交还给调用方。", "output"),
+                        ],
+                        start=1,
+                    )
+                ],
+                "flows": [
+                    {"from": f"step-{index}", "to": f"step-{index + 1}", "label": "下一步"}
+                    for index in range(1, 4)
+                ],
+                "unknowns": ["真实运行顺序尚未验证。"],
+            }
+        else:
+            requested_stages.append("change")
+            change_requests.append(request)
+            model_brief = _raw_brief()
+            model_brief["claims"][0]["scope"] = "code_change"
+            model_brief["claims"][0]["text"] = "问候处理新增了姓名内容。"
+            raw = {
+                "schema_version": "plainchange.change-interpretation.v2",
+                "raw_brief": model_brief,
+                "change_summary": {
+                    "headline": "这次让问候可以包含姓名。",
+                    "explanation": "固定代码差异支持这一变化，真实运行仍需验证。",
+                    "changed_component_ids": ["step-3"],
+                    "evidence_ids": ["git.patch"],
+                    "limitations": ["没有运行目标软件"],
+                    "audience_candidates": [
+                        {
+                            "role": "问候功能的调用方",
+                            "reason": "本次改动调整了返回给调用方的问候内容。",
+                            "evidence_ids": ["git.patch"],
+                        }
+                    ],
+                },
+                "owner_checks": [
+                    {
+                        "title": "检查带姓名的问候",
+                        "instructions": "输入一个姓名，确认返回的问候符合预期。",
+                        "evidence_ids": ["git.patch"],
+                    }
+                ],
+            }
         return {
             "id": "chatcmpl-test",
             "model": "provider-resolved-model",
@@ -442,8 +545,84 @@ def test_analyze_can_use_configured_compatible_model(
     assert receipt["status"] == "succeeded"
     run_receipt = json.loads(Path(result["run_receipt"]).read_text(encoding="utf-8"))
     assert [item["name"] for item in run_receipt["stages"]][-2:] == [
-        "model_generation",
+        "change_interpretation",
         "owner_draft",
+    ]
+    assert result["analysis_mode"] == "full_model"
+    assert result["project_understanding"]
+    assert requested_stages == ["project", "change"]
+    assert change_requests[0]["change_context"]["schema_version"] == "plainchange.change-context.v1"
+    assert "git.patch" not in change_requests[0]["change_context"]["allowed_evidence_ids"]
+    assert len(json.dumps(change_requests[0])) < 150_000
+    control = json.loads(Path(result["software_control"]).read_text(encoding="utf-8"))
+    assert control["first_screen_summary"]["headline"] == "这次让问候可以包含姓名。"
+    assert "固定代码差异支持这一变化" in control["five_questions"][1]["answer"]
+    assert control["first_screen_summary"]["user_impact"]["state_label"] == "可能受影响"
+    assert control["five_questions"][2]["details"]["audience_impacts"][0]["audience"] == "问候功能的调用方"
+    html = Path(result["review_html"]).read_text(encoding="utf-8")
+    localized_match = re.search(
+        r'<script id="localized-control-data" type="application/json">(.*?)</script>',
+        html,
+        flags=re.DOTALL,
+    )
+    assert localized_match is not None
+    english = json.loads(localized_match.group(1))["en"]
+    assert english["first_screen_summary"]["user_impact"]["state_label"] == "Possibly affected"
+    assert english["five_questions"][2]["details"]["audience_impacts"][0]["audience"] == "问候功能的调用方"
+    for receipt_name in (
+        "project-understanding-run-receipt.json",
+        "change-interpretation-run-receipt.json",
+    ):
+        receipt_text = (tmp_path / "model-analysis" / receipt_name).read_text(encoding="utf-8")
+
+        assert "test-secret" not in receipt_text
+        assert json.loads(receipt_text)["status"] == "succeeded"
+
+    repeated = analyze_sample(
+        manifest,
+        tmp_path / "model-analysis-repeat",
+        generator="model",
+        model_config_path=config_path,
+    )
+    assert repeated["project_understanding_cache_hit"] is True
+    assert requested_stages == ["project", "change", "change"]
+
+
+def test_first_screen_never_confirms_a_validator_downgraded_architecture_claim(
+    sample_repo, manifest_factory, tmp_path: Path
+):
+    repo, base, head = sample_repo
+    manifest = manifest_factory(tmp_path / "manifest.json", repo, base, head)
+    analyze_sample(manifest, tmp_path / "analysis")
+    output = tmp_path / "analysis"
+    brief = json.loads((output / "brief.json").read_text(encoding="utf-8"))
+    review = json.loads((output / "beginner-review.json").read_text(encoding="utf-8"))
+    system = json.loads((output / "system-architecture.json").read_text(encoding="utf-8"))
+    evidence = json.loads((output / "evidence.json").read_text(encoding="utf-8"))["evidence"]
+
+    brief["claims"] = [
+        {
+            "id": "downgraded.architecture",
+            "section": "architecture",
+            "scope": "architecture_change",
+            "claim_type": "unknown",
+            "text": "现有证据不足，无法确认架构职责或依赖关系的含义。",
+            "evidence_ids": ["git.diff_summary"],
+        }
+    ]
+
+    control = draft_software_control(brief, review, system, evidence)
+    confirmed = control["first_screen_summary"]["confirmed_change"]
+
+    assert confirmed["statement_state"] == "observed_fact"
+    assert confirmed["state_label"] == "已确认"
+    assert "固定 Git 差异确认这次修改了" in confirmed["text"]
+    assert "具体功能或架构含义还不能确定" in confirmed["text"]
+    assert "现有证据不足" not in confirmed["text"]
+    assert confirmed["basis"]["claim_ids"] == []
+    assert confirmed["basis"]["evidence_ids"] == [
+        "git.change_identity",
+        "git.diff_summary",
     ]
 
 

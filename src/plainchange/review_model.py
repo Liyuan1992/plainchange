@@ -639,6 +639,20 @@ def build_beginner_review_model(
             "technical_label": _technical_label(node_id, before, after),
             "status": status,
             "status_label": _STATUS_LABELS.get(status, status),
+            "before_state": (
+                "absent"
+                if before_node is None
+                else "present_with_responsibility"
+                if _responsibility(before_node)
+                else "present_without_responsibility"
+            ),
+            "after_state": (
+                "absent"
+                if after_node is None
+                else "present_with_responsibility"
+                if _responsibility(after_node)
+                else "present_without_responsibility"
+            ),
             "before": before_text,
             "after": after_text,
             "impact": impact_text,

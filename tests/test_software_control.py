@@ -79,6 +79,26 @@ def test_rejects_overview_that_is_not_four_owner_steps():
         validate_software_control(resign(value))
 
 
+def test_accepts_non_sequential_capability_map_and_rejects_ordered_edge():
+    value = software_control_sample()
+    value["working_map"]["map_kind"] = "capability_map"
+    value["working_map"]["order_status"] = "not_applicable"
+    value["working_map"]["order_label"] = "没有先后顺序"
+    value["working_map"]["order_note"] = "这些能力没有固定先后顺序。"
+    value["working_map"]["order_source_refs"] = []
+    value["working_map"]["flows"] = []
+    value["working_map"]["overview_map"]["flows"] = []
+
+    validated = validate_software_control(resign(value))
+    assert validated["working_map"]["map_kind"] == "capability_map"
+
+    value["working_map"]["flows"] = [
+        {"from": value["working_map"]["nodes"][0]["id"], "to": value["working_map"]["nodes"][1]["id"], "label": "guessed"}
+    ]
+    with pytest.raises(ManifestError, match="must not declare ordered flows"):
+        validate_software_control(resign(value))
+
+
 def test_rejects_changed_overview_not_bound_to_changed_detail():
     value = software_control_sample()
     overview = value["working_map"]["overview_map"]["nodes"]

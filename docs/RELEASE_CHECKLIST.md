@@ -1,5 +1,22 @@
 # Alpha 发布检查清单
 
+The checked items below are evidence from the original local `0.1.0a1` Alpha
+handoff. They do not prove that later uncommitted work has been pushed or
+published. Treat local commit, remote selection, push, GitHub Release and
+package publication as separate events.
+
+## Current GitHub handoff status (2026-09-11)
+
+- [x] English and Simplified Chinese public README files have been reviewed for
+  owner-facing positioning, local operation, model/privacy boundaries and
+  Alpha limitations.
+- [x] Public README contract tests pass; a fresh sdist/wheel includes both
+  README files and excludes ignored artifacts/local provider configuration.
+- [x] Current public-worktree token scan found no token-shaped values.
+- [ ] An owner-selected GitHub remote has not yet been configured.
+- [ ] The exact current release scope has not been staged and committed.
+- [ ] No push, GitHub Release or package publication has occurred.
+
 ## 版本与治理
 
 - [x] 发布任务为 `DONE`，验收证据已写入任务记录。

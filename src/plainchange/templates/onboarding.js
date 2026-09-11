@@ -20,7 +20,42 @@
   const resultBox = byId("result-box");
   const openReport = byId("open-report");
   const errorMessage = byId("error-message");
+  const modelSettings = byId("model-settings");
+  const providerId = byId("provider-id");
+  const modelName = byId("model-name");
+  const modelBaseUrl = byId("model-base-url");
+  const apiKeyEnv = byId("api-key-env");
+  const responseFormat = byId("response-format");
   let repository = null;
+
+  function selectedMode() {
+    return document.querySelector('input[name="analysis-mode"]:checked')?.value || "full_model";
+  }
+
+  document.querySelectorAll('input[name="analysis-mode"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      document.querySelectorAll(".mode-card").forEach((card) => {
+        card.classList.toggle("selected", card.contains(document.querySelector('input[name="analysis-mode"]:checked')));
+      });
+      modelSettings.hidden = selectedMode() !== "full_model";
+    });
+  });
+
+  function modelConfig() {
+    const value = {
+      schema_version: "change-passport.model-provider.v1",
+      provider_id: providerId.value.trim(),
+      base_url: modelBaseUrl.value.trim(),
+      model: modelName.value.trim(),
+      api_key_env: apiKeyEnv.value.trim() || null,
+      timeout_seconds: 120,
+      response_format: responseFormat.value,
+    };
+    if (!value.provider_id || !value.base_url || !value.model) {
+      throw new Error("完整理解需要填写接口名称、兼容接口地址和模型名称。");
+    }
+    return value;
+  }
 
   async function api(path, payload, method = "POST") {
     const response = await fetch(path, {
@@ -118,7 +153,8 @@
     const stages = receipt && Array.isArray(receipt.stages) ? receipt.stages : [];
     const finished = stages.filter((stage) => stage.status === "succeeded").length;
     const withinStage = latest && Number.isFinite(latest.percent) ? latest.percent / 100 : 0;
-    let percent = Math.min(96, Math.round(((finished + withinStage) / 7) * 100));
+    const expectedStages = job.analysis_mode === "full_model" ? 9 : 7;
+    let percent = Math.min(96, Math.round(((finished + withinStage) / expectedStages) * 100));
     if (!receipt) percent = 4;
     if (job.status === "succeeded") percent = 100;
     progressPercent.textContent = `${percent}%`;
@@ -166,12 +202,16 @@
     progressBar.style.width = "0%";
     setStep(3);
     try {
+      const analysisMode = selectedMode();
       const data = await api("/api/analyze", {
         repository: repository.path,
         base: baseSelect.value,
         head: headSelect.value,
         task: taskInput.value,
         output: outputPath.textContent,
+        analysis_mode: analysisMode,
+        model_config: analysisMode === "full_model" ? modelConfig() : null,
+        human_language: navigator.language?.toLowerCase().startsWith("zh") ? "zh-CN" : "en",
       });
       poll(data.job.id);
     } catch (error) {

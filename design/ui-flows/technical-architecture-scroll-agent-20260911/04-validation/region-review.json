@@ -1,0 +1,22 @@
+{
+  "total_score": 9.1,
+  "delivery_allowed": true,
+  "regions": {
+    "technical_concept_canvas": {
+      "result": "pass",
+      "score": 9.2,
+      "notes": ["overflow-x is auto", "horizontal wheel moved scrollLeft from 0 to 280", "cards and hierarchy unchanged"]
+    },
+    "technical_inspector": {
+      "result": "pass",
+      "score": 9.4,
+      "notes": ["width and sticky placement unchanged", "independent relationship-list scroll preserved"]
+    },
+    "report_boundary": {
+      "result": "pass",
+      "score": 9.0,
+      "notes": ["no document-level horizontal overflow at 1280 or 390 px", "zero console errors"]
+    }
+  },
+  "next_round_fixes": []
+}

@@ -1,10 +1,147 @@
 # Project facts
 
+Current open-source preparation: TASK-20260911-055 rewrites the English and
+Simplified Chinese public entry points around the owner job-to-be-done, local
+model-provider choice, evidence boundaries and Alpha limits. Public-doc tests
+and package build pass, and no token-shaped content was found in the public
+worktree scope. The current release branch has no Git remote; no current
+release-scope commit, push, GitHub Release or package publication exists.
+
+Current two-local-project regression: TASK-20260911-054 confirms that the v2
+model contract can distinguish a capability-oriented public package release
+(`memdsl`) from an ordered media-production pipeline change (`VideoFactory`)
+without target-specific rules or target writes. Both reports retain bounded
+owner maps and runtime boundaries. This is portability evidence only.
+TASK-20260911-056 subsequently fixed BUG-20260911-049: no accepted
+function-level claim now means the first screen confirms only deterministic
+file-change facts and keeps semantic meaning unknown.
+
+Current owner-language real-model regression: TASK-20260911-052/053 reran the
+same fixed ChestnutDogAiThink business change against the v2 model contract.
+The first provider result exposed a generic first-screen projection issue, not
+a target-specific semantic rule: a valid short title was concatenated with its
+detail. After the renderer correction, the repeated run produces a 23-character
+result-first title, six business workflow steps and a source-bound `店员`
+candidate marked only as possible impact. Four claims are accepted, two are
+downgraded, none are rejected, and runtime/user behavior remain unverified.
+The target revision and dirty worktree remain unchanged; this is real-provider
+quality evidence, not human comprehension acceptance.
+
+Current owner-language contract result: TASK-20260911-051 makes the model-first
+project map a shallow owner layer rather than an implementation inventory:
+normally four to six items, never more than six. Change headlines now have a
+short result-first contract, and a model may name a source-bound specific role
+as `可能受影响`; deterministic rendering keeps that role unverified and ignores
+generic `普通用户`/`最终用户` candidates. Mocked provider and report-projection
+regressions pass; no provider call or target mutation occurred. Human acceptance
+and live-model quality remain separate pending evidence.
+
+Current real-provider result: TASK-20260911-050 validates the two-stage model-
+first path on ChestnutDogAiThink through a user-configured compatible provider.
+After preserving 504, schema-rejection and 502 evidence, two generic corrections
+derive redundant capability types and replace the 622 KB second-stage packet
+with a bounded semantic context. `gpt-5.3-codex-spark` then reuses cached project
+understanding and generates the full report in 17.827 seconds. Its headline now
+identifies the product-recommendation overview, backend task, frontend cards,
+replacement-plan presentation and peer-shop data support instead of incidental
+exception branches. Four claims are accepted, two are downgraded to unknown and
+runtime/user impact remain unverified. The two stage receipts report 45,197
+tokens total and contain no credential. The target stayed read-only; owner
+wording acceptance and a long-term model/cost choice remain pending.
+
+Current model-first correction: TASK-20260911-049 makes configured semantic
+understanding a two-stage product path while keeping Git facts, sanitization,
+source/evidence allowlists, downgrade rules and unknowns deterministic. The
+guided UI defaults to the full model-assisted experience; no-provider analysis
+is explicitly labelled `basic_evidence`. The generic ChestnutDogAiThink rerun
+now shows eight real capability descriptions, 518 first-party nodes including
+79 Vue and 3 MJS files, excludes 480 vendored/generated files and contains zero
+dependency/build-tree nodes. Its basic-mode exception headline remains expected
+counterevidence: BUG-20260911-039 stays open until a real configured provider
+produces and a human accepts a better semantic result. No target-specific rule,
+real provider call, target write, commit, push or publication occurred.
+
+Current English-source validation correction: TASK-20260911-047 supersedes the
+incomplete hidden-state acceptance in TASK-046. The generic presentation now
+projects first-tab summaries, task context, relationship views, node details,
+branch explanations and known deterministic claims from stable IDs/counts/states.
+Real Edge opens the first technical disclosure, cycles Before/After/Changes only,
+clicks every unique node, opens the system technical view and finds zero visible
+Han text in both English owner tabs (excluding the intentional selector label
+`中文`) at 1280/390 px. Project-authored text and evidence remain source-language.
+Automatic product naming still exposes the bare clone directory name rather than
+`FastAPI`; BUG-20260911-037 tracks that separate comprehension defect.
+
+Current generated-architecture localization correction: TASK-20260911-045
+closes the review/technical-payload gap left by TASK-044. PlainChange-owned
+conceptual titles, boundary/source labels, candidate snapshot state and
+automatic implementation categories now project from stable map/status/category
+IDs. Project-declared capability names and descriptions remain source text.
+The fixed DigitalSelf v3 report passes 114 tests and real Edge desktop/narrow
+checks; its canonical review and technical snapshot identities remain unchanged.
+
+Current language-neutral owner-presentation correction: TASK-20260911-044 fixes
+BUG-20260911-033 without repository-name rules. Automatic owner conclusions,
+states, actions, dynamic counts/filenames, code-discovered responsibility labels
+and evidence explanations now carry stable message keys and bounded arguments;
+the English projection is generated without a model or reviewed pack. Project
+purpose/capability wording, quotations and technical evidence remain in their
+source language. A complete identity-bound reviewed pack still overrides the
+automatic projection. The fresh DigitalSelf report contains 317 owned messages
+and 49 explicit source-language paths; 113 tests and real Edge desktop/narrow
+checks pass.
+
+Current technical-reader correction: BUG-20260911-032 restores user-controlled
+horizontal scrolling inside an overflowing technical conceptual canvas. The
+inner canvas owns the overflow; the report and right inspector retain their
+width. Real Edge moved the fixed DigitalSelf canvas from scrollLeft 0 to 280
+while the document itself remained overflow-free at 1280 and 390 px.
+
+Current capability-depth correction: TASK-20260910-043 fixes
+BUG-20260910-031 without repository-name rules. A capability overview expands
+only when its explicit fixed-revision code scope supports at least two distinct
+candidate responsibilities; children are labelled `从代码结构发现`, remain
+unordered and do not claim project or runtime confirmation. DigitalSelf now
+exposes 6 internal responsibilities under its main chat runtime, while memdsl
+honestly keeps five leaf capabilities and VideoFactory retains its declared
+workflow. Real Edge checks pass at 1280/390 px with no console errors or
+horizontal overflow.
+
+Current capability-map correction: TASK-20260910-042 fixes BUG-20260910-029
+without target-name rules. A fixed-commit README capability list or summary table
+now becomes a source-bound `capability_map` with no directional edges; an
+undocumented repository falls back to code-derived areas without inventing
+business order. Fresh memdsl and DigitalSelf reports expose 5 and 10 capabilities;
+VideoFactory retains its 7-step declared workflow and 4-step overview. Real Edge
+checks pass at 1280/390 px with no console errors or overflow, and all three target
+HEAD/status fingerprints remain unchanged. English body packs remain separately
+required and absent for these fresh reports.
+
+Current body-localization correction: TASK-20260910-040 supersedes the shell-only
+limitation below. Source-bound translation packs cover owner summaries, workflow
+nodes and expanded inspector text without changing canonical evidence or states.
+The vLLM English pack is complete; new projects still require authored/reviewed
+translations, and missing packs show an explicit warning. No automatic provider
+translation, target-repository change, commit, or release was performed.
+Follow-up coverage now includes System workflow and technical explanations via
+review-identity-bound translations. The earlier browser pass excluded these
+panels; this follow-up has 11 passing script/DOM states, not new browser-layout QA.
+
+Current bilingual-reader result: TASK-20260910-039 splits the public entry into
+English `README.md` and Simplified Chinese `README.zh-CN.md`. The offline report
+supports exactly `en` and `zh-CN`, follows browser/system preference, remembers an
+explicit local choice, and translates PlainChange-owned presentation text without
+rewriting embedded evidence. Single-language project declarations, quotations,
+technical evidence, and authored explanations retain their source language. The
+93-test suite, package-content checks, and real Edge English/Chinese/fallback/
+persistence checks at 1280 and 390 px pass; no remote release or tag movement
+occurred.
+
 Current Alpha delivery: TASK-20260910-038 is DONE. It freezes the approved core at `c09652efb34f` and establishes **PlainChange** as the product, Python package, import namespace, CLI, cache, and guided local UI. PlainChange generates an evidence-backed **Change Passport**; existing `change-passport.*` schemas remain the artifact/protocol family. The local entrypoints are `plainchange analyze .`, shorthand `plainchange .`, and loopback UI `plainchange serve`. The MIT `0.1.0a1` wheel/sdist, clean installation, direct analysis, 90-test suite, package/privacy checks, and real Edge 1280/390 px checks pass; local release tag `v0.1.0-alpha.1` identifies the accepted Alpha. No remote, push, deployment, registry publication, telemetry, or automatic model request occurred.
 
 Current behavior-semantic result: TASK-20260910-037 adds conservative, source-bound diff signals for newly added raises, explicit non-zero returns, and callable-signature changes. The no-model owner draft now says `还没判断` instead of presenting unperformed semantic analysis as `目前没发现`, maps only the primary source path when unique, and recommends separate normal and stop/failure checks. The fixed VideoFactory report now locates the change at `检查视频质量`; static signals still do not prove reachability, runtime, breaking impact, or user impact.
 
-Current model status (supersedes the older no-provider sentence below): TASK-20260910-033 replaces the Ollama-specific experiment with a user-configured OpenAI-compatible Chat Completions boundary. Deterministic generation remains the default; no real model call, remote source upload, account integration, or production connection was performed in this task.
+Current model status: TASK-20260911-049 and ADR-0005 revise the product default. The full experience uses the user-configured OpenAI-compatible boundary in two stages: immutable project understanding, then change interpretation. Deterministic code still owns source/evidence allowlists, identities, downgrade rules and unknowns. CLI `auto` without a provider produces an explicit no-network `basic_evidence` result; configured failures do not silently fall back. This implementation used mocked endpoints only and performed no real provider transmission.
 
 Current automatic-profile result: TASK-20260910-035 resolves the generic VideoFactory failure without a target-name exception. Root README purpose/workflow material is retained as a fixed-commit declaration with path and SHA-256 identity, then reconciled separately against code anchors, orchestration order, and runtime unknowns. VideoFactory now exposes seven declared production steps with code support and partially supported order; vLLM and FastAPI safely retain automatic candidate workflows with unverified order. Ambiguous changes are not assigned to a business step, automatic areas no longer share broad first-match prefixes, and all three projects use the same implementation.
 

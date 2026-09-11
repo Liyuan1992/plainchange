@@ -128,6 +128,10 @@ def test_browser_shell_is_packaged_and_api_requires_session(onboarding_server) -
     assert status == 200
     html = body.decode("utf-8")
     assert "选一个项目，看看 AI 到底改了什么" in html
+    assert "完整理解（推荐）" in html
+    assert "基础证据模式" in html
+    assert 'id="model-base-url"' in html
+    assert "这里只填写环境变量的名字，不填写密钥" in html
     assert 'rel="icon" href="data:,"' in html
     assert state.token in html
     assert "default-src 'self'" in headers["Content-Security-Policy"]
@@ -146,6 +150,23 @@ def test_browser_shell_is_packaged_and_api_requires_session(onboarding_server) -
     )
     assert status == 403
     assert "其他网页" in body.decode("utf-8")
+
+
+def test_full_model_guided_request_requires_provider_settings(sample_repo, onboarding_server) -> None:
+    repo, base, head = sample_repo
+    _server, state, base_url = onboarding_server
+    status, body, _headers = _request(
+        base_url + "/api/analyze",
+        token=state.token,
+        payload={
+            "repository": str(repo),
+            "base": base,
+            "head": head,
+            "analysis_mode": "full_model",
+        },
+    )
+    assert status == 400
+    assert "模型接口设置" in json.loads(body)["error"]
 
 
 def test_http_guided_flow_generates_and_serves_report(sample_repo, onboarding_server) -> None:

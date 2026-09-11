@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import locale
 import sys
 from pathlib import Path
 from typing import Sequence
@@ -31,6 +32,12 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
+    localize = subcommands.add_parser("localize-report", help="export or apply source-bound report-body translations")
+    localize.add_argument("directory")
+    options = localize.add_mutually_exclusive_group(required=True)
+    options.add_argument("--export", help="create a complete translation template")
+    options.add_argument("--translations", help="apply a completed translation JSON")
+    localize.add_argument("--language", choices=("en", "zh-CN"), default="en")
 
     serve = subcommands.add_parser("serve", help="open the guided local web interface")
     serve.add_argument("--host", default="127.0.0.1")
@@ -50,13 +57,22 @@ def _parser() -> argparse.ArgumentParser:
     analyze.add_argument("--task", default="", help="optional original task or intent")
     analyze.add_argument(
         "--generator",
-        choices=("deterministic", "model"),
-        default="deterministic",
-        help="candidate wording generator; deterministic remains the default",
+        choices=("auto", "model", "deterministic"),
+        default="auto",
+        help=(
+            "analysis experience: auto uses a supplied model config or otherwise "
+            "creates a clearly limited basic-evidence report"
+        ),
     )
     analyze.add_argument(
         "--model-config",
         help="OpenAI-compatible provider config JSON; required with --generator model",
+    )
+    analyze.add_argument(
+        "--human-language",
+        choices=("auto", "en", "zh-CN"),
+        default="auto",
+        help="language requested from the model for owner-facing text; auto follows the system language",
     )
 
     finalize = subcommands.add_parser("finalize", help="validate model claims and render the brief")
@@ -85,7 +101,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def _normalized_argv(argv: Sequence[str] | None) -> list[str]:
     values = list(sys.argv[1:] if argv is None else argv)
-    commands = {"serve", "prepare", "analyze", "finalize", "score", "approve-baseline"}
+    commands = {"serve", "prepare", "analyze", "finalize", "score", "approve-baseline", "localize-report"}
     if values and not values[0].startswith("-") and values[0] not in commands:
         values.insert(0, "analyze")
     return values
@@ -101,6 +117,18 @@ def _configure_utf8_output() -> None:
                 pass
 
 
+def _system_human_language() -> str:
+    candidates = [locale.getlocale()[0]]
+    try:
+        candidates.append(locale.setlocale(locale.LC_CTYPE))
+    except locale.Error:
+        pass
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.casefold().startswith(("zh", "chinese")):
+            return "zh-CN"
+    return "en"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     _configure_utf8_output()
     parser = _parser()
@@ -110,7 +138,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "serve":
             serve_onboarding(args.host, args.port, open_browser=not args.no_open)
             return 0
-        if args.command == "analyze":
+        if args.command == "localize-report":
+            from .report_localization import localize_report
+            result = localize_report(args.directory, translations=args.translations,
+                                     export=args.export, language=args.language)
+        elif args.command == "analyze":
             target = Path(args.target).expanduser()
             if target.is_dir():
                 direct_project = True
@@ -133,6 +165,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output,
                 generator=args.generator,
                 model_config_path=args.model_config,
+                human_language=(
+                    _system_human_language()
+                    if args.human_language == "auto"
+                    else args.human_language
+                ),
             )
         elif args.command == "prepare":
             result = prepare_sample(args.manifest, args.output)

@@ -71,7 +71,7 @@ plainchange serve --port 8877
 
 ## 模型增强是可选项
 
-首次使用页不调用模型，也不上传源码。高级用户需要模型增强时，可以使用 `analyze --generator model`，并按 README 配置任意 OpenAI-compatible 提供商。
+首次使用页默认选择“完整理解”：用户填写自己的 OpenAI-compatible 接口、模型和密钥环境变量名后，PlainChange 会先理解项目，再解释变化。页面不接收或保存密钥值。模型负责人说明会跟随浏览器语言（只支持英文、简体中文）；CLI 可用 `--human-language auto|en|zh-CN` 指定。选择“基础证据模式”或在没有配置时使用 CLI `auto`，不会调用模型，但报告会明确说明它没有完成业务语义理解。详见 README 的模型配置与隐私边界。
 
 ## 当前限制
 

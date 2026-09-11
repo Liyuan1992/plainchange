@@ -268,6 +268,73 @@ def test_profile_accepts_branch_merge_and_multiple_human_gates(tmp_path: Path):
     assert {component.component_type for component in loaded.presentation.conceptual_architecture.components} >= {"input", "process", "human_gate", "state"}
 
 
+def test_capability_profile_accepts_two_details_and_rejects_fake_single_detail(
+    tmp_path: Path,
+):
+    profile = _profile(tmp_path / "capability-profile.json")
+    value = json.loads(profile.read_text(encoding="utf-8"))
+    value["conceptual_architecture"].update(
+        {
+            "architecture_kind": "capability_map",
+            "purpose_statement_state": "project_declared",
+            "purpose_source_refs": ["git:abc:README.md"],
+            "source_refs": ["git:abc:README.md"],
+            "workflow_order_status": "not_applicable",
+            "workflow_order_label": "No order",
+            "workflow_order_note": "These capabilities are parallel.",
+            "workflow_order_source_refs": ["git:abc:README.md"],
+            "flows": [],
+            "components": [
+                {
+                    "id": "conversation",
+                    "type": "capability",
+                    "label": "Conversation",
+                    "description": "Handles an owner conversation.",
+                    "grid_column": 1,
+                    "grid_row": 1,
+                    "group_ids": ["product"],
+                    "details": [
+                        {
+                            "id": "conversation.input",
+                            "type": "capability",
+                            "label": "Receive input",
+                            "description": "Accepts a new message.",
+                            "group_ids": ["product"],
+                            "evidence_status": "declared_and_code_supported",
+                            "evidence_label": "Code located",
+                            "evidence_note": "Exact code scope located.",
+                            "source_refs": ["git:abc:src/conversation/messages.py"],
+                        },
+                        {
+                            "id": "conversation.output",
+                            "type": "capability",
+                            "label": "Return output",
+                            "description": "Returns the prepared answer.",
+                            "group_ids": ["product"],
+                            "evidence_status": "declared_and_code_supported",
+                            "evidence_label": "Code located",
+                            "evidence_note": "Exact code scope located.",
+                            "source_refs": ["git:abc:src/conversation/response.py"],
+                        },
+                    ],
+                }
+            ],
+        }
+    )
+    profile.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+
+    loaded = load_target_profile(profile)
+    assert loaded.presentation.conceptual_architecture is not None
+    assert len(loaded.presentation.conceptual_architecture.components[0].details) == 2
+
+    value["conceptual_architecture"]["components"][0]["details"] = value[
+        "conceptual_architecture"
+    ]["components"][0]["details"][:1]
+    profile.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(ManifestError, match="two to six"):
+        load_target_profile(profile)
+
+
 def test_profile_consumers_have_no_embedded_target_or_self_sample_identity():
     source_root = Path(__file__).parents[1] / "src" / "plainchange"
     source = "\n".join(
@@ -278,6 +345,7 @@ def test_profile_consumers_have_no_embedded_target_or_self_sample_identity():
             "html_renderer.py",
             "target_profile.py",
             "templates/review.html",
+            "templates/review-i18n.js",
             "templates/review.js",
         )
     )

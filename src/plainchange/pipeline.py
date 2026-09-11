@@ -20,13 +20,24 @@ from .html_renderer import render_review_html
 from .models import ManifestError, SampleManifest, canonical_json_bytes
 from .model_adapter import (
     OpenAICompatibleRawBriefProvider,
-    generate_raw_brief_with_model,
+    _require_requested_human_language,
+    generate_change_interpretation_with_model,
+    generate_project_understanding_with_model,
     load_model_provider_config,
+    parse_model_provider_config,
 )
 from .progress import ProgressRecorder
 from .review_model import build_beginner_review_model
 from .scoring import build_annotation_template, score_annotations
 from .software_control import validate_software_control
+from .semantic_analysis import (
+    attach_context_sources,
+    build_project_context_packet,
+    project_understanding_cache_key,
+    read_cached_project_understanding,
+    target_profile_from_understanding,
+    write_cached_project_understanding,
+)
 from .validator import render_markdown, validate_raw_brief
 
 
@@ -170,25 +181,45 @@ def analyze_sample(
     manifest_path: str | Path,
     output_path: str | Path,
     *,
-    generator: str = "deterministic",
+    generator: str = "auto",
     model_config_path: str | Path | None = None,
+    model_config: Mapping[str, Any] | None = None,
+    human_language: str = "zh-CN",
 ) -> dict[str, Any]:
     """Run the local path from manifest to an owner-facing candidate report."""
 
+    if model_config_path is not None and model_config is not None:
+        raise ManifestError("provide model_config_path or model_config, not both")
+    if human_language not in {"zh-CN", "en"}:
+        raise ManifestError("human_language must be zh-CN or en")
     configured_provider: OpenAICompatibleRawBriefProvider | None = None
-    if generator == "model":
-        if model_config_path is None:
+    provider_config = (
+        load_model_provider_config(model_config_path)
+        if model_config_path is not None
+        else parse_model_provider_config(model_config)
+        if model_config is not None
+        else None
+    )
+    resolved_generator = generator
+    if generator == "auto":
+        resolved_generator = "model" if provider_config is not None else "deterministic"
+    if resolved_generator == "model":
+        if provider_config is None:
             raise ManifestError("--model-config is required when --generator model")
-        configured_provider = OpenAICompatibleRawBriefProvider(
-            load_model_provider_config(model_config_path)
-        )
-    elif generator != "deterministic":
+        configured_provider = OpenAICompatibleRawBriefProvider(provider_config)
+    elif resolved_generator != "deterministic":
         raise ManifestError(f"unsupported generator: {generator}")
 
     manifest = SampleManifest.load(manifest_path)
     output = manifest.validate_output_path(output_path)
     output.mkdir(parents=True, exist_ok=True)
     progress = ProgressRecorder(output, "analyze", manifest.sample_id)
+    project_understanding_path: Path | None = None
+    project_understanding_receipt: Path | None = None
+    project_understanding_cache_hit: bool | None = None
+    semantic_interpretation: dict[str, Any] | None = None
+    change_interpretation_receipt: Path | None = None
+    materialized = None
     try:
         profile_path = manifest.target_profile_path
         if profile_path is None:
@@ -214,6 +245,74 @@ def analyze_sample(
                     section_count=len(profile["sections"]) - 1,
                     status="candidate_requires_owner_confirmation",
                 )
+        if configured_provider is not None:
+            with progress.stage(
+                "project_understanding",
+                "模型先理解这个软件的用途和主要工作",
+            ) as details:
+                if materialized is None:
+                    materialized = materialize_repository(
+                        manifest.repository,
+                        manifest.limits,
+                        cache_root=default_cache_root(),
+                        progress=lambda current, total, message: progress.update(
+                            current, total, message
+                        ),
+                    )
+                base_profile = _load_json(profile_path, "target profile draft")
+                context = build_project_context_packet(
+                    materialized.repository.path,
+                    materialized.repository.head,
+                    manifest.limits.git_timeout_seconds,
+                    manifest.repository.path.name,
+                    base_profile,
+                )
+                _write_json(output / "project-context.json", context)
+                cache_key = project_understanding_cache_key(
+                    context,
+                    configured_provider.config_sha256,
+                    configured_provider.model,
+                    human_language,
+                )
+                understanding = read_cached_project_understanding(
+                    default_cache_root(), cache_key, context
+                )
+                project_understanding_cache_hit = understanding is not None
+                if understanding is not None:
+                    _require_requested_human_language(
+                        understanding,
+                        human_language,
+                        stage="cached project understanding",
+                    )
+                if understanding is None:
+                    understanding, project_understanding_receipt = (
+                        generate_project_understanding_with_model(
+                            context, output, configured_provider,
+                            human_language=human_language,
+                        )
+                    )
+                    write_cached_project_understanding(
+                        default_cache_root(), cache_key, understanding
+                    )
+                understanding_with_sources = attach_context_sources(understanding, context)
+                project_understanding_path = output / "project-understanding.json"
+                _write_json(project_understanding_path, understanding)
+                if manifest.target_profile_path is None:
+                    profile = target_profile_from_understanding(
+                        base_profile,
+                        understanding_with_sources,
+                        materialized.repository.head,
+                        human_language=human_language,
+                    )
+                    profile_path = output / "target-profile.model.json"
+                    _write_json(profile_path, profile)
+                details.update(
+                    cache_hit=project_understanding_cache_hit,
+                    provider=configured_provider.provider_name,
+                    model=configured_provider.model,
+                    component_count=len(understanding["components"]),
+                    profile_path=str(profile_path),
+                )
         prepared = prepare_sample(
             manifest_path,
             output,
@@ -222,21 +321,34 @@ def analyze_sample(
         )
         packet = validate_packet(_load_json(prepared["packet_path"], "generator packet"))
         model_receipt: Path | None = None
-        if generator == "deterministic":
+        if resolved_generator == "deterministic":
             raw = draft_raw_brief(packet)
             raw_path = output / "raw-brief.auto.json"
-        elif generator == "model":
-            with progress.stage("model_generation", "配置模型生成受约束候选说明") as details:
+        elif resolved_generator == "model":
+            with progress.stage("change_interpretation", "模型结合项目理解解释这次变化") as details:
                 if configured_provider is None:
                     raise ManifestError("configured model provider is unavailable")
-                raw, model_receipt = generate_raw_brief_with_model(
-                    packet, output, configured_provider
+                if project_understanding_path is None:
+                    raise ManifestError("project understanding is unavailable")
+                understanding = _load_json(
+                    project_understanding_path, "project understanding"
                 )
+                semantic_interpretation, change_interpretation_receipt = (
+                    generate_change_interpretation_with_model(
+                        packet, understanding, output, configured_provider,
+                        human_language=human_language,
+                    )
+                )
+                raw = semantic_interpretation["raw_brief"]
+                model_receipt = change_interpretation_receipt
                 raw_path = output / "raw-brief.model.json"
+                _write_json(
+                    output / "change-interpretation.json", semantic_interpretation
+                )
                 details.update(
                     provider=configured_provider.provider_name,
                     model=configured_provider.model,
-                    receipt=str(model_receipt),
+                    receipt=str(change_interpretation_receipt),
                 )
         with progress.stage("owner_draft", "校验并生成负责人候选说明") as details:
             _write_json(raw_path, raw)
@@ -249,6 +361,11 @@ def analyze_sample(
                 review,
                 system_architecture,
                 packet["evidence"],
+                semantic_interpretation=semantic_interpretation,
+                analysis_mode=(
+                    "full_model" if resolved_generator == "model" else "basic_evidence"
+                ),
+                human_language=human_language,
             )
             control_path = output / "software-control.auto.json"
             _write_json(control_path, control)
@@ -261,8 +378,8 @@ def analyze_sample(
             details.update(
                 generation_mode=(
                     "deterministic_local_no_model"
-                    if generator == "deterministic"
-                    else "constrained_configured_model"
+                    if resolved_generator == "deterministic"
+                    else "model_first_project_and_change"
                 ),
                 owner_draft_status="candidate_requires_owner_confirmation",
             )
@@ -274,10 +391,17 @@ def analyze_sample(
         **prepared,
         **final,
         "target_profile_draft": str(profile_path) if manifest.target_profile_path is None else None,
-        "raw_brief_auto": str(raw_path) if generator == "deterministic" else None,
+        "raw_brief_auto": str(raw_path) if resolved_generator == "deterministic" else None,
         "raw_brief_generated": str(raw_path),
-        "generator": generator,
+        "generator": resolved_generator,
+        "requested_generator": generator,
+        "analysis_mode": "full_model" if resolved_generator == "model" else "basic_evidence",
         "model_run_receipt": str(model_receipt) if model_receipt is not None else None,
+        "project_understanding": str(project_understanding_path) if project_understanding_path else None,
+        "project_understanding_receipt": str(project_understanding_receipt) if project_understanding_receipt else None,
+        "project_understanding_cache_hit": project_understanding_cache_hit,
+        "change_interpretation": str(output / "change-interpretation.json") if semantic_interpretation else None,
+        "change_interpretation_receipt": str(change_interpretation_receipt) if change_interpretation_receipt else None,
         "software_control_auto": str(control_path),
         "review_html": str(output / "review.html"),
         "run_receipt": str(output / "run-receipt.json"),
@@ -341,7 +465,9 @@ def finalize_brief(
             _write_json(output / "software-control.json", software_control)
         _write_text(
             output / "review.html",
-            render_review_html(beginner_review, software_control),
+            render_review_html(beginner_review, software_control,
+                _load_json(output / "report-translations.json", "report translations")
+                if (output / "report-translations.json").is_file() else None),
         )
     _write_text(output / "brief.md", render_markdown(brief))
     annotation = build_annotation_template(brief)

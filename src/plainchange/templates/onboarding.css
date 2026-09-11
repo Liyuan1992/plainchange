@@ -67,6 +67,22 @@ textarea { width: calc(100% - 50px); margin-left: 50px; }
 .promise-grid div { padding: 15px; border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 6px; }
 .promise-grid span { color: var(--muted); font-size: 14px; line-height: 1.6; }
 .large { margin-left: 50px; min-width: 190px; }
+.analysis-modes { margin: 20px 0 14px 50px; padding: 0; border: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.analysis-modes legend { grid-column: 1 / -1; margin-bottom: 8px; font-weight: 800; }
+.mode-card { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; cursor: pointer; }
+.mode-card.selected { border-color: var(--blue); background: var(--blue-soft); box-shadow: 0 0 0 2px rgba(23,105,232,.08); }
+.mode-card input { width: 18px; min-height: 18px; margin: 2px 0 0; }
+.mode-card span { display: grid; gap: 5px; }
+.mode-card small { color: var(--muted); line-height: 1.55; }
+.model-settings { margin: 0 0 20px 50px; padding: 17px; border: 1px solid #bfd4ee; border-radius: 14px; background: #f7fbff; }
+.model-settings[hidden] { display: none; }
+.model-settings-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.model-settings-head > div { display: grid; gap: 4px; }
+.model-settings-head span { color: var(--muted); font-size: 13px; }
+.model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.model-grid label { display: grid; gap: 7px; color: var(--blue-dark); font-size: 13px; font-weight: 800; }
+.model-grid .wide { grid-column: 1 / -1; }
+.model-note { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .progress-box, .result-box { margin: 18px 0 0 50px; padding: 17px; border-radius: 14px; background: var(--blue-soft); }
 .progress-head { display: flex; justify-content: space-between; }
 .progress-track { height: 8px; margin-top: 12px; background: #d6e5f8; border-radius: 999px; overflow: hidden; }
@@ -86,12 +102,14 @@ textarea { width: calc(100% - 50px); margin-left: 50px; }
   .section { padding: 22px 18px 24px; }
   .section-heading { align-items: flex-start; }
   .section-heading > div { align-items: flex-start; }
-  .hint, .path-row, .message, .version-grid, .task-label, textarea, .output-note, .promise-grid, .large, .progress-box, .result-box { margin-left: 0; width: 100%; }
+  .hint, .path-row, .message, .version-grid, .task-label, textarea, .output-note, .promise-grid, .analysis-modes, .model-settings, .large, .progress-box, .result-box { margin-left: 0; width: 100%; }
   .path-row { grid-template-columns: 1fr 1fr; }
   .path-row input { grid-column: 1 / -1; }
   .version-grid { grid-template-columns: 1fr; }
   .arrow { height: 22px; transform: rotate(90deg); }
   .promise-grid { grid-template-columns: 1fr; }
+  .analysis-modes, .model-grid { grid-template-columns: 1fr; }
+  .model-grid .wide { grid-column: auto; }
   .result-box { align-items: flex-start; flex-wrap: wrap; }
   .result-box .link-button { width: 100%; margin: 4px 0 0; }
 }

@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any, Mapping, Sequence
 
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
+from .owner_presentation import validate_owner_presentation
 
 SOFTWARE_CONTROL_SCHEMA = "change-passport.software-control.v1"
 QUESTION_IDS = (
@@ -25,12 +26,15 @@ WORKFLOW_EVIDENCE_STATES = {
     "declared_only",
     "code_discovered",
     "generated_candidate",
+    "model_interpreted_code_supported",
+    "model_interpreted_only",
 }
 WORKFLOW_ORDER_STATES = {
     "code_supported",
     "partially_supported",
     "conflicting",
     "unverified",
+    "not_applicable",
 }
 
 
@@ -116,6 +120,11 @@ def validate_software_control(
     document = _mapping(value, "software control")
     if document.get("schema_version") != SOFTWARE_CONTROL_SCHEMA:
         raise ManifestError("software control schema is invalid")
+    if document.get("analysis_mode", "basic_evidence") not in {
+        "basic_evidence",
+        "full_model",
+    }:
+        raise ManifestError("software control analysis_mode is unsupported")
     _text(document.get("sample_id"), "software control sample_id")
     if brief is not None and document.get("sample_id") != brief.get("sample_id"):
         raise ManifestError("software control sample_id does not match the validated brief")
@@ -145,6 +154,9 @@ def validate_software_control(
         _mapping(question.get("details"), f"software control five_questions[{index}].details")
 
     working_map = _mapping(document.get("working_map"), "software control working_map")
+    map_kind = working_map.get("map_kind", "workflow")
+    if map_kind not in {"workflow", "capability_map"}:
+        raise ManifestError("software control working_map.map_kind is unsupported")
     _text(working_map.get("title"), "software control working_map.title")
     _text(working_map.get("description"), "software control working_map.description")
     screen_summary = _mapping(working_map.get("screen_summary"), "software control working_map.screen_summary")
@@ -157,6 +169,10 @@ def validate_software_control(
         )
         if order_status not in WORKFLOW_ORDER_STATES:
             raise ManifestError("software control working_map.order_status is unsupported")
+        if map_kind == "capability_map" and order_status != "not_applicable":
+            raise ManifestError("software control capability_map order status must be not_applicable")
+        if map_kind == "workflow" and order_status == "not_applicable":
+            raise ManifestError("software control workflow order status cannot be not_applicable")
         _text(working_map.get("order_label"), "software control working_map.order_label")
         _text(working_map.get("order_note"), "software control working_map.order_note")
         _text_list(
@@ -200,6 +216,8 @@ def validate_software_control(
         raise ManifestError("software control currently supports at most one changed working-map node")
 
     flows = _sequence(working_map.get("flows"), "software control working_map.flows")
+    if map_kind == "capability_map" and flows:
+        raise ManifestError("software control capability_map must not declare ordered flows")
     for index, raw_flow in enumerate(flows):
         flow = _mapping(raw_flow, f"software control working_map.flows[{index}]")
         source_id = _text(flow.get("from"), f"software control flow {index}.from")
@@ -211,8 +229,10 @@ def validate_software_control(
     overview_map = _mapping(working_map.get("overview_map"), "software control working_map.overview_map")
     _text(overview_map.get("title"), "software control working_map.overview_map.title")
     overview_nodes = _sequence(overview_map.get("nodes"), "software control working_map.overview_map.nodes")
-    if len(overview_nodes) != 4:
-        raise ManifestError("software control overview map must contain exactly four owner steps")
+    if map_kind == "workflow" and len(overview_nodes) != 4:
+        raise ManifestError("software control workflow overview must contain exactly four owner steps")
+    if map_kind == "capability_map" and not 1 <= len(overview_nodes) <= 10:
+        raise ManifestError("software control capability overview must contain one to ten capabilities")
     overview_ids: set[str] = set()
     covered_detail_ids: list[str] = []
     changed_overview_nodes: list[Mapping[str, Any]] = []
@@ -245,6 +265,8 @@ def validate_software_control(
             raise ManifestError("software control changed overview node must contain the changed detail node")
 
     overview_flows = _sequence(overview_map.get("flows"), "software control working_map.overview_map.flows")
+    if map_kind == "capability_map" and overview_flows:
+        raise ManifestError("software control capability overview must not declare ordered flows")
     for index, raw_flow in enumerate(overview_flows):
         flow = _mapping(raw_flow, f"software control overview flow {index}")
         source_id = _text(flow.get("from"), f"software control overview flow {index}.from")
@@ -258,6 +280,8 @@ def validate_software_control(
     payload.pop("control_identity", None)
     if sha256_bytes(canonical_json_bytes(payload)) != identity:
         raise ManifestError("software control canonical identity is invalid")
+
+    validate_owner_presentation(document)
 
     source = dict(_mapping(document.get("source_identity"), "software control source_identity"))
     source["_working_map"] = working_map

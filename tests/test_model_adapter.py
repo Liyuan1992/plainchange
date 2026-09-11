@@ -9,6 +9,10 @@ from plainchange.generator_contract import validate_packet
 from plainchange.model_adapter import (
     ModelGenerationError,
     OpenAICompatibleRawBriefProvider,
+    _bound_model_evidence_budgets,
+    _bound_change_summary_evidence,
+    _change_interpretation_prompt,
+    _require_requested_human_language,
     generate_raw_brief_with_model,
     load_model_provider_config,
     raw_brief_json_schema,
@@ -164,3 +168,77 @@ def test_raw_brief_schema_requires_bounded_claims():
     claims = raw_brief_json_schema(["git.diff_summary"])["properties"]["claims"]
     assert claims["minItems"] == 4
     assert claims["maxItems"] == 12
+
+
+def test_model_prompt_uses_explicit_english_owner_language(
+    sample_repo, manifest_factory, tmp_path: Path, monkeypatch
+):
+    repo, base, head = sample_repo
+    manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
+    prepared = prepare_sample(manifest, tmp_path / "prepared")
+    packet = validate_packet(json.loads(Path(prepared["packet_path"]).read_text(encoding="utf-8")))
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    captured = {}
+
+    def fake_post(_url, payload, _timeout, _headers):
+        captured.update(payload=payload)
+        raw = _model_claims(packet)
+        for claim in raw["claims"]:
+            claim["text"] = "Model candidate explanation."
+            claim["limitations"] = ["Only the bounded evidence packet was used."]
+        return _completion(raw)
+
+    monkeypatch.setenv("TEST_MODEL_API_KEY", "secret-test-value")
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
+    raw, _telemetry = OpenAICompatibleRawBriefProvider(config).generate(
+        packet, human_language="en"
+    )
+
+    assert "Use English for all human-facing text" in captured["payload"]["messages"][0]["content"]
+    assert raw["generator_metadata"]["human_language"] == "en"
+
+
+def test_model_evidence_budget_only_removes_surplus_references():
+    raw = {"change_summary": {"evidence_ids": [f"git.file.{index:03d}" for index in range(30)]}}
+
+    bounded, normalizations = _bound_change_summary_evidence(raw)
+
+    assert len(bounded["change_summary"]["evidence_ids"]) == 24
+    assert bounded["change_summary"]["evidence_ids"] == raw["change_summary"]["evidence_ids"][:24]
+    assert normalizations == ["change_summary.evidence_ids deduplicated and capped at 24"]
+
+
+def test_model_evidence_budgets_cover_all_nested_contracts():
+    raw = {
+        "raw_brief": {"claims": [{"evidence_ids": [f"git.file.{index}" for index in range(20)]}]},
+        "change_summary": {
+            "evidence_ids": [f"git.summary.{index}" for index in range(30)],
+            "audience_candidates": [{"evidence_ids": [f"git.audience.{index}" for index in range(20)]}],
+        },
+        "owner_checks": [{"evidence_ids": [f"git.check.{index}" for index in range(20)]}],
+    }
+
+    bounded, normalizations = _bound_model_evidence_budgets(raw)
+
+    assert len(bounded["raw_brief"]["claims"][0]["evidence_ids"]) == 16
+    assert len(bounded["change_summary"]["evidence_ids"]) == 24
+    assert len(bounded["change_summary"]["audience_candidates"][0]["evidence_ids"]) == 12
+    assert len(bounded["owner_checks"][0]["evidence_ids"]) == 12
+    assert len(normalizations) == 4
+
+
+def test_english_change_prompt_has_no_chinese_instruction_text():
+    assert not any("\u3400" <= char <= "\u9fff" for char in _change_interpretation_prompt("en"))
+
+
+def test_english_model_output_rejects_mixed_owner_prose_but_not_identifiers():
+    _require_requested_human_language(
+        {"id": "中文_identifier", "evidence_ids": ["git.中文"], "headline": "English result"},
+        "en",
+        stage="change interpretation",
+    )
+
+    with pytest.raises(ModelGenerationError, match="non-English owner text"):
+        _require_requested_human_language(
+            {"headline": "中文标题"}, "en", stage="change interpretation"
+        )

@@ -22,14 +22,67 @@ from .generator_contract import (
     validate_packet,
 )
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
+from .semantic_analysis import (
+    CHANGE_INTERPRETATION_SCHEMA,
+    PROJECT_UNDERSTANDING_SCHEMA,
+    change_interpretation_json_schema,
+    project_understanding_json_schema,
+    validate_change_interpretation,
+    validate_project_context,
+    validate_project_understanding,
+)
 
 PROVIDER_CONFIG_SCHEMA = "change-passport.model-provider.v1"
 RESPONSE_FORMATS = ("json_schema", "json_object", "prompt_only")
 ENV_NAME_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+CHANGE_CONTEXT_SCHEMA = "plainchange.change-context.v1"
 
 
 class ModelGenerationError(ManifestError):
     """A configured model request failed before a raw brief was validated."""
+
+
+_CJK = re.compile(r"[\u3400-\u9fff]")
+_LANGUAGE_STRUCTURAL_KEYS = frozenset(
+    {
+        "code_paths",
+        "evidence_ids",
+        "id",
+        "schema_version",
+        "source_ids",
+    }
+)
+
+
+def _require_requested_human_language(value: Any, human_language: str, *, stage: str) -> None:
+    """Reject a mixed-language model response before it becomes report prose.
+
+    Prompting alone is not a contract: an OpenAI-compatible provider can return
+    valid JSON while ignoring the requested response language. We fail closed
+    for model-authored owner prose rather than publishing an English-labelled
+    report containing Chinese. Source material, paths, evidence IDs, and other
+    technical identifiers are not inspected here.
+    """
+
+    if human_language != "en":
+        return
+
+    def visit(item: Any, path: str) -> None:
+        if isinstance(item, Mapping):
+            for key, child in item.items():
+                if key in _LANGUAGE_STRUCTURAL_KEYS:
+                    continue
+                visit(child, f"{path}.{key}")
+        elif isinstance(item, list):
+            for index, child in enumerate(item):
+                visit(child, f"{path}[{index}]")
+        elif isinstance(item, str) and _CJK.search(item):
+            raise ModelGenerationError(
+                f"{stage} returned non-English owner text at {path}; "
+                "choose a model that follows the requested language"
+            )
+
+    visit(value, stage)
 
 
 @dataclass(frozen=True)
@@ -58,7 +111,9 @@ class RawBriefProvider(Protocol):
     model: str
     config_sha256: str
 
-    def generate(self, packet: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    def generate(
+        self, packet: Mapping[str, Any], *, human_language: str = "zh-CN"
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Return the untrusted raw brief and non-secret provider telemetry."""
 
 
@@ -73,18 +128,87 @@ def _write_json(path: Path, value: Any) -> None:
     os.replace(temporary, path)
 
 
+def _compact_change_context(packet: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep semantic change input bounded without weakening final validation."""
+
+    evidence = [dict(item) for item in packet["evidence"]]
+    metadata = [
+        item
+        for item in evidence
+        if item.get("kind") == "git"
+        and item.get("id") != "git.patch"
+        and not str(item.get("id", "")).startswith("git.file.")
+    ]
+    file_items = [
+        item for item in evidence if str(item.get("id", "")).startswith("git.file.")
+    ]
+
+    def churn(item: Mapping[str, Any]) -> int:
+        content = str(item.get("content", ""))
+        added = re.search(r"(?:^|;) added_lines=(\d+)", content)
+        deleted = re.search(r"(?:^|;) deleted_lines=(\d+)", content)
+        return int(added.group(1) if added else 0) + int(deleted.group(1) if deleted else 0)
+
+    file_items.sort(key=lambda item: (-churn(item), str(item.get("id", ""))))
+    behavior_and_task = [
+        item for item in evidence if item.get("kind") in {"behavior_signal", "task"}
+    ]
+    architecture_by_id = {
+        str(item.get("id")): item
+        for item in evidence
+        if item.get("kind") == "architecture"
+    }
+    delta = packet["architecture_delta"]
+    architecture_ids: list[str] = []
+    for field in ("added_node_ids", "modified_node_ids", "impacted_node_ids", "removed_node_ids"):
+        for item_id in delta.get(field, []):
+            value = str(item_id)
+            if value in architecture_by_id and value not in architecture_ids:
+                architecture_ids.append(value)
+            if len(architecture_ids) >= 32:
+                break
+        if len(architecture_ids) >= 32:
+            break
+    selected = metadata + file_items[:80] + behavior_and_task + [
+        architecture_by_id[item_id] for item_id in architecture_ids
+    ]
+    deduplicated: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in selected:
+        item_id = str(item.get("id", ""))
+        if item_id and item_id not in seen:
+            seen.add(item_id)
+            deduplicated.append(item)
+    return {
+        "schema_version": CHANGE_CONTEXT_SCHEMA,
+        "sample_id": packet["sample_id"],
+        "change": packet["change"],
+        "evidence": deduplicated,
+        "allowed_evidence_ids": [item["id"] for item in deduplicated],
+        "omitted_evidence_count": len(evidence) - len(deduplicated),
+        "architecture_summary": {
+            "analysis_stats": delta.get("analysis_stats", {}),
+            "added_node_count": len(delta.get("added_node_ids", [])),
+            "modified_node_count": len(delta.get("modified_node_ids", [])),
+            "removed_node_count": len(delta.get("removed_node_ids", [])),
+            "impacted_node_count": len(delta.get("impacted_node_ids", [])),
+            "unknowns": list(delta.get("unknowns", []))[:24],
+            "limitations": list(delta.get("limitations", []))[:24],
+        },
+        "instructions": [
+            "Use only the included evidence records; omitted evidence is unavailable, not negative evidence.",
+            "File churn helps identify themes but does not prove user impact or runtime behavior.",
+        ],
+    }
+
+
 def _required_text(value: Any, label: str, *, max_length: int = 300) -> str:
     if not isinstance(value, str) or not value.strip() or len(value) > max_length:
         raise ModelGenerationError(f"{label} must be a non-empty string")
     return value.strip()
 
 
-def load_model_provider_config(path: str | Path) -> ModelProviderConfig:
-    config_path = Path(path).resolve(strict=True)
-    try:
-        value = json.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ModelGenerationError("model provider config is not valid UTF-8 JSON") from exc
+def parse_model_provider_config(value: Any) -> ModelProviderConfig:
     if not isinstance(value, Mapping):
         raise ModelGenerationError("model provider config must be an object")
     allowed = {
@@ -144,6 +268,15 @@ def load_model_provider_config(path: str | Path) -> ModelProviderConfig:
     )
 
 
+def load_model_provider_config(path: str | Path) -> ModelProviderConfig:
+    config_path = Path(path).resolve(strict=True)
+    try:
+        value = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ModelGenerationError("model provider config is not valid UTF-8 JSON") from exc
+    return parse_model_provider_config(value)
+
+
 def raw_brief_json_schema(allowed_evidence_ids: list[str]) -> dict[str, Any]:
     claim = {
         "type": "object",
@@ -172,7 +305,7 @@ def raw_brief_json_schema(allowed_evidence_ids: list[str]) -> dict[str, Any]:
                 "type": "array",
                 "items": {"type": "string", "enum": allowed_evidence_ids},
             },
-            "limitations": {"type": "array", "items": {"type": "string"}},
+            "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
             "next_check": {"type": ["string", "null"]},
         },
     }
@@ -260,35 +393,28 @@ class OpenAICompatibleRawBriefProvider:
             headers["Authorization"] = f"Bearer {api_key}"
         return headers
 
-    def generate(self, packet: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-        validated = validate_packet(packet)
-        schema = raw_brief_json_schema(list(validated["allowed_evidence_ids"]))
-        system_prompt = (
-            "你是 PlainChange 的受约束说明生成器。只依据用户消息中的证据包生成 Change Passport JSON。"
-            "不得推测未提供的运行行为、用户影响、历史决定或测试结果。"
-            "所有面向人的文本必须使用简体中文（代码标识符除外）。"
-            "必须覆盖 function、architecture、history、attention 四个 section，且前四条按这个顺序各一条；"
-            "证据不足时也必须输出对应 section，并使用 unknown。"
-            "先说软件行为或负责人能感知的结果，不用文件名、函数名或工程术语作主语。"
-            "每条 text 最多两句。不要输出 JSON 之外的内容。"
-        )
+    def _structured_completion(
+        self,
+        *,
+        system_prompt: str,
+        payload: Mapping[str, Any],
+        schema: Mapping[str, Any],
+        schema_name: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         request_payload: dict[str, Any] = {
             "model": self.config.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": canonical_json_bytes(validated).decode("utf-8"),
-                },
+                {"role": "user", "content": canonical_json_bytes(payload).decode("utf-8")},
             ],
         }
         if self.config.response_format == "json_schema":
             request_payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
-                    "name": "plainchange_raw_brief",
+                    "name": schema_name,
                     "strict": True,
-                    "schema": schema,
+                    "schema": dict(schema),
                 },
             }
         elif self.config.response_format == "json_object":
@@ -310,14 +436,8 @@ class OpenAICompatibleRawBriefProvider:
         except json.JSONDecodeError as exc:
             raise ModelGenerationError("model assistant content is not valid JSON") from exc
         if not isinstance(raw, dict):
-            raise ModelGenerationError("model raw brief must be an object")
+            raise ModelGenerationError("model structured output must be an object")
         generated_at = _now()
-        raw["generator_metadata"] = {
-            "provider": self.config.provider_id,
-            "model": str(response.get("model") or self.config.model),
-            "mode": "constrained_configured_model_candidate",
-            "generated_at": generated_at,
-        }
         usage = response.get("usage") if isinstance(response.get("usage"), Mapping) else {}
         telemetry = {
             "endpoint_origin": self.config.endpoint_origin,
@@ -329,14 +449,223 @@ class OpenAICompatibleRawBriefProvider:
             "total_tokens": usage.get("total_tokens"),
             "response_format": self.config.response_format,
             "generated_at": generated_at,
+            "stage": schema_name,
         }
         return raw, telemetry
+
+    def understand_project(
+        self, packet: Mapping[str, Any], *, human_language: str = "zh-CN"
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        validated = validate_project_context(packet)
+        raw, telemetry = self._structured_completion(
+            system_prompt=(
+                "You are PlainChange's project-understanding stage. Explain what the software does in owner language before interpreting a change. "
+                "Project documentation is a claim, not truth: reconcile it with the supplied fixed-revision code paths and implementation groups. "
+                "Choose workflow only for an evidence-supported ordered business path; otherwise choose capability_map. "
+                "Produce a shallow owner map, never an implementation inventory: normally use four to six components, and use two or three only when the supplied evidence cannot honestly support more. "
+                "Each label must name a person-visible business action, responsibility, or outcome in plain language. Keep labels short. Do not use framework, API, service, module, layer, route, import, controller, or implementation terminology as the main label unless that term is itself visible to the product owner. "
+                "When structure_kind is capability_map, every component.type must be capability. "
+                "When structure_kind is workflow, component.type must be input, process, output, human_gate, or state. "
+                "Do not claim runtime behavior, user impact, test results, or correctness. Cite only supplied source IDs and code paths. "
+                f"{_human_language_instruction(human_language)} Output JSON only."
+            ),
+            payload=validated,
+            schema=project_understanding_json_schema(validated),
+            schema_name="plainchange_project_understanding",
+        )
+        result = validate_project_understanding(validated, raw)
+        _require_requested_human_language(
+            result, human_language, stage="project understanding"
+        )
+        return result, telemetry
+
+    def interpret_change(
+        self,
+        packet: Mapping[str, Any],
+        understanding: Mapping[str, Any],
+        *,
+        human_language: str = "zh-CN",
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        validated = validate_packet(packet)
+        compact_context = _compact_change_context(validated)
+        component_ids = [str(item["id"]) for item in understanding["components"]]
+        schema = change_interpretation_json_schema(
+            list(compact_context["allowed_evidence_ids"]),
+            component_ids,
+            raw_brief_json_schema(list(compact_context["allowed_evidence_ids"])),
+        )
+        model_input = {
+            "project_understanding": {
+                key: value
+                for key, value in understanding.items()
+                if not str(key).startswith("_")
+            },
+            "change_context": compact_context,
+        }
+        raw, telemetry = self._structured_completion(
+            system_prompt=_change_interpretation_prompt(human_language),
+            payload=model_input,
+            schema=schema,
+            schema_name="plainchange_change_interpretation",
+        )
+        bounded_raw, normalizations = _bound_model_evidence_budgets(raw)
+        if normalizations:
+            telemetry["local_normalizations"] = normalizations
+        result = validate_change_interpretation(validated, understanding, bounded_raw)
+        _require_requested_human_language(
+            result, human_language, stage="change interpretation"
+        )
+        result["raw_brief"]["generator_metadata"] = {
+            "provider": self.config.provider_id,
+            "model": str(telemetry["response_model"]),
+            "mode": "model_first_project_and_change_candidate",
+            "human_language": human_language,
+            "generated_at": str(telemetry["generated_at"]),
+        }
+        return result, telemetry
+
+    def generate(
+        self, packet: Mapping[str, Any], *, human_language: str = "zh-CN"
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        validated = validate_packet(packet)
+        schema = raw_brief_json_schema(list(validated["allowed_evidence_ids"]))
+        system_prompt = (
+            "你是 PlainChange 的受约束说明生成器。只依据用户消息中的证据包生成 Change Passport JSON。"
+            "不得推测未提供的运行行为、用户影响、历史决定或测试结果。"
+            f"{_human_language_instruction(human_language)}"
+            "必须覆盖 function、architecture、history、attention 四个 section，且前四条按这个顺序各一条；"
+            "证据不足时也必须输出对应 section，并使用 unknown。"
+            "先说软件行为或负责人能感知的结果，不用文件名、函数名或工程术语作主语。"
+            "每条 text 最多两句。不要输出 JSON 之外的内容。"
+        )
+        raw, telemetry = self._structured_completion(
+            system_prompt=system_prompt,
+            payload=validated,
+            schema=schema,
+            schema_name="plainchange_raw_brief",
+        )
+        raw, normalizations = _bound_model_evidence_budgets({"raw_brief": raw})
+        raw = raw["raw_brief"]
+        if normalizations:
+            telemetry["local_normalizations"] = normalizations
+        raw["generator_metadata"] = {
+            "provider": self.config.provider_id,
+            "model": str(telemetry["response_model"]),
+            "mode": "constrained_configured_model_candidate",
+            "human_language": human_language,
+            "generated_at": str(telemetry["generated_at"]),
+        }
+        _require_requested_human_language(raw, human_language, stage="raw brief")
+        return raw, telemetry
+
+
+def _human_language_instruction(human_language: str) -> str:
+    if human_language == "zh-CN":
+        return "所有面向人的文本必须使用简体中文（代码标识符除外）。"
+    if human_language == "en":
+        return "Use English for all human-facing text, except product names and code identifiers."
+    raise ModelGenerationError(f"unsupported human output language: {human_language}")
+
+
+def _change_interpretation_prompt(human_language: str) -> str:
+    if human_language == "en":
+        return (
+            "You are PlainChange's change-understanding stage. The project understanding is a bounded candidate, not a fact. "
+            "Using the fixed change evidence, explain the main change in business language that a software owner can repeat in ten seconds, then select at most one most relevant software step or capability. "
+            "Lead the headline with the outcome; write one sentence of at most 56 characters. Do not make engineering abstractions such as capability, pipeline, task layer, display layer, module, or API the headline subject. "
+            "Use at most two explanation sentences: first say what changed, then what remains unverified. "
+            "When fixed evidence supports concrete roles, provide at most three audience_candidates. Use roles such as operator, administrator, or API consumer rather than generic end user; candidates may identify who should pay attention, never claim actual impact. "
+            "Do not let an incidental exception, function, or file count displace the more important product change. "
+            "Every evidence_id must come from the supplied change packet; change_summary.evidence_ids may contain at most 24 items. Keep unknown when evidence is insufficient. "
+            "limitations may be empty; every supplied item must be a substantive non-empty limit. "
+            "Do not claim verified runtime behavior, end-user impact, test results, or correctness. Use English for every human-facing field except product names and code identifiers. Output JSON only."
+        )
+    if human_language == "zh-CN":
+        return (
+            "你是 PlainChange 的变更理解阶段。项目理解只是受约束候选，不是事实。"
+            "结合固定变更证据，先用软件负责人能在十秒内复述的业务语言说明主要变化，再选择至多一个最相关的软件步骤或能力。"
+            "标题先说结果，只写一句且不超过 56 个字符；不要把“能力、链路、任务层、展示层、扩展上线、模块、接口”等工程抽象当作标题主语。"
+            "说明不超过两句：先说发生了什么，再说明还没有验证什么。"
+            "如固定证据能支持具体使用角色，给出至多三个 audience_candidates；角色应是店员、管理员、调用方等具体角色，而不是“普通用户”或“最终用户”。角色候选只能说明最可能需要关注的人，不能声称其已受到实际影响。"
+            "不得用偶然出现的异常、函数或文件数量覆盖更主要的产品变化。"
+            "所有 evidence_ids 必须来自变更证据包；change_summary.evidence_ids 最多只能列出 24 条。证据不足时保持 unknown。"
+            "limitations 可以为空数组；如填写，每一项必须是有内容的具体限制，绝不能输出空字符串或空白项。"
+            "不得声称已验证运行行为、最终用户影响、测试结果或正确性。所有面向人的文本使用简体中文（代码标识符除外）。只输出 JSON。"
+        )
+    raise ModelGenerationError(f"unsupported human output language: {human_language}")
+
+
+def _bound_change_summary_evidence(raw: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Apply a loss-only evidence budget before semantic validation.
+
+    Compatible providers may accept a JSON-schema request without enforcing its
+    max-items constraints. Removing duplicate or surplus references can never
+    create support for a model statement; it only preserves the local contract.
+    """
+    result = json.loads(json.dumps(raw))
+    summary = result.get("change_summary")
+    if not isinstance(summary, dict) or not isinstance(summary.get("evidence_ids"), list):
+        return result, []
+    bounded: list[str] = []
+    for item in summary["evidence_ids"]:
+        if isinstance(item, str) and item not in bounded:
+            bounded.append(item)
+        if len(bounded) == 24:
+            break
+    if bounded == summary["evidence_ids"]:
+        return result, []
+    summary["evidence_ids"] = bounded
+    return result, ["change_summary.evidence_ids deduplicated and capped at 24"]
+
+
+def _bound_model_evidence_budgets(raw: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Apply all model-output evidence budgets as loss-only normalizations.
+
+    Some OpenAI-compatible services acknowledge a JSON Schema response format
+    without enforcing nested ``maxItems``. Every list below contains only
+    evidence identifiers. Deduplicating or dropping surplus IDs cannot create
+    support for a model claim, so this preserves the local contract while
+    retaining the provider response's strongest bounded subset.
+    """
+
+    result = json.loads(json.dumps(raw))
+    normalizations: list[str] = []
+
+    def bound(value: Any, maximum: int, path: str) -> None:
+        if not isinstance(value, dict) or not isinstance(value.get("evidence_ids"), list):
+            return
+        bounded: list[str] = []
+        for item in value["evidence_ids"]:
+            if isinstance(item, str) and item not in bounded:
+                bounded.append(item)
+            if len(bounded) == maximum:
+                break
+        if bounded != value["evidence_ids"]:
+            value["evidence_ids"] = bounded
+            normalizations.append(f"{path} deduplicated and capped at {maximum}")
+
+    raw_brief = result.get("raw_brief")
+    if isinstance(raw_brief, dict) and isinstance(raw_brief.get("claims"), list):
+        for index, claim in enumerate(raw_brief["claims"]):
+            bound(claim, 16, f"raw_brief.claims[{index}].evidence_ids")
+    summary = result.get("change_summary")
+    bound(summary, 24, "change_summary.evidence_ids")
+    if isinstance(summary, dict) and isinstance(summary.get("audience_candidates"), list):
+        for index, audience in enumerate(summary["audience_candidates"]):
+            bound(audience, 12, f"change_summary.audience_candidates[{index}].evidence_ids")
+    checks = result.get("owner_checks")
+    if isinstance(checks, list):
+        for index, check in enumerate(checks):
+            bound(check, 12, f"owner_checks[{index}].evidence_ids")
+    return result, normalizations
 
 
 def generate_raw_brief_with_model(
     packet: Mapping[str, Any],
     output_dir: Path,
     provider: RawBriefProvider,
+    *,
+    human_language: str = "zh-CN",
 ) -> tuple[dict[str, Any], Path]:
     validated = validate_packet(packet)
     receipt_path = output_dir / "model-run-receipt.json"
@@ -348,6 +677,7 @@ def generate_raw_brief_with_model(
         "model": provider.model,
         "provider_config_sha256": provider.config_sha256,
         "packet_sha256": validated["packet_sha256"],
+        "human_language": human_language,
         "started_at": _now(),
         "finished_at": None,
         "elapsed_seconds": 0.0,
@@ -356,7 +686,7 @@ def generate_raw_brief_with_model(
     }
     _write_json(receipt_path, receipt)
     try:
-        raw, telemetry = provider.generate(validated)
+        raw, telemetry = provider.generate(validated, human_language=human_language)
         receipt["status"] = "succeeded"
         receipt["output_sha256"] = sha256_bytes(canonical_json_bytes(raw))
         receipt["telemetry"] = telemetry
@@ -369,3 +699,96 @@ def generate_raw_brief_with_model(
         receipt["finished_at"] = _now()
         receipt["elapsed_seconds"] = round(time.perf_counter() - started, 3)
         _write_json(receipt_path, receipt)
+
+
+def _run_model_stage(
+    *,
+    output_dir: Path,
+    receipt_name: str,
+    stage: str,
+    input_sha256: str,
+    provider: OpenAICompatibleRawBriefProvider,
+    human_language: str,
+    operation: Any,
+) -> tuple[dict[str, Any], Path]:
+    receipt_path = output_dir / receipt_name
+    started = time.perf_counter()
+    receipt: dict[str, Any] = {
+        "schema_version": "plainchange.model-stage-receipt.v1",
+        "stage": stage,
+        "status": "running",
+        "provider": provider.provider_name,
+        "model": provider.model,
+        "provider_config_sha256": provider.config_sha256,
+        "input_sha256": input_sha256,
+        "human_language": human_language,
+        "started_at": _now(),
+        "finished_at": None,
+        "elapsed_seconds": 0.0,
+        "output_sha256": None,
+        "telemetry": {},
+    }
+    _write_json(receipt_path, receipt)
+    try:
+        result, telemetry = operation()
+        receipt["status"] = "succeeded"
+        receipt["output_sha256"] = sha256_bytes(canonical_json_bytes(result))
+        receipt["telemetry"] = telemetry
+        return result, receipt_path
+    except BaseException as exc:
+        receipt["status"] = "failed"
+        receipt["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        raise
+    finally:
+        receipt["finished_at"] = _now()
+        receipt["elapsed_seconds"] = round(time.perf_counter() - started, 3)
+        _write_json(receipt_path, receipt)
+
+
+def generate_project_understanding_with_model(
+    packet: Mapping[str, Any],
+    output_dir: Path,
+    provider: OpenAICompatibleRawBriefProvider,
+    *,
+    human_language: str = "zh-CN",
+) -> tuple[dict[str, Any], Path]:
+    validated = validate_project_context(packet)
+    return _run_model_stage(
+        output_dir=output_dir,
+        receipt_name="project-understanding-run-receipt.json",
+        stage="project_understanding",
+        input_sha256=str(validated["packet_sha256"]),
+        provider=provider,
+        human_language=human_language,
+        operation=lambda: provider.understand_project(validated, human_language=human_language),
+    )
+
+
+def generate_change_interpretation_with_model(
+    packet: Mapping[str, Any],
+    understanding: Mapping[str, Any],
+    output_dir: Path,
+    provider: OpenAICompatibleRawBriefProvider,
+    *,
+    human_language: str = "zh-CN",
+) -> tuple[dict[str, Any], Path]:
+    validated = validate_packet(packet)
+    input_sha = sha256_bytes(
+        canonical_json_bytes(
+            {
+                "packet_sha256": validated["packet_sha256"],
+                "understanding_identity": understanding["understanding_identity"],
+            }
+        )
+    )
+    return _run_model_stage(
+        output_dir=output_dir,
+        receipt_name="change-interpretation-run-receipt.json",
+        stage="change_interpretation",
+        input_sha256=input_sha,
+        provider=provider,
+        human_language=human_language,
+        operation=lambda: provider.interpret_change(
+            validated, understanding, human_language=human_language
+        ),
+    )

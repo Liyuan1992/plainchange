@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>AI 变化说明</title>
+  <title>PlainChange review</title>
   <style>
 {{THEME_CSS}}
 {{APP_CSS}}
@@ -20,9 +20,14 @@
       </nav>
     </div>
     <div id="top-status" class="top-status" aria-label="本次变化状态"></div>
+    <div id="language-switch" class="language-switch" role="group" aria-label="报告语言">
+      <button type="button" data-locale="zh-CN" aria-pressed="false">中文</button>
+      <button type="button" data-locale="en" aria-pressed="false">English</button>
+    </div>
   </header>
 
   <main class="shell">
+    <p class="language-boundary">本报告界面可切换中英文；项目说明、任务原话、技术证据和仅提供单语的解释正文保留来源语言。</p>
     <section class="hero" aria-labelledby="page-title">
       <div>
         <p id="eyebrow" class="eyebrow"></p>
@@ -34,6 +39,7 @@
 
     <section id="change-page" class="page-panel" role="tabpanel" aria-labelledby="change-tab">
       <section id="owner-change" class="owner-change" aria-label="这次改动的负责人摘要" hidden>
+        <aside id="analysis-mode-banner" class="analysis-mode-banner" hidden></aside>
         <article class="owner-conclusion">
           <p class="eyebrow">一句话结论</p>
           <h2 id="owner-change-headline"></h2>
@@ -117,6 +123,7 @@
         <div id="owner-map-evidence-key" class="owner-map-evidence-key" aria-label="信息来源说明" hidden>
           <span data-evidence-key="declared"><strong>来自项目说明</strong>：项目自己这样描述</span>
           <span data-evidence-key="code"><strong>找到对应代码</strong>：代码里确实有相关位置</span>
+          <span data-evidence-key="model"><strong>模型候选理解</strong>：已通过本地来源和路径校验，仍不是运行事实</span>
         </div>
         <div class="owner-map-workspace">
           <section id="owner-map-canvas" class="owner-map-canvas" tabindex="-1" aria-label="可点击的软件工作图">
@@ -185,7 +192,12 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <script id="review-data" type="application/json">{{REVIEW_JSON}}</script>
   <script id="software-control-data" type="application/json">{{SOFTWARE_CONTROL_JSON}}</script>
+  <script id="localized-control-data" type="application/json">{{LOCALIZED_CONTROL_JSON}}</script>
+  <script id="localized-review-data" type="application/json">{{LOCALIZED_REVIEW_JSON}}</script>
   <script id="technical-payload-data" type="application/json">{{TECHNICAL_PAYLOAD_JSON}}</script>
+  <script>
+{{I18N_JS}}
+  </script>
   <script>
 {{APP_JS}}
   </script>

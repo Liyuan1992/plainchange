@@ -76,6 +76,17 @@ Verification: `prepare` and `finalize` exited 0; packet forbidden-string scan fo
 Links: `docs/project-governance/tasks/TASK-20260904-002-first-digitals-self-sample.md`, `artifacts/digitalself-430c342/blind-review.md`, `BUG-20260904-002`
 Needs curation: yes
 
+ID: EVO-20260911-029
+Date: 2026-09-11
+Domain: report-localization
+Type: language-neutral-owner-presentation
+What changed: Replaced the translation-pack-only owner-body path with a two-tier projection. PlainChange-owned deterministic messages carry stable semantic keys and bounded arguments and can render English automatically; project/source-language text stays original, while complete reviewed translation packs remain an explicit override.
+Why now: Tracing the remaining Chinese in English mode showed that most first-screen text came from PlainChange itself, not from the target README. Requiring an authored translation for facts the deterministic generator already understands created needless per-project work and confused text ownership.
+Impact / tradeoff: A new Chinese project now receives an English decision layer without a model, network call or sample-specific glossary, including dynamic counts, filenames and code-discovered candidate responsibilities. Project declarations can still appear in their original language by design and are labelled as such; automatic English is deterministic presentation, not a reviewed semantic translation or stronger evidence.
+Verification: 113 tests, Python compilation, JavaScript syntax, diff checks, target-name scan, a fresh 1,140-module DigitalSelf generation, structured Chinese-remnant audit and real Edge desktop/390 px interaction checks pass. Canonical Chinese control data remains unchanged by projection and the existing reviewed vLLM pack path still passes.
+Links: `TASK-20260911-044`, `BUG-20260911-033`, `src/plainchange/owner_presentation.py`, `docs/project-governance/domains/evidence-contract.md`
+Needs curation: yes
+
 ID: EVO-20260910-010
 Date: 2026-09-10
 Domain: analysis-runtime
@@ -569,4 +580,244 @@ Why now: The owner decided to open source the Alpha but found the former product
 Impact / tradeoff: The brand can grow beyond one report while existing artifact schemas retain continuity. The pre-public Alpha intentionally makes a clean package/CLI break; historical evidence keeps its original names and paths where rewriting would falsify history.
 Verification: Distribution, clean-install, direct-project CLI, shorthand CLI, loopback UI, report generation, browser branding, full tests, compilation, JavaScript syntax, package-content, and checksum checks are required before the local Alpha tag.
 Links: `ADR-0005`, `pyproject.toml`, `src/plainchange/cli.py`, `src/plainchange/onboarding.py`, `README.md`, `TASK-20260910-038`
+Needs curation: yes
+
+ID: EVO-20260910-023
+Date: 2026-09-10
+Domain: distribution
+Type: bilingual-public-reader
+What changed: Split the public project entry into English and Simplified Chinese README editions and added an offline report locale layer with exactly `en` and `zh-CN`, browser/system default selection, explicit switching, and local preference persistence.
+Why now: The owner chose an international product identity and then required both audiences to reach the project and read the same Change Passport without maintaining a Chinese-only public surface.
+Impact / tradeoff: PlainChange-owned controls, status language, accessibility text, architecture explanations, and known deterministic templates can switch without a network request or evidence rewrite. Project declarations, quotations, technical evidence, and single-language authored explanation remain in their source language; fully translating those requires a separately source-bound bilingual explanation rather than silent client-side invention.
+Verification: 93 tests, compileall, report/i18n/browser-check JavaScript syntax, diff checks, wheel/sdist content inspection, and real Edge checks for English/Chinese system preference, unsupported-locale fallback, explicit switching, reload persistence, 1280/390 px overflow, and console problems pass.
+Links: `README.md`, `README.zh-CN.md`, `src/plainchange/templates/review-i18n.js`, `src/plainchange/templates/review.html`, `TASK-20260910-039`
+Needs curation: yes
+
+ID: EVO-20260910-024
+Date: 2026-09-10
+Domain: report-localization
+Type: source-bound-presentation
+What changed: Added localize-report template export/application, complete coverage validation, source identity binding and localized owner-data projections. Supplied the vLLM English sample outside generic source code.
+Why now: The owner rejected shell-only English because workflow content remained Chinese.
+Impact / tradeoff: Owner explanations can switch offline without mutating canonical evidence, graph structure or states. New projects require reviewed translations; language completeness does not establish semantic accuracy or runtime correctness.
+Verification: Coverage, stale-pack rejection, canonical preservation and CLI integration tests; Edge verifies 28 owner-view states at desktop/narrow widths, both locale defaults and persistence, with no console errors.
+Links: `TASK-20260910-040`, `BUG-20260910-025`, `README.md`, `README.zh-CN.md`
+Needs curation: yes
+
+ID: EVO-20260910-025
+Date: 2026-09-10
+Domain: report-localization
+Type: technical-explanation-projection
+What changed: Extended source-bound presentation translation to review summaries, conceptual workflow, technical claims, limitations, checks and lazy snapshot labels/responsibilities. Original conclusions are available in separate disclosures.
+Why now: The user found Chinese in the two technical panels that the prior language QA excluded.
+Impact / tradeoff: English readers can inspect explanations without replacing canonical JSON or source references. A translation remains a reviewable derived view, not stronger evidence.
+Verification: Script/DOM checks cover 11 states and canonical preservation; real-browser verification is currently blocked by environment limitations.
+Links: `BUG-20260910-026`, `TASK-20260910-040`
+Needs curation: yes
+
+ID: EVO-20260910-026
+Date: 2026-09-10
+Domain: cross-project-validation
+Type: scale-and-comprehension-evidence
+What changed: Added a reusable real-browser multi-project harness and ran the unchanged analyzer on fixed memdsl, VideoFactory and DigitalSelf ranges.
+Why now: The owner asked to test more of their own projects rather than infer portability from vLLM alone.
+Impact / tradeoff: The test separates delivery performance from semantic usefulness. Runtime is now seconds at 52 to 1,140 supported modules, but two of three projects still fail owner comprehension because conservative declaration extraction yields generic workflows. Fresh reports also do not automatically receive English body translations.
+Verification: Three reports generated; desktop/390 px tab, expansion, console and overflow checks pass; target HEAD/status hashes are unchanged. Source-bound report data and observed timings are recorded in TASK-041.
+Links: `TASK-20260910-041`, `BUG-20260910-029`, `scripts/verify-multi-project-browser.cjs`
+Needs curation: yes
+
+ID: EVO-20260910-027
+Date: 2026-09-10
+Domain: target-profile
+Type: architecture
+What changed: Split the automatic owner architecture into two explicit shapes: source-supported ordered workflows and source-bound unordered capability maps. Capability candidates come from bounded README lists/tables or, when absent, broad code areas; they carry no arrows or implied order.
+Why now: Multi-project validation showed that the earlier safe-looking generic four-step fallback still concealed useful product declarations and taught a false sequential model to non-technical owners.
+Impact / tradeoff: Libraries, runtimes and multi-surface applications can now explain what they contain without pretending every area runs in sequence. The extraction is deliberately conservative and may omit free-form capabilities; project declarations, code anchors and runtime facts remain separate.
+Verification: 107 tests; memdsl 5-capability report; DigitalSelf 10-capability report; VideoFactory ordered-workflow regression; real Edge desktop/narrow interaction and overflow checks; unchanged target fingerprints; no target-name matches in production source.
+Links: `TASK-20260910-042`, `BUG-20260910-029`, `BUG-20260910-030`, `src/plainchange/project_declarations.py`, `src/plainchange/software_control.py`
+Needs curation: yes
+
+ID: EVO-20260910-028
+Date: 2026-09-10
+Domain: target-profile
+Type: capability-depth
+What changed: Added an evidence-bound internal responsibility layer beneath capability overviews. Explicit README paths and exact public identifiers define the allowed code scope; fixed generic responsibility families may become unordered child candidates only when at least two are supported. Leaf capabilities no longer expose a fake duplicate expansion.
+Why now: The first capability-map correction removed fabricated workflow arrows, but real DigitalSelf review showed that broad capability cards were still too coarse and their one-to-one expansion offered no additional understanding.
+Impact / tradeoff: Non-technical owners can progressively open complex capabilities without losing the full map, while weak or single-source evidence now produces less detail instead of a confident fiction. Filename/identifier semantics remain heuristic candidates and therefore receive a distinct `从代码结构发现` state rather than `找到对应代码` project support.
+Verification: Focused reconciliation and contract tests, full suite, syntax checks, target-name scan, fresh DigitalSelf/memdsl/VideoFactory reports, and real Edge desktop/narrow interaction are required by TASK-043. DigitalSelf produces 6/4/2 child groups under three capabilities; memdsl stays leaf-only; VideoFactory preserves its ordered workflow and quality-check mapping.
+Links: `TASK-20260910-043`, `BUG-20260910-031`, `src/plainchange/project_declarations.py`, `src/plainchange/auto_draft.py`, `src/plainchange/templates/review.js`
+Needs curation: yes
+
+ID: EVO-20260911-030
+Date: 2026-09-11
+Domain: project-governance
+Type: corrective-sequencing-note
+What changed: Preserved the complete EVO-20260911-029 language-neutral-presentation record at its accidentally earlier physical position and added this tail note so readers do not infer chronology from file position.
+Why now: The append patch matched a repeated `Needs curation: yes` anchor, recurring the sequencing issue documented by BUG-20260904-001 and BUG-20260911-034.
+Impact / tradeoff: No evolution fact was rewritten or deleted. ID/date remain the ordering authority; the ledger retains visible evidence of the append-process defect.
+Verification: `rg -n "EVO-20260911-029|EVO-20260911-030" docs/project-governance/EVOLUTION.md` retains both records and places EVO-030 at the unique current tail.
+Links: `EVO-20260911-029`, `BUG-20260904-001`, `BUG-20260911-034`, `TASK-20260911-044`
+Needs curation: yes
+
+ID: EVO-20260911-031
+Date: 2026-09-11
+Domain: report-localization
+Type: generated-architecture-projection
+What changed: Extended language-neutral presentation from the owner control document to PlainChange-owned conceptual-architecture and lazy technical-snapshot wording. English is derived from stable semantic fields and applied as identity-bound text-path patches.
+Why now: Owner screenshots proved the first correction covered one report data source but not the separate review/architecture sources used by technical implementation.
+Impact / tradeoff: Generated architecture framing now switches consistently without duplicating or rewriting the large canonical snapshot. Project declarations remain visibly source-language until an identity-bound reviewed translation is supplied.
+Verification: 114 tests; mutated-wording and canonical-preservation regression; compile and JavaScript syntax checks; fixed DigitalSelf v3 generation; real Edge desktop/narrow interaction and generated-text assertions.
+Links: `TASK-20260911-045`, `BUG-20260911-035`, `EVO-20260911-029`
+Needs curation: yes
+
+ID: EVO-20260911-032
+Date: 2026-09-11
+Domain: report-localization
+Type: english-source-cross-project-validation
+What changed: Added visible-text language validation to the real-browser harness and used it on a pure-English public FastAPI release comparison. A locale-specific decorative capability mark was replaced with a language-neutral mark.
+Why now: The owner proposed an English-only external repository as the clean control for distinguishing project-source language from PlainChange-generated presentation.
+Impact / tradeoff: English localization can now be asserted across both owner tabs and lazy technical content without falsely failing because the offline file contains dormant Chinese resources. Native language-choice labels remain intentionally self-named. One sample is evidence of this fixed path, not universal language completeness.
+Verification: Generic deterministic analysis in 1.456 seconds; 1,121 modules per revision; 2,242 cache hits; zero visible Han lines in English change/system views; real Edge 1280/390 px; 114 tests; unchanged fixed Git objects.
+Links: `TASK-20260911-046`, `BUG-20260911-036`, `scripts/verify-multi-project-browser.cjs`, `artifacts/fastapi-english-source-v3`
+Needs curation: yes
+
+ID: EVO-20260911-033
+Date: 2026-09-11
+Domain: report-localization
+Type: interactive-state-language-coverage
+What changed: Completed identity-bound English projection for the change tab's dynamic technical explanation and changed the browser acceptance contract from a default-screen scan to accumulated coverage across disclosures, views and node selections.
+Why now: The owner's screenshot exposed substantial Chinese text that the earlier pure-English FastAPI validation had missed behind the first technical disclosure.
+Impact / tradeoff: PlainChange-owned explanations now follow the selected language throughout the decision and evidence journey without translating project-authored material or changing canonical truth. The browser harness performs more interactions and therefore takes slightly longer, but it now tests what users can actually reveal.
+Verification: Pre-fix strict scan reproduced the mixed-language disclosure. Post-fix real Edge checks open technical details, task context, three relationship views, every unique node and the system technical view; both English tabs return zero visible Han-bearing lines except the native `中文` selector label.
+Links: `TASK-20260911-047`, `BUG-20260911-038`, `src/plainchange/review_presentation.py`, `scripts/verify-multi-project-browser.cjs`
+Needs curation: yes
+
+ID: EVO-20260911-034
+Date: 2026-09-11
+Domain: cross-project-validation
+Type: complex-full-stack-counterexample
+What changed: Added a fixed, read-only ChestnutDogAiThink product-recommendation sample that combines Python, Vue, source declarations, tracked dependencies and a large cross-surface commit. The unchanged analyzer produces a mechanically valid but semantically rejected report.
+Why now: The owner requested another real personal project after the pure-English FastAPI localization success; this sample tests explanation quality rather than language switching alone.
+Impact / tradeoff: The sample proves current speed and browser mechanics at 868 head modules, while exposing four high-impact generalization gaps that smaller Python-centric samples did not reveal. Keeping the failed report prevents a polished demo from replacing counterevidence.
+Verification: Deterministic generation completes in 3.789 seconds; Edge desktop/narrow interaction passes; target HEAD and 3,031-entry status fingerprint are unchanged. BUG-039 through BUG-042 retain the semantic failures.
+Links: `TASK-20260911-048`, `BUG-20260911-039`, `BUG-20260911-040`, `BUG-20260911-041`, `BUG-20260911-042`, `artifacts/chestnutdogaithink-product-recommendation`
+Needs curation: yes
+
+ID: EVO-20260911-035
+Date: 2026-09-11
+Domain: semantic-analysis
+Type: model-first-evidence-constrained-understanding
+What changed: Made user-configured model assistance the normal full-experience path. A sanitized, fixed-revision project-context packet is interpreted first and cached by immutable input/provider/model identity; the selected change is then interpreted against that validated project model. Deterministic code retains Git collection, scope, identities, source/evidence allowlists, downgrade rules and unknowns.
+Why now: The complex business-application counterexample proved that correct low-level signals can still produce the wrong owner story when deterministic heuristics choose semantic importance before a model sees the project.
+Impact / tradeoff: PlainChange can now use business context before choosing the headline, capability location and owner actions without treating model prose as runtime truth. Full experience requires a user-configured compatible endpoint and credential environment variable; no-provider operation remains useful but is prominently labelled basic evidence mode. Model cost, latency and quality become explicit product variables.
+Verification: 121 tests pass, including mocked ordered stages, source/evidence allowlists, cache reuse/invalidation, secret-free receipts and generic source-scope regressions. Python/JavaScript syntax, diff checks, wheel and source-archive builds pass. No real provider request was made, so semantic quality and beginner comprehension remain pending validation rather than accepted outcomes.
+Links: `TASK-20260911-049`, `ADR-0005`, `BUG-20260911-039`, `BUG-20260911-043`, `BUG-20260911-044`, `BUG-20260911-045`, `src/plainchange/semantic_analysis.py`, `src/plainchange/model_adapter.py`, `src/plainchange/pipeline.py`
+Needs curation: yes
+
+ID: EVO-20260911-036
+Date: 2026-09-11
+Domain: semantic-analysis
+Type: first-real-provider-model-first-result
+What changed: Configured the model-first path against a user-supplied OpenAI-compatible endpoint using an existing environment-only credential, exercised three available model variants, retained secret-free failure receipts, fixed the two generic defects exposed by real traffic and generated the first successful full-model business-application report.
+Why now: TASK-049 proved contracts with mocks, but the owner supplied a real provider specifically to see whether model-first semantics correct the rejected ChestnutDogAiThink product story.
+Impact / tradeoff: The final report identifies the product-recommendation overview, frontend cards, replacement-plan presentation and peer-shop data support instead of promoting incidental exception branches. Project understanding is reusable, and a repeated report takes 17.827 seconds; the two model stages consumed 45,197 reported tokens, so cache reuse and bounded evidence selection are product requirements rather than optional optimizations.
+Verification: Provider model enumeration succeeds; fixed failed attempts retain HTTP 504/502 or validation outcomes without secrets; the final `gpt-5.3-codex-spark` report completes with four accepted and two downgraded claims, explicit runtime/user-impact unknowns and no target mutation. Focused regressions enforce source bounds and sub-150 KB change input; full-suite closeout is tracked by TASK-050.
+Links: `TASK-20260911-050`, `BUG-20260911-039`, `BUG-20260911-046`, `BUG-20260911-047`, `artifacts/chestnutdogaithink-model-first-spark-v3`
+Needs curation: yes
+
+ID: EVO-20260911-037
+Date: 2026-09-11
+Domain: semantic-analysis
+Type: owner-language-contract
+What changed: Replaced the loose "owner language" instruction with a v2 model
+contract: a shallow two-to-six item business map, short result-first change
+summary fields, and optional source-bound concrete audience candidates. The
+deterministic owner projection displays a concrete role only as `可能受影响` and
+keeps its truth state/runtime behavior unverified; generic audience labels do
+not replace the honest fallback.
+Why now: The first real model run corrected ChestnutDogAiThink's dominant
+business story but still produced engineering-style headings, a ten-area
+implementation inventory, and an unhelpful generic audience label.
+Impact / tradeoff: The default report is easier to scan as a software owner,
+while detailed implementation remains available through existing evidence
+views. Compressing the owner map can omit secondary business areas from the
+default layer, so no more than six are shown and source/code evidence remains
+available beneath it.
+Verification: 124 tests across split suite groups pass, including mocked
+provider role projection, six-item rejection, generic-role suppression,
+compileall, JavaScript syntax and diff checks. No provider call or target
+project mutation occurred.
+Links: `TASK-20260911-051`, `ADR-0005`, `src/plainchange/semantic_analysis.py`,
+`src/plainchange/model_adapter.py`, `src/plainchange/auto_draft.py`,
+`tests/test_owner_language_contract.py`
+Needs curation: yes
+
+ID: EVO-20260911-038
+Date: 2026-09-11
+Domain: owner-presentation
+Type: real-model-owner-language-regression
+What changed: Exercised the v2 owner-language contract on the fixed ChestnutDogAiThink product range using the configured compatible model, then corrected the generic first-screen projection so it renders only the model's short result-first headline.
+Why now: Mocked contracts established output shape, but only a real business-project report could show whether the model stayed shallow and whether the browser projection preserved that result.
+Impact / tradeoff: The final report shows six business steps, a 23-character change title and a source-bound `店员` candidate marked only as possible impact. Detailed explanation stays available beneath the first screen; runtime behavior and real user impact are still unverified. The two-run exercise also demonstrates that immutable project-understanding cache reuse shortens repeated generation.
+Verification: First run completed in 29.064 seconds and exposed the projection defect; fixed rerun completed in 18.653 seconds with cached project understanding and 14.479-second change interpretation. Four claims accepted, two downgraded, zero rejected. Full 124-test suite, compilation, JavaScript syntax and diff checks pass; target commits and dirty worktree were unchanged and no secret appeared in generated output.
+Links: `TASK-20260911-051`, `TASK-20260911-052`, `TASK-20260911-053`, `BUG-20260911-048`, `artifacts/chestnutdogaithink-owner-language-v2-headline`
+Needs curation: yes
+
+ID: EVO-20260911-039
+Date: 2026-09-11
+Domain: semantic-analysis
+Type: two-local-project-owner-language-regression
+What changed: Applied the same configured model-first pipeline to two additional, fixed local project ranges without target-specific rules: memdsl's MCP Registry release and VideoFactory's render-freshness/QA change.
+Why now: A business web application alone cannot establish that the owner-language model separates public protocol/package work from a configuration-driven media-production workflow.
+Impact / tradeoff: memdsl is presented as a six-area capability map with a release-focused title and possible release-administrator/caller attention; VideoFactory is presented as a six-step production flow with a stale-render failure headline and explicit retry/runtime unknowns. Both results keep model language under deterministic evidence validation. One new cross-project state/body disagreement is recorded as BUG-20260911-049 rather than concealed.
+Verification: memdsl completed in 26.122 seconds (2 accepted, 4 downgraded, 0 rejected); VideoFactory completed in 20.705 seconds (5 accepted, 1 downgraded, 0 rejected). Both fixed target HEADs and dirty-state counts were identical before/after, and artifact scans found no credential-shaped strings.
+Links: `TASK-20260911-054`, `BUG-20260911-049`, `artifacts/memdsl-mcp-registry-owner-language-v2`, `artifacts/videofactory-render-freshness-owner-language-v2`
+Needs curation: yes
+
+ID: EVO-20260911-040
+Date: 2026-09-11
+Domain: public-documentation
+Type: open-source-readme-preparation
+What changed: Rewrote the paired English and Simplified Chinese READMEs as public owner-facing entry points. They describe the software-control problem, report journey, local quick start, user-owned compatible model path, privacy/evidence boundaries, translation behavior, artifacts and explicit Alpha limits.
+Why now: The owner judged the model-first product ready for external Alpha use and requested GitHub preparation; the prior documents were technically complete but read primarily as an internal capability inventory.
+Impact / tradeoff: New readers can decide whether PlainChange fits their responsibility before configuring a model or reading technical internals. The README deliberately does not claim runtime proof, guaranteed semantic quality, universal project support or a completed public release.
+Verification: Public README contracts pass (2 tests); fresh full pytest capture reached 100% with empty stderr; compilation, JavaScript syntax and diff checks pass. `uv build` creates the sdist/wheel, including both READMEs and excluding ignored artifacts/local provider configuration. Public token scan is clean. No remote, commit, push, GitHub Release or package publication occurred.
+Links: `TASK-20260911-055`, `README.md`, `README.zh-CN.md`, `docs/RELEASE_CHECKLIST.md`, `tests/test_public_docs.py`
+Needs curation: yes
+
+ID: EVO-20260911-041
+Date: 2026-09-11
+Domain: owner-presentation
+Type: final-statement-state-projection
+What changed: Repaired first-screen confirmed-card selection so a validator-downgraded architecture claim cannot retain an observed/confirmed visual state. The fallback confirms only fixed Git file change facts and states that semantic meaning remains unknown.
+Why now: A real memdsl model report revealed a direct contradiction on the primary decision surface during GitHub preparation.
+Impact / tradeoff: The page is more conservative when the model cannot support a function-level statement; it may say less about meaning, but it cannot visually overstate a downgraded claim. The provider-facing schema/prompt also forbids blank limitation strings, keeping formatting failures at the model contract boundary.
+Verification: 20 focused tests pass. The first fixed-input rerun fails visibly on blank limitations; the corrected rerun completes in 15.624 seconds, with cached project understanding, a deterministic 21-file confirmed card, explicit unknown semantics and an unchanged clean memdsl target. Compilation, JavaScript syntax and diff checks pass.
+Links: `TASK-20260911-056`, `BUG-20260911-049`, `src/plainchange/auto_draft.py`, `src/plainchange/model_adapter.py`, `src/plainchange/semantic_analysis.py`, `tests/test_pipeline.py`, `tests/test_semantic_analysis.py`, `artifacts/memdsl-mcp-registry-owner-language-v2-state-fix-rerun`
+Needs curation: yes
+
+ID: EVO-20260911-042
+Date: 2026-09-11
+Domain: model-language-contract
+Type: enforceable-owner-language-and-public-demo-repair
+What changed: Made the selected owner language a validated end-to-end
+contract. English model prose is now rejected when it contains Chinese; cached
+understanding is rechecked; PlainChange-owned candidate/profile and
+deterministic presentation text is selected by language; and all known model
+evidence lists are loss-only bounded before validation. Refreshed the English
+README GIF from a successful real English report.
+Why now: The public English demo exposed mixed-language output despite an
+English reader shell, which is unacceptable for a bilingual release surface.
+Impact / tradeoff: A non-compliant compatible model now fails with an explicit
+provider-output error instead of silently publishing mixed prose. The system
+does not translate source quotations or technical evidence automatically,
+preserving provenance and avoiding hidden cost. Bounding extra evidence IDs
+can only discard provider surplus; it cannot create evidence.
+Verification: Focused tests: 40 passed. Full suite: 130 passed. Report scripts
+parse, package build succeeds, the real unmodified PlainChange run completes
+in 18.6 seconds, and both README GIFs have two 4000 ms frames. No remote,
+commit, push, release, package publication, secret, or target modification
+was made.
+Links: `TASK-20260911-057`, `BUG-20260911-050`,
+`docs/images/plainchange-self-demo-en.gif`, `README.md`, `README.zh-CN.md`
 Needs curation: yes

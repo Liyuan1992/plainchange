@@ -4,16 +4,26 @@
 
 ## 需要准备什么
 
-- Windows 10/11、macOS 或 Linux。
-- Git。
-- Python 3.12 或更高版本。
 - 一个至少有两次提交的本地 Git 项目。
+- Git。
+- Windows 10/11（使用便携包时）；或 Python 3.12+ 与 `uv`（从源码运行时）。
 
 分析在本机完成，目标项目保持只读。报告默认写到目标项目旁边的 `plainchange-reports` 文件夹。
 
-最快的命令是在需要理解的 Git 项目目录运行 `plainchange .`。如果更喜欢图形引导，再运行 `plainchange serve`。
+普通使用不需要输入命令：使用便携版后直接双击 `PlainChange.exe`。CLI 只保留给
+开发者和自动化。
 
-## 方法一：从源码启动（推荐给当前 Alpha 试用者）
+## 方法一：Windows 便携包（推荐）
+
+从 [GitHub Release](https://github.com/Liyuan1992/plainchange/releases) 下载
+`PlainChange-windows-x64-portable.zip`，解压，然后双击
+`PlainChange.exe`。首次页面直接选择项目、接口地址、模型名和 API Key；密钥只在当前进程
+内存中使用。
+
+当前仓库可以用 `scripts/build-windows-portable.ps1` 在本机构建该压缩包；公开附件
+是否已发布以 Release 页面为准。
+
+## 方法二：从源码启动（开发者）
 
 先安装 [uv](https://docs.astral.sh/uv/)，然后在项目目录运行：
 
@@ -71,11 +81,11 @@ plainchange serve --port 8877
 
 ## 模型增强是可选项
 
-首次使用页默认选择“完整理解”：用户填写自己的 OpenAI-compatible 接口、模型和密钥环境变量名后，PlainChange 会先理解项目，再解释变化。页面不接收或保存密钥值。模型负责人说明会跟随浏览器语言（只支持英文、简体中文）；CLI 可用 `--human-language auto|en|zh-CN` 指定。选择“基础证据模式”或在没有配置时使用 CLI `auto`，不会调用模型，但报告会明确说明它没有完成业务语义理解。详见 README 的模型配置与隐私边界。
+首次使用页默认选择“完整理解”：用户填写自己的 OpenAI-compatible 接口、模型和 API Key 后，PlainChange 会先理解项目，再解释变化。密钥只在当前进程内存中使用，关闭 PlainChange 后清除，不会写入项目、报告、日志、配置文件或 Git。模型负责人说明会跟随浏览器语言（只支持英文、简体中文）；CLI 可用 `--human-language auto|en|zh-CN` 指定。选择“基础证据模式”或在没有配置时使用 CLI `auto`，不会调用模型，但报告会明确说明它没有完成业务语义理解。详见 README 的模型配置与隐私边界。
 
 ## 当前限制
 
 - 只分析已经提交到 Git 的两个固定版本，未提交的工作区变化不在范围内。
 - 静态代码关系不等于真实运行、部署、数据库或网络行为。
 - 自动生成的项目流程和负责人说明仍是候选，需要人核对。
-- Alpha 尚未完成足够的非技术用户理解测试，也没有原生 Windows 安装程序。
+- Alpha 尚未完成足够的非技术用户理解测试；当前提供便携式 Windows EXE，但尚无安装程序、代码签名或自动更新。

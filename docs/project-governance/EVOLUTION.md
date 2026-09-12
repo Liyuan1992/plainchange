@@ -821,3 +821,49 @@ was made.
 Links: `TASK-20260911-057`, `BUG-20260911-050`,
 `docs/images/plainchange-self-demo-en.gif`, `README.md`, `README.zh-CN.md`
 Needs curation: yes
+
+ID: EVO-20260912-043
+Date: 2026-09-12
+Domain: first-run-distribution
+Type: windows-portable-and-ephemeral-model-key
+What changed: Added a reproducible one-file Windows portable build, a
+double-click entrypoint using an ephemeral loopback port, and a simplified
+first-run model form: endpoint, model, and masked API key. The direct key is
+separate from the stable provider config and exists only in process memory.
+Why now: The owner identified `uv`, Python, CLI arguments, JSON files and
+environment-variable naming as an unacceptable entry barrier for the intended
+software-owner audience.
+Impact / tradeoff: Users no longer need a development runtime for the intended
+Windows entry. The P0 path deliberately does not remember credentials, so a
+key must be pasted after restart. Git remains a host prerequisite; code signing,
+installer delivery, automatic updates and GitHub Release attachment remain
+separate decisions.
+Verification: 137 tests pass in 55.34 seconds; JavaScript checks, package build
+and diff check pass. The windowed EXE served the simplified shell from an
+ephemeral loopback port; its ZIP contains only the EXE and no injected test or
+environment credential literal. Browser-control infrastructure was unavailable
+for a new visual responsive pass.
+Links: `TASK-20260912-058`, `scripts/build-windows-portable.ps1`,
+`src/plainchange/portable.py`, `src/plainchange/onboarding.py`,
+`src/plainchange/model_adapter.py`, `tests/test_portable.py`
+Needs curation: yes
+
+ID: EVO-20260912-044
+Date: 2026-09-12
+Domain: first-run-onboarding
+Type: comparable-history-as-product-state
+What changed: Made zero saved versions and one saved version explicit guided
+workflow states instead of allowing Git's command failure to define the user
+experience.
+Why now: Portable first-run testing against a newly created project exposed a
+raw unborn-branch error that the earlier two-commit happy-path tests missed.
+Impact / tradeoff: Owners now receive a concrete next action without needing
+Git vocabulary. PlainChange still requires two real saved versions before it
+can make a before/after comparison; it does not invent a baseline or mutate the
+target repository.
+Verification: Dedicated zero/one/two-version regressions pass; the full suite
+is 139 passed. The rebuilt packaged flow returned the friendly zero-version
+message for the unchanged reported repository without Git jargon.
+Links: `TASK-20260912-059`, `BUG-20260912-051`,
+`src/plainchange/onboarding.py`
+Needs curation: yes

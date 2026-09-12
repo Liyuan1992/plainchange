@@ -23,13 +23,14 @@ LOOPBACK_HOSTS = {"127.0.0.1", "localhost"}
 OID_PATTERN = re.compile(r"^[0-9a-fA-F]{7,64}$")
 SAFE_ID_PATTERN = re.compile(r"[^a-z0-9._-]+")
 MAX_REQUEST_BYTES = 64_000
+MAX_EPHEMERAL_API_KEY_BYTES = 8_192
 
 
 class OnboardingError(ValueError):
     """Raised when the guided local workflow receives unsafe or invalid input."""
 
 
-def _git(repo: Path, args: list[str], timeout: int = 15) -> str:
+def _run_git(repo: Path, args: list[str], timeout: int = 15) -> subprocess.CompletedProcess[bytes]:
     env = os.environ.copy()
     env.update(
         {
@@ -40,7 +41,7 @@ def _git(repo: Path, args: list[str], timeout: int = 15) -> str:
         }
     )
     try:
-        completed = subprocess.run(
+        return subprocess.run(
             ["git", "-C", str(repo), "--no-pager", *args],
             check=False,
             capture_output=True,
@@ -52,6 +53,10 @@ def _git(repo: Path, args: list[str], timeout: int = 15) -> str:
         raise OnboardingError("读取项目版本超时，请确认这是一个可用的本地 Git 项目。") from exc
     except OSError as exc:
         raise OnboardingError("没有找到 Git，请先安装 Git 后重试。") from exc
+
+
+def _git(repo: Path, args: list[str], timeout: int = 15) -> str:
+    completed = _run_git(repo, args, timeout)
     if completed.returncode != 0:
         detail = completed.stderr.decode("utf-8", errors="replace").strip()
         raise OnboardingError(detail or "无法读取这个 Git 项目。")
@@ -83,6 +88,13 @@ def resolve_repository(value: str | Path) -> Path:
 def inspect_repository(value: str | Path, *, limit: int = 20) -> dict[str, Any]:
     repo = resolve_repository(value)
     limit = max(2, min(limit, 50))
+    branch = _git(repo, ["branch", "--show-current"]).strip() or "当前分支"
+    head_check = _run_git(repo, ["rev-parse", "--verify", "HEAD"])
+    if head_check.returncode != 0:
+        raise OnboardingError(
+            f"“{branch}”还没有保存过任何版本，所以现在没有改动前后可以比较。"
+            "请先保存一个初始版本，再完成一次修改并保存新版本后重试。"
+        )
     raw = _git(
         repo,
         [
@@ -100,8 +112,10 @@ def inspect_repository(value: str | Path, *, limit: int = 20) -> dict[str, Any]:
                 {"id": parts[0], "short_id": parts[1], "date": parts[2], "message": parts[3]}
             )
     if len(commits) < 2:
-        raise OnboardingError("这个项目至少需要两个提交，才能比较前后变化。")
-    branch = _git(repo, ["branch", "--show-current"]).strip() or "未命名分支"
+        raise OnboardingError(
+            "这个项目目前只有一个已保存版本，还没有“改动前”和“改动后”可以比较。"
+            "请完成一次修改并再保存一个版本后重试。"
+        )
     return {
         "path": str(repo),
         "name": repo.name,
@@ -282,13 +296,20 @@ class OnboardingState:
         if requested_mode not in {"full_model", "basic_evidence"}:
             raise OnboardingError("分析方式无效。")
         provider_config = payload.get("model_config")
+        model_api_key = payload.get("model_api_key")
         human_language = payload.get("human_language", "zh-CN")
         if human_language not in {"zh-CN", "en"}:
             raise OnboardingError("模型说明语言只能是中文或英文。")
         if requested_mode == "full_model" and not isinstance(provider_config, dict):
             raise OnboardingError("完整理解需要先填写模型接口设置。")
+        if model_api_key is not None:
+            if not isinstance(model_api_key, str) or not model_api_key.strip():
+                raise OnboardingError("模型密钥格式无效。")
+            if len(model_api_key.encode("utf-8")) > MAX_EPHEMERAL_API_KEY_BYTES:
+                raise OnboardingError("模型密钥过长。")
         if requested_mode == "basic_evidence":
             provider_config = None
+            model_api_key = None
         job = GuidedJob(
             secrets.token_hex(12),
             output,
@@ -305,6 +326,7 @@ class OnboardingState:
                     output,
                     generator="model" if requested_mode == "full_model" else "deterministic",
                     model_config=provider_config,
+                    model_api_key=model_api_key,
                     human_language=human_language,
                 )
             except (ManifestError, OSError, RuntimeError, ValueError) as exc:

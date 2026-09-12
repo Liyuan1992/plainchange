@@ -80,17 +80,20 @@
           </fieldset>
           <section id="model-settings" class="model-settings" aria-labelledby="model-settings-title">
             <div class="model-settings-head">
-              <div><strong id="model-settings-title">模型接口设置</strong><span>支持国内外 OpenAI 兼容接口</span></div>
-              <span class="safe-chip">不保存密钥</span>
+              <div><strong id="model-settings-title">连接你的模型</strong><span>支持国内外 OpenAI 兼容接口</span></div>
+              <span class="safe-chip">密钥只用于本次分析</span>
             </div>
             <div class="model-grid">
-              <label>接口名称<input id="provider-id" type="text" value="my-provider" autocomplete="off"></label>
-              <label>模型名称<input id="model-name" type="text" placeholder="例如：gpt-5 / deepseek-chat" autocomplete="off"></label>
               <label class="wide">兼容接口地址<input id="model-base-url" type="url" placeholder="https://api.example.com/v1" autocomplete="off"></label>
-              <label>密钥环境变量名<input id="api-key-env" type="text" value="PLAINCHANGE_MODEL_API_KEY" autocomplete="off"></label>
-              <label>输出兼容模式<select id="response-format"><option value="json_schema">JSON Schema</option><option value="json_object">JSON Object</option><option value="prompt_only">Prompt-only JSON</option></select></label>
+              <label>模型名称<input id="model-name" type="text" placeholder="例如：gpt-5 / deepseek-chat" autocomplete="off"></label>
+              <label>API Key<input id="model-api-key" type="password" placeholder="粘贴你自己的 API Key" autocomplete="off" spellcheck="false"></label>
             </div>
-            <p class="model-note">这里只填写环境变量的名字，不填写密钥。请在启动 PlainChange 前把密钥放进该环境变量；留空表示接口不需要密钥。</p>
+            <label class="keyless-option"><input id="model-no-api-key" type="checkbox"> 这个接口不需要 API Key</label>
+            <p class="model-note">密钥只保存在当前 PlainChange 进程的内存中：不会写入项目、报告、日志、配置文件或 Git。关闭 PlainChange 后需要重新填写。</p>
+            <details class="advanced-settings">
+              <summary>高级兼容设置</summary>
+              <label>输出兼容模式<select id="response-format"><option value="json_schema">JSON Schema（默认）</option><option value="json_object">JSON Object</option><option value="prompt_only">Prompt-only JSON</option></select></label>
+            </details>
           </section>
           <div class="promise-grid">
             <div><strong>你会看到</strong><span>AI 改了什么、可能影响谁、该检查什么</span></div>

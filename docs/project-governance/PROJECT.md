@@ -4,8 +4,10 @@ Current open-source preparation: TASK-20260911-055 rewrites the English and
 Simplified Chinese public entry points around the owner job-to-be-done, local
 model-provider choice, evidence boundaries and Alpha limits. Public-doc tests
 and package build pass, and no token-shaped content was found in the public
-worktree scope. The current release branch has no Git remote; no current
-release-scope commit, push, GitHub Release or package publication exists.
+worktree scope. The public repository is now
+`https://github.com/Liyuan1992/plainchange`, with `main` at `0197c53` and the
+historical `v0.1.0-alpha.1` tag pushed. No GitHub Release, registry publication,
+code signing or hosted service exists yet.
 
 Current two-local-project regression: TASK-20260911-054 confirms that the v2
 model contract can distinguish a capability-oriented public package release

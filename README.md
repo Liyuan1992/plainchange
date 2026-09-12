@@ -47,7 +47,25 @@ The full experience makes two constrained model calls: one to form a bounded pro
 
 Without a configured provider, PlainChange sends no network request and emits a clearly labelled **basic evidence** report instead. This is useful for private diagnostics, but it is not presented as a complete business understanding.
 
-## Start locally
+## Windows: download, unzip, double-click
+
+The intended path for a software owner is a portable Windows download:
+
+1. Download `PlainChange-windows-x64-portable.zip` from the GitHub Release.
+2. Unzip it anywhere on your computer.
+3. Double-click `PlainChange.exe`.
+4. Choose the Git project, then enter your model endpoint, model name, and API key.
+
+No terminal, Python, `uv`, JSON file, or environment variable is needed. The API key is
+used only in PlainChange's process memory for that analysis; it is never written to the
+project, report, log, local configuration, or Git. Closing the app clears it. The portable
+app still needs Git installed because it compares committed versions.
+
+The portable ZIP is built locally by `scripts/build-windows-portable.ps1`; attaching it to
+a GitHub Release is a separate publishing step. Until an attachment is published, use the
+source/developer path below.
+
+## Source and developer path
 
 Requirements: Git, Python 3.12+, and [uv](https://docs.astral.sh/uv/).
 
@@ -72,9 +90,9 @@ uv run plainchange analyze D:\path\to\a\git-project
 
 See [installation and first use](docs/INSTALL.md) for wheel installation, ports, and troubleshooting.
 
-## Enable model-assisted understanding
+## Advanced model configuration
 
-PlainChange accepts a user-owned OpenAI-compatible endpoint. This can be a domestic, international, hosted, or local service; the project does not choose your provider or model.
+PlainChange accepts a user-owned OpenAI-compatible endpoint. This can be a domestic, international, hosted, or local service; the project does not choose your provider or model. The portable first-run page accepts a masked API key directly and keeps it only in memory. The environment-variable JSON path below remains available for CLI and automation.
 
 ```powershell
 Copy-Item examples\model-provider.template.json model-provider.local.json

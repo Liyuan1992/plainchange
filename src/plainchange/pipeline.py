@@ -184,6 +184,7 @@ def analyze_sample(
     generator: str = "auto",
     model_config_path: str | Path | None = None,
     model_config: Mapping[str, Any] | None = None,
+    model_api_key: str | None = None,
     human_language: str = "zh-CN",
 ) -> dict[str, Any]:
     """Run the local path from manifest to an owner-facing candidate report."""
@@ -200,13 +201,17 @@ def analyze_sample(
         if model_config is not None
         else None
     )
+    if model_api_key is not None and provider_config is None:
+        raise ManifestError("a direct model credential requires a model provider config")
     resolved_generator = generator
     if generator == "auto":
         resolved_generator = "model" if provider_config is not None else "deterministic"
     if resolved_generator == "model":
         if provider_config is None:
             raise ManifestError("--model-config is required when --generator model")
-        configured_provider = OpenAICompatibleRawBriefProvider(provider_config)
+        configured_provider = OpenAICompatibleRawBriefProvider(
+            provider_config, api_key=model_api_key
+        )
     elif resolved_generator != "deterministic":
         raise ManifestError(f"unsupported generator: {generator}")
 

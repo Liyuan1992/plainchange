@@ -373,18 +373,26 @@ def _assistant_text(message: Mapping[str, Any]) -> str:
 
 
 class OpenAICompatibleRawBriefProvider:
-    def __init__(self, config: ModelProviderConfig) -> None:
+    def __init__(self, config: ModelProviderConfig, *, api_key: str | None = None) -> None:
         self.config = config
         self.provider_name = config.provider_id
         self.model = config.model
         self.config_sha256 = config.config_sha256
+        if api_key is not None:
+            if not isinstance(api_key, str) or not api_key.strip() or len(api_key) > 8_192:
+                raise ModelGenerationError("direct model credential is invalid")
+            self._ephemeral_api_key = api_key.strip()
+        else:
+            self._ephemeral_api_key = None
 
     def _headers(self) -> dict[str, str]:
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "plainchange/0.1",
         }
-        if self.config.api_key_env is not None:
+        if self._ephemeral_api_key is not None:
+            headers["Authorization"] = f"Bearer {self._ephemeral_api_key}"
+        elif self.config.api_key_env is not None:
             api_key = os.environ.get(self.config.api_key_env)
             if not api_key:
                 raise ModelGenerationError(

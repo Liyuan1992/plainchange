@@ -82,7 +82,12 @@ textarea { width: calc(100% - 50px); margin-left: 50px; }
 .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .model-grid label { display: grid; gap: 7px; color: var(--blue-dark); font-size: 13px; font-weight: 800; }
 .model-grid .wide { grid-column: 1 / -1; }
+.keyless-option { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--blue-dark); font-size: 13px; font-weight: 700; }
+.keyless-option input { width: 16px; min-height: 16px; margin: 0; }
 .model-note { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.advanced-settings { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d9e6f4; color: var(--muted); font-size: 13px; }
+.advanced-settings summary { cursor: pointer; font-weight: 800; color: var(--blue-dark); }
+.advanced-settings label { display: grid; gap: 7px; max-width: 280px; margin-top: 12px; color: var(--blue-dark); font-weight: 800; }
 .progress-box, .result-box { margin: 18px 0 0 50px; padding: 17px; border-radius: 14px; background: var(--blue-soft); }
 .progress-head { display: flex; justify-content: space-between; }
 .progress-track { height: 8px; margin-top: 12px; background: #d6e5f8; border-radius: 999px; overflow: hidden; }

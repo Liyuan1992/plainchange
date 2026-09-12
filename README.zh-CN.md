@@ -43,7 +43,23 @@ PlainChange 目前是本地优先的早期 Alpha：不修改被分析项目、�
 
 没有配置供应商时，PlainChange 不会发出任何网络请求，而是生成明确标注为**基础证据模式**的报告。它适合私密诊断，但不会被包装成已经完整理解业务。
 
-## 本地开始
+## Windows：下载、解压、双击
+
+面向软件负责人的正式入口是 Windows 便携包：
+
+1. 在 GitHub Release 下载 `PlainChange-windows-x64-portable.zip`。
+2. 解压到电脑任意位置。
+3. 双击 `PlainChange.exe`。
+4. 选择 Git 项目，再填写模型接口地址、模型名称和 API Key。
+
+不需要终端、Python、`uv`、JSON 配置文件或环境变量。API Key 只在本次 PlainChange
+进程内存中用于分析：不会写入项目、报告、日志、本地配置或 Git；关闭应用后即清除。便携版
+仍需已安装 Git，因为它比较的是已提交的版本。
+
+便携包由 `scripts/build-windows-portable.ps1` 在本机构建；将其附加到 GitHub Release 是
+另一个发布步骤。在公开附件发布前，可使用下方源码/开发者路径。
+
+## 源码与开发者路径
 
 需要：Git、Python 3.12+ 与 [uv](https://docs.astral.sh/uv/)。
 
@@ -68,9 +84,9 @@ uv run plainchange analyze D:\path\to\a\git-project
 
 wheel 安装、端口与排障见[安装与首次使用](docs/INSTALL.md)。
 
-## 配置模型增强理解
+## 高级模型配置
 
-PlainChange 使用用户自己配置的 OpenAI-compatible 接口。无论国内、国外、托管还是本地服务，只要兼容该接口即可；项目不会替你选择供应商或模型。
+PlainChange 使用用户自己配置的 OpenAI-compatible 接口。无论国内、国外、托管还是本地服务，只要兼容该接口即可；项目不会替你选择供应商或模型。便携版首次使用页可直接填写掩码 API Key，并且只在内存中保存；下方环境变量 JSON 方式仍适用于 CLI 和自动化。
 
 ```powershell
 Copy-Item examples\model-provider.template.json model-provider.local.json

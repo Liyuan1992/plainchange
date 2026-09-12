@@ -21,10 +21,10 @@
   const openReport = byId("open-report");
   const errorMessage = byId("error-message");
   const modelSettings = byId("model-settings");
-  const providerId = byId("provider-id");
   const modelName = byId("model-name");
   const modelBaseUrl = byId("model-base-url");
-  const apiKeyEnv = byId("api-key-env");
+  const modelApiKey = byId("model-api-key");
+  const modelNoApiKey = byId("model-no-api-key");
   const responseFormat = byId("response-format");
   let repository = null;
 
@@ -44,18 +44,31 @@
   function modelConfig() {
     const value = {
       schema_version: "change-passport.model-provider.v1",
-      provider_id: providerId.value.trim(),
+      provider_id: "guided-provider",
       base_url: modelBaseUrl.value.trim(),
       model: modelName.value.trim(),
-      api_key_env: apiKeyEnv.value.trim() || null,
+      api_key_env: null,
       timeout_seconds: 120,
       response_format: responseFormat.value,
     };
-    if (!value.provider_id || !value.base_url || !value.model) {
-      throw new Error("完整理解需要填写接口名称、兼容接口地址和模型名称。");
+    if (!value.base_url || !value.model) {
+      throw new Error("完整理解需要填写兼容接口地址和模型名称。");
     }
     return value;
   }
+
+  function modelApiKeyValue() {
+    const value = modelApiKey.value.trim();
+    if (!modelNoApiKey.checked && !value) {
+      throw new Error("请填写 API Key，或确认这个接口不需要 API Key。");
+    }
+    return value || null;
+  }
+
+  modelNoApiKey.addEventListener("change", () => {
+    modelApiKey.disabled = modelNoApiKey.checked;
+    if (modelNoApiKey.checked) modelApiKey.value = "";
+  });
 
   async function api(path, payload, method = "POST") {
     const response = await fetch(path, {
@@ -211,6 +224,7 @@
         output: outputPath.textContent,
         analysis_mode: analysisMode,
         model_config: analysisMode === "full_model" ? modelConfig() : null,
+        model_api_key: analysisMode === "full_model" ? modelApiKeyValue() : null,
         human_language: navigator.language?.toLowerCase().startsWith("zh") ? "zh-CN" : "en",
       });
       poll(data.job.id);

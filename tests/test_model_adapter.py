@@ -164,6 +164,44 @@ def test_missing_environment_credential_fails_before_request_and_keeps_receipt(
     assert receipt["output_sha256"] is None
 
 
+def test_ephemeral_credential_overrides_environment_without_entering_receipt(
+    sample_repo, manifest_factory, tmp_path: Path, monkeypatch
+):
+    repo, base, head = sample_repo
+    manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
+    prepared = prepare_sample(manifest, tmp_path / "prepared")
+    packet = validate_packet(
+        json.loads(Path(prepared["packet_path"]).read_text(encoding="utf-8"))
+    )
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    captured = {}
+
+    def fake_post(_url, _payload, _timeout, headers):
+        captured["headers"] = headers
+        return _completion(_model_claims(packet))
+
+    monkeypatch.setenv("TEST_MODEL_API_KEY", "environment-secret")
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
+    direct_secret = "ephemeral-direct-secret"
+    _raw, receipt_path = generate_raw_brief_with_model(
+        packet,
+        tmp_path / "prepared",
+        OpenAICompatibleRawBriefProvider(config, api_key=direct_secret),
+    )
+
+    assert captured["headers"]["Authorization"] == f"Bearer {direct_secret}"
+    assert direct_secret not in receipt_path.read_text(encoding="utf-8")
+    assert direct_secret not in config.config_sha256
+
+
+def test_ephemeral_credential_rejects_empty_or_oversized_values(tmp_path: Path):
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    with pytest.raises(ModelGenerationError, match="direct model credential"):
+        OpenAICompatibleRawBriefProvider(config, api_key=" ")
+    with pytest.raises(ModelGenerationError, match="direct model credential"):
+        OpenAICompatibleRawBriefProvider(config, api_key="x" * 8_193)
+
+
 def test_raw_brief_schema_requires_bounded_claims():
     claims = raw_brief_json_schema(["git.diff_summary"])["properties"]["claims"]
     assert claims["minItems"] == 4

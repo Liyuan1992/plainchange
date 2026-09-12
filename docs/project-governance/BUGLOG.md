@@ -1124,3 +1124,28 @@ Links: `TASK-20260911-057`, `src/plainchange/model_adapter.py`,
 `src/plainchange/templates/review-i18n.js`, `tests/test_model_adapter.py`,
 `docs/images/plainchange-self-demo-en.gif`
 Needs curation: yes
+
+ID: BUG-20260912-051
+Date: 2026-09-12
+Status: fixed
+Domain: first-run-onboarding
+Severity: high
+Symptom fingerprint: Selecting a Git project whose current branch has no
+saved versions exposes `fatal: ... does not have any commits yet` in the
+owner-facing project picker.
+Trigger / reproduction: Initialize a Git repository without creating its first
+commit, then choose it in the portable guided flow.
+Impact: A non-technical software owner sees an unexplained implementation
+error at the first step and cannot tell what action is required.
+Root cause: Repository inspection ran `git log` before checking whether `HEAD`
+exists, so Git's failure bypassed the intended friendly history guard.
+Resolution: TASK-059 detects zero and one saved versions before constructing a
+comparison and returns distinct owner-language guidance. The logic is generic
+and does not inspect or special-case the reported repository name.
+Verification: Focused onboarding suite: 11 passed. Full suite: 139 passed in
+62.33 seconds. The rebuilt portable executable returned the friendly error
+through its real HTTP endpoint for the unchanged reported zero-version
+repository; no `fatal` or `commit` text appeared.
+Links: `TASK-20260912-059`, `src/plainchange/onboarding.py`,
+`tests/test_onboarding.py`
+Needs curation: yes

@@ -60,7 +60,9 @@ async function evaluate(send) {
     scrollWidth: document.documentElement.scrollWidth,
     overflow: document.documentElement.scrollWidth > window.innerWidth,
     hasProjectInput: Boolean(document.querySelector('#repository-path')),
-    hasAnalyzeAction: Boolean(document.querySelector('#analyze-button'))
+    hasAnalyzeAction: Boolean(document.querySelector('#analyze-button')),
+    hasDirectApiKey: Boolean(document.querySelector('#model-api-key[type="password"]')),
+    hasEnvironmentVariableField: Boolean(document.querySelector('#api-key-env'))
   }))()`;
   const result = await send("Runtime.evaluate", {
     expression,
@@ -96,7 +98,7 @@ async function evaluate(send) {
   const checks = {
     title: desktop.title === "开始使用 · PlainChange",
     brand: desktop.brand.includes("PlainChange"),
-    controls: desktop.hasProjectInput && desktop.hasAnalyzeAction,
+    controls: desktop.hasProjectInput && desktop.hasAnalyzeAction && desktop.hasDirectApiKey && !desktop.hasEnvironmentVariableField,
     desktopOverflow: desktop.overflow,
     narrowOverflow: narrow.overflow,
     browserProblems: problems.length,

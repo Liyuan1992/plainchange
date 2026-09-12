@@ -1,0 +1,19 @@
+docs/project-governance/BUGLOG.md
+  s_1116ef124e665c::t_2eab06a47523a2 1377-1390
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1a16df96080d9b16007a75c4abeed446f3b70b5b",
+  "prompts": {},
+  "sessions": {
+    "s_1116ef124e665c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0651b-349a-7b11-892f-da9401cb1bb4",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

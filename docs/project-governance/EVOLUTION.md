@@ -76,6 +76,59 @@ Verification: `prepare` and `finalize` exited 0; packet forbidden-string scan fo
 Links: `docs/project-governance/tasks/TASK-20260904-002-first-digitals-self-sample.md`, `artifacts/digitalself-430c342/blind-review.md`, `BUG-20260904-002`
 Needs curation: yes
 
+ID: EVO-20260912-049
+Date: 2026-09-12
+Domain: model-contract
+Type: self-hosted-validation
+What changed: Replaced the incorrect minimal-repository report with a fixed-range
+self-analysis of PlainChange's complete Git AI integration, and hardened the
+generic project-understanding boundary so provider-visible constraints match
+local source/path and workflow validation. The final report names code-source
+coverage, optional Git AI collection, the Windows command correction and the
+remaining runtime/coverage unknowns.
+Why now: The owner correctly observed that the prior artifact proved native Git
+AI attribution but did not explain the product change that integrated Git AI.
+Impact / tradeoff: Self-analysis now tests the actual product promise and the same
+contract becomes more reliable for other repositories. Normalization is
+deliberately loss-only; malformed missing semantics still stop generation rather
+than being guessed. Historical pre-hook edits remain untracked, so the report
+shows 0% provenance coverage instead of fabricating authorship.
+Verification: The authoritative artifact is
+`artifacts/plainchange-git-ai-integration-review-v6/review.html`; all 148 tests,
+wheel/sdist build, Windows portable build and `git diff --check` pass. The real
+PlainChange HEAD, active notes and worktree state were unchanged by analysis.
+Links: `TASK-20260912-063`, `BUG-20260912-055`, `ADR-0006`
+Needs curation: yes
+
+ID: EVO-20260912-045
+Date: 2026-09-12
+Domain: agent-provenance
+Type: architecture
+What changed: Added an optional read-only Git AI adapter and a separate
+`authorship_attestation` evidence authority. Fixed-range output is bounded,
+validated and normalized before persistence; the owner report now shows a
+bilingual "where this change came from" summary without exposing raw sessions.
+Why now: The owner identified the missing chain from an AI coding session to
+the code it produced and approved Git AI as the recording layer beneath
+PlainChange.
+Impact / tradeoff: Existing repositories continue to work without Git AI. When
+records exist, PlainChange can explain recorded AI/human/untracked additions;
+when they do not, it cannot reconstruct history. Prompt text, transcript URLs,
+session/person IDs, emails, commit messages, raw diffs and base contents are
+discarded. Authorship remains unable to prove intent, correctness, tests,
+runtime behavior or user impact.
+Verification: 146 tests pass; JavaScript syntax and Git diff checks pass; source
+and wheel builds plus the Windows portable build succeed. Deterministic fake
+executables cover mixed provenance, no data, absence, timeout, non-zero exit,
+malformed/oversized output, unsafe identity text and invalid paths. A fixed
+PlainChange sample regenerated successfully with the expected non-fatal
+not-installed state. Real Git AI collection was not run because it is not
+installed. Browser automation was blocked from opening the local file URL, so
+new desktop/narrow screenshot acceptance is not claimed.
+Links: `TASK-20260912-060`, `ADR-0006`, `src/plainchange/agent_provenance.py`,
+`tests/test_agent_provenance.py`
+Needs curation: yes
+
 ID: EVO-20260911-029
 Date: 2026-09-11
 Domain: report-localization
@@ -866,4 +919,160 @@ is 139 passed. The rebuilt packaged flow returned the friendly zero-version
 message for the unchanged reported repository without Git jargon.
 Links: `TASK-20260912-059`, `BUG-20260912-051`,
 `src/plainchange/onboarding.py`
+Needs curation: yes
+
+ID: EVO-20260912-046
+Date: 2026-09-12
+Domain: project-governance
+Type: operations
+What changed: Recorded that `EVO-20260912-045` was physically inserted after
+an older record instead of at the file end. The entry is retained unchanged;
+IDs, dates and links establish the authoritative sequence
+`EVO-20260912-044 → EVO-20260912-045 → EVO-20260912-046`.
+Why now: The append-only ledger forbids silently moving or deleting the newly
+written provenance record, so the ordering mistake requires an explicit later
+correction.
+Impact / tradeoff: The audit trail remains intact and future readers have an
+unambiguous chronology despite one out-of-order physical entry.
+Verification: `rg -n "^ID: EVO-" docs/project-governance/EVOLUTION.md` shows
+all three IDs and this correction at the current file end.
+Links: `BUG-20260912-052`, `EVO-20260912-045`, `TASK-20260912-060`
+Needs curation: no
+
+ID: EVO-20260912-047
+Date: 2026-09-12
+Domain: git-ai-integration
+Type: real-provider-validation
+What changed: Installed the fixed official Git AI v1.7.5 release after explicit
+user approval, produced a real `refs/notes/ai` record in a disposable lab and
+verified PlainChange's sanitized, read-only range projection. The validation
+also added a Windows-only executable-suffix normalization required by Git AI's
+invocation-name dispatcher.
+Why now: The first adapter phase deliberately relied on simulated command
+output. The user approved user-level hooks and daemon state so the external
+notes contract and end-to-end privacy boundary could be tested for real.
+Impact / tradeoff: Repositories with Git AI records now expose source coverage
+without revealing prompts or full sessions and without changing the target.
+Historical changes still cannot be reconstructed, native Codex attribution
+still requires a fresh Agent session, and the Git AI user state is already about
+3.5 GB and may still grow after scanning existing Agent history.
+Verification: The fixed lab range records 4 AI additions at 100% coverage;
+HEAD, notes and worktree status are unchanged by PlainChange; seven sensitive
+identifiers/fields have zero artifact matches; 146 tests, syntax checks, sdist,
+wheel and Windows portable builds pass.
+Links: `TASK-20260912-060`, `TASK-20260912-061`, `BUG-20260912-053`,
+`BUG-20260912-054`, `ADR-0006`
+Needs curation: yes
+
+ID: EVO-20260912-048
+Date: 2026-09-12
+Domain: git-ai-integration
+Type: native-agent-validation
+What changed: Verified the complete native Codex attribution chain in a fresh
+post-install task without calling a manual checkpoint. A normal Codex file edit
+and ordinary Git commit produced a Git AI note, and PlainChange projected the
+same fixed range as 5 AI-authored lines from `codex` / `gpt-5.6-sol` at 100%
+recorded coverage.
+Why now: The controlled `mock_ai` validation proved the external format but
+could not establish that installed Codex hooks actually observe normal Agent
+edits. The user explicitly approved a new isolated task to close that gap.
+Impact / tradeoff: PlainChange can now claim a verified local Codex-to-code
+provenance path while retaining its strict evidence boundary. The result still
+does not prove correctness, runtime behavior or user impact, and existing
+desktop processes may need restart before newly installed PATH entries appear.
+Verification: The disposable range is
+`3b9d10b6ff8de7b4b61d5b2032379351265e5748..e1608fb3cbfdfd12bd6cf94efa6d0c08c097993e`,
+with notes object `ca46d7c68f856f472b4f3bbd01db52e7cbcbd10d`.
+PlainChange left HEAD, notes and worktree status unchanged; raw session identity
+and test email had zero matches in the generated artifact.
+Links: `TASK-20260912-061`, `TASK-20260912-062`, `ADR-0006`,
+`artifacts/git-ai-codex-native-v1/agent-provenance.json`
+Needs curation: yes
+
+ID: EVO-20260912-050
+Date: 2026-09-12
+Domain: project-governance
+Type: ledger-order-correction
+What changed: Recorded that `EVO-20260912-049` was written at a repeated footer
+anchor instead of the physical end of the append-only Evolution ledger. The
+original record remains unchanged and this later entry restores an explicit
+chronological audit trail.
+Why now: Append-only governance forbids silently moving or deleting the valid
+self-review record merely to repair its position.
+Impact / tradeoff: Readers and curation tools can distinguish a placement error
+from a content correction; the ledger keeps one out-of-order physical entry.
+Verification: `EVO-20260912-049` occurs once, this correction is the final
+Evolution record, and no prior entry was removed.
+Links: `EVO-20260912-049`, `TASK-20260912-063`, `BUG-20260912-056`
+Needs curation: no
+
+ID: EVO-20260912-051
+Date: 2026-09-12
+Domain: owner-experience
+Type: verification-control
+What changed: Added a strict fixed-range verification receipt and replaced the
+first tab's abstract status cards with a control surface that separates checks
+already completed for the owner, remaining evidence gaps with cause/method/
+responsibility, and the single decision still belonging to the owner.
+Why now: The first correct Git AI integration self-review still transferred its
+engineering burden to the user. It described uncertainty honestly but did not
+consume the real tests, builds, Windows checks, native Codex sample or privacy
+checks already performed.
+Impact / tradeoff: Owners can now see exactly which verification work is done
+without reading commands or task history. Receipts are optional and deliberately
+strict; reports without them keep the previous unknown-state behavior. Passing
+receipts still do not prove production correctness, all-platform compatibility
+or user impact.
+Verification: A configured-model rerun on the fixed Git AI integration range
+projects six passed checks, zero failures and one remaining boundary. Receipt
+tampering, range mismatch, unknown fields and false missing-receipt claims fail
+closed or are suppressed. 154 tests and both release build paths pass.
+Links: `TASK-20260912-064`, `BUG-20260912-057`,
+`plainchange.verification-receipt.v1`
+Needs curation: yes
+
+ID: EVO-20260912-052
+Date: 2026-09-12
+Domain: owner-experience
+Type: cross-project-regression
+What changed: Reused the fixed-range verification control on VideoFactory's
+media-production change and generalized remaining-gap projection so accepted
+or inferred attention claims with explicit next checks are not lost.
+Why now: PlainChange's self-analysis established the receipt path but could
+still hide real-world acceptance work on a business/media project. The user
+asked for a different project rather than another self-hosted example.
+Impact / tradeoff: The same page now distinguishes automated confidence from
+human acceptance across a second project type. More attention claims may appear
+as remaining work, but only when the validated brief already supplies an
+explicit next check; PlainChange does not invent new checks.
+Verification: The VideoFactory report explains the visual and stale-result
+change, lists 151 full tests, 27 focused tests and a successful package build,
+then retains one real-video visual/delivery check for the owner. PlainChange's
+155 tests and Python/Windows builds pass.
+Links: `TASK-20260912-065`, `BUG-20260912-058`,
+`artifacts/videofactory-owner-verification-v2/review.html`
+Needs curation: yes
+
+ID: EVO-20260912-053
+Date: 2026-09-12
+Domain: owner-experience
+Type: specific-decision-projection
+What changed: Replaced the generic owner acceptance prompt with a structured
+decision that reports the actual number of failed or unverified items and lists
+their concrete labels and responsible parties in the decision panel.
+Why now: Cross-project comparison showed that an evidence-correct gap panel was
+still followed by the same abstract sentence, transferring the final synthesis
+back to the owner and even miscounting multiple gaps as one.
+Impact / tradeoff: The owner can see exactly what remains outside the verified
+boundary before accepting a change. The decision panel repeats concise gap labels
+already shown with reasons and methods above, trading a small amount of visual
+duplication for decision clarity. It still does not make or persist the decision.
+Verification: PlainChange Git AI now names its cross-project/production boundary,
+while VideoFactory names final video appearance, stale-result messaging and real
+user experience. Both derive from the same code path. 157 tests, JavaScript syntax,
+sdist/wheel build and `git diff --check` pass. Automated browser control failed;
+the owner then inspected and accepted the Git AI v10 report in the real product
+surface, while the separate VideoFactory v3 visual state remains unreviewed.
+Links: `TASK-20260912-066`, `BUG-20260912-059`,
+`plainchange.verification-control.v1`
 Needs curation: yes

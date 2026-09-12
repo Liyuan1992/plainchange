@@ -1,0 +1,22 @@
+{
+  "total_score": 7.5,
+  "delivery_allowed": false,
+  "regions": {
+    "change_headline": {
+      "result": "structural_pass",
+      "score": 8.4,
+      "notes": ["单一结论承担变化说明，删除重复模型长段落"]
+    },
+    "verification_control": {
+      "result": "structural_pass",
+      "score": 8.6,
+      "notes": ["6项通过与1项剩余边界分离", "缺口包含原因、方法和责任方"]
+    },
+    "responsive_rendering": {
+      "result": "blocked",
+      "score": 5.5,
+      "notes": ["浏览器策略阻止自动打开本地file报告", "只有CSS和HTML结构断言，没有真实截图"]
+    }
+  },
+  "next_round_fixes": ["桌面和390px实际截图复核", "仅修复截图暴露的溢出或密度问题"]
+}

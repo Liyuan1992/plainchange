@@ -179,6 +179,8 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert "这次改了什么" in html
     assert "这个软件怎么工作" in html
     assert "owner-map-inspector" in html
+    assert "agent-provenance-data" in html
+    assert "Where did this change come from?" in html
     assert "ownerMapSelectedId" in html
     assert "查看详细验证步骤" in html
     assert "查看技术实现结构" in html
@@ -207,7 +209,9 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert "owner-question-column owner-question-column-secondary" in html
     assert '<details class="owner-relation-disclosure">' in html
     assert "owner-status-icon" in html
-    assert ".owner-status-list { display: grid; grid-template-columns: repeat(3" in html
+    assert ".owner-verification-grid { display: grid; grid-template-columns:" in html
+    assert "已经替你验证" in html
+    assert "还有什么没验证，为什么？" in html
     assert ".owner-audience-row { min-width: 0;" in html
     assert ".owner-audience-explanation { grid-column: 1 / -1;" in html
     assert ".owner-question-column { min-width: 0; display: grid;" in html

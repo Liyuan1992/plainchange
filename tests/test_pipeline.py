@@ -90,12 +90,15 @@ def test_end_to_end_file_bridge_does_not_change_target_repo(
 
     prepared = prepare_sample(manifest, output)
     packet_text = (output / "generator-packet.json").read_text(encoding="utf-8")
+    provenance = json.loads((output / "agent-provenance.json").read_text(encoding="utf-8"))
     raw_path = output / "raw-brief.input.json"
     raw_path.write_text(json.dumps(_raw_brief(), ensure_ascii=False), encoding="utf-8")
     finalized = finalize_brief(prepared["packet_path"], raw_path, output)
 
     assert "ground.truth" not in packet_text
     assert "feature flag was added" not in packet_text
+    assert provenance["status"] == "not_installed"
+    assert '"authority":"authorship_attestation"' in packet_text
     assert Path(finalized["brief_markdown"]).exists()
     assert Path(finalized["architecture_map"]).exists()
     assert Path(finalized["system_architecture"]).exists()
@@ -123,6 +126,8 @@ def test_end_to_end_file_bridge_does_not_change_target_repo(
     assert why["task_context"]["entries"][0]["role"] == "user"
     assert "这次 AI 改了什么？" in (output / "review.html").read_text(encoding="utf-8")
     assert "整体架构" in (output / "review.html").read_text(encoding="utf-8")
+    assert "这次改动从哪里来" in (output / "review.html").read_text(encoding="utf-8")
+    assert "安装 Git AI 后，可以从未来的变化开始记录" in (output / "review.html").read_text(encoding="utf-8")
     assert (output / "annotation.template.json").exists()
     assert _status(repo) == before
 
@@ -283,6 +288,7 @@ def test_prepare_reports_progress_and_reuses_content_cache(
     assert [item["name"] for item in receipt["stages"]] == [
         "git_preflight",
         "git_evidence",
+        "agent_provenance",
         "architecture",
         "generator_packet",
         "write_artifacts",

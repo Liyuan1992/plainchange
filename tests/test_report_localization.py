@@ -13,6 +13,7 @@ from test_review_model import validated_brief
 from plainchange.review_model import build_beginner_review_model
 from plainchange.cli import main
 from plainchange.html_renderer import render_review_html
+from plainchange.agent_provenance import GitAIProvenanceProvider
 
 
 def pair():
@@ -94,6 +95,14 @@ def test_cli_export_apply_preserves_canonical_data_and_rejects_stale_pack(tmp_pa
     control = resign(control)
     for filename, value in [('beginner-review.json', model), ('software-control.json', control)]:
         (tmp_path / filename).write_text(json.dumps(value), encoding='utf-8')
+    provenance = GitAIProvenanceProvider(command_prefix=(str(tmp_path / 'missing-git-ai'),)).collect(
+        tmp_path,
+        'a' * 40,
+        'b' * 40,
+        expected_added_lines=3,
+        expected_deleted_lines=1,
+    )
+    (tmp_path / 'agent-provenance.json').write_text(json.dumps(provenance), encoding='utf-8')
     source_bytes = (tmp_path / 'software-control.json').read_bytes()
     pack_path = tmp_path / 'translation.json'
     assert main(['localize-report', str(tmp_path), '--export', str(pack_path)]) == 0
@@ -107,6 +116,7 @@ def test_cli_export_apply_preserves_canonical_data_and_rejects_stale_pack(tmp_pa
         return json.loads(re.search(r'<script id="' + identifier + r'" type="application/json">(.*?)</script>', html, re.S).group(1))
     assert embedded('software-control-data') == control
     assert embedded('localized-control-data')['en'] == localized_control(control, pack)
+    assert embedded('agent-provenance-data') == provenance
     assert (tmp_path / 'software-control.json').read_bytes() == source_bytes
     pack['control_identity'] = 'stale'
     pack_path.write_text(json.dumps(pack), encoding='utf-8')

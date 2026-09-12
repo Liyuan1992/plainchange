@@ -151,7 +151,9 @@ def _compact_change_context(packet: Mapping[str, Any]) -> dict[str, Any]:
 
     file_items.sort(key=lambda item: (-churn(item), str(item.get("id", ""))))
     behavior_and_task = [
-        item for item in evidence if item.get("kind") in {"behavior_signal", "task"}
+        item
+        for item in evidence
+        if item.get("kind") in {"behavior_signal", "task", "test", "agent_provenance"}
     ]
     architecture_by_id = {
         str(item.get("id")): item
@@ -195,9 +197,11 @@ def _compact_change_context(packet: Mapping[str, Any]) -> dict[str, Any]:
             "unknowns": list(delta.get("unknowns", []))[:24],
             "limitations": list(delta.get("limitations", []))[:24],
         },
+        "verification_receipts": list(packet.get("verification_receipts", [])),
         "instructions": [
             "Use only the included evidence records; omitted evidence is unavailable, not negative evidence.",
             "File churn helps identify themes but does not prove user impact or runtime behavior.",
+            "Structured verification receipts are authoritative for their exact recorded scope; do not describe a supplied receipt as missing.",
         ],
     }
 
@@ -474,6 +478,8 @@ class OpenAICompatibleRawBriefProvider:
                 "Each label must name a person-visible business action, responsibility, or outcome in plain language. Keep labels short. Do not use framework, API, service, module, layer, route, import, controller, or implementation terminology as the main label unless that term is itself visible to the product owner. "
                 "When structure_kind is capability_map, every component.type must be capability. "
                 "When structure_kind is workflow, component.type must be input, process, output, human_gate, or state. "
+                "For workflow, list components in execution order and provide exactly one flow for each adjacent pair in that same order; for capability_map, flows must be empty. "
+                "Purpose and each component may cite at most 12 unique source IDs; each component may cite at most 24 unique code paths, copied exactly from source_paths. "
                 "Do not claim runtime behavior, user impact, test results, or correctness. Cite only supplied source IDs and code paths. "
                 f"{_human_language_instruction(human_language)} Output JSON only."
             ),
@@ -481,7 +487,12 @@ class OpenAICompatibleRawBriefProvider:
             schema=project_understanding_json_schema(validated),
             schema_name="plainchange_project_understanding",
         )
-        result = validate_project_understanding(validated, raw)
+        bounded_raw, normalizations = _bound_project_understanding_contract(
+            raw, validated
+        )
+        if normalizations:
+            telemetry["local_normalizations"] = normalizations
+        result = validate_project_understanding(validated, bounded_raw)
         _require_requested_human_language(
             result, human_language, stage="project understanding"
         )
@@ -586,7 +597,8 @@ def _change_interpretation_prompt(human_language: str) -> str:
             "Do not let an incidental exception, function, or file count displace the more important product change. "
             "Every evidence_id must come from the supplied change packet; change_summary.evidence_ids may contain at most 24 items. Keep unknown when evidence is insufficient. "
             "limitations may be empty; every supplied item must be a substantive non-empty limit. "
-            "Do not claim verified runtime behavior, end-user impact, test results, or correctness. Use English for every human-facing field except product names and code identifiers. Output JSON only."
+            "Do not claim verified runtime behavior, end-user impact, or correctness. Claim a test or build result only when it cites actual_test_receipt evidence, and state only that receipt's exact scope. "
+            "Write the headline as a concrete new owner-visible ability or corrected outcome, not as an implementation category such as coverage information. Use English for every human-facing field except product names and code identifiers. Output JSON only."
         )
     if human_language == "zh-CN":
         return (
@@ -598,9 +610,125 @@ def _change_interpretation_prompt(human_language: str) -> str:
             "不得用偶然出现的异常、函数或文件数量覆盖更主要的产品变化。"
             "所有 evidence_ids 必须来自变更证据包；change_summary.evidence_ids 最多只能列出 24 条。证据不足时保持 unknown。"
             "limitations 可以为空数组；如填写，每一项必须是有内容的具体限制，绝不能输出空字符串或空白项。"
-            "不得声称已验证运行行为、最终用户影响、测试结果或正确性。所有面向人的文本使用简体中文（代码标识符除外）。只输出 JSON。"
+            "不得声称已验证运行行为、最终用户影响或正确性。只有引用 actual_test_receipt 证据时才能陈述测试或构建结果，并且只能覆盖收据明确列出的范围。"
+            "结构化验证收据是其明确范围内的优先事实；已提供收据时，不得再说没有 actual_test_receipt，也不得把已通过项目列为待验证。"
+            "标题必须说清楚负责人现在具体多了什么能力或什么结果被修正，不能只写成“覆盖信息”等实现分类。所有面向人的文本使用简体中文（代码标识符除外）。只输出 JSON。"
         )
     raise ModelGenerationError(f"unsupported human output language: {human_language}")
+
+
+def _bound_project_understanding_contract(
+    raw: Mapping[str, Any], packet: Mapping[str, Any]
+) -> tuple[dict[str, Any], list[str]]:
+    """Remove unsupported project references without inventing semantics.
+
+    Some compatible providers accept the requested JSON Schema but do not
+    enforce nested enum, uniqueness, or list-size constraints. Filtering
+    unknown/surplus references is loss-only. Workflow edges may be reordered or
+    have extras removed only when the model already supplied every adjacent
+    edge implied by its own ordered component list; a missing edge still fails
+    normal validation.
+    """
+
+    result = json.loads(json.dumps(raw))
+    normalizations: list[str] = []
+    allowed_sources = set(map(str, packet.get("allowed_source_ids", [])))
+    allowed_paths = set(map(str, packet.get("source_paths", [])))
+
+    def bound_strings(
+        container: Any,
+        key: str,
+        *,
+        allowed: set[str] | None,
+        maximum: int,
+        path: str,
+    ) -> None:
+        if not isinstance(container, dict) or not isinstance(container.get(key), list):
+            return
+        original = container[key]
+        bounded: list[str] = []
+        for item in original:
+            if not isinstance(item, str):
+                continue
+            if allowed is not None and item not in allowed:
+                continue
+            if item not in bounded:
+                bounded.append(item)
+            if len(bounded) == maximum:
+                break
+        if bounded != original:
+            container[key] = bounded
+            normalizations.append(
+                f"{path} filtered, deduplicated and capped at {maximum}"
+            )
+
+    purpose = result.get("purpose")
+    bound_strings(
+        purpose,
+        "source_ids",
+        allowed=allowed_sources,
+        maximum=12,
+        path="purpose.source_ids",
+    )
+    components = result.get("components")
+    if isinstance(components, list):
+        for index, component in enumerate(components):
+            bound_strings(
+                component,
+                "source_ids",
+                allowed=allowed_sources,
+                maximum=12,
+                path=f"components[{index}].source_ids",
+            )
+            bound_strings(
+                component,
+                "code_paths",
+                allowed=allowed_paths,
+                maximum=24,
+                path=f"components[{index}].code_paths",
+            )
+    bound_strings(
+        result,
+        "unknowns",
+        allowed=None,
+        maximum=12,
+        path="unknowns",
+    )
+
+    flows = result.get("flows")
+    if result.get("structure_kind") == "capability_map" and isinstance(flows, list) and flows:
+        result["flows"] = []
+        normalizations.append("capability_map.flows removed")
+    elif (
+        result.get("structure_kind") == "workflow"
+        and isinstance(components, list)
+        and isinstance(flows, list)
+    ):
+        component_ids = [
+            item.get("id") if isinstance(item, Mapping) else None
+            for item in components
+        ]
+        if all(isinstance(item, str) for item in component_ids):
+            expected = list(zip(component_ids, component_ids[1:]))
+            labels: dict[tuple[str, str], str] = {}
+            for flow in flows:
+                if not isinstance(flow, Mapping):
+                    continue
+                edge = (flow.get("from"), flow.get("to"))
+                label = flow.get("label")
+                if edge in expected and isinstance(label, str) and edge not in labels:
+                    labels[edge] = label
+            if all(edge in labels for edge in expected):
+                ordered = [
+                    {"from": edge[0], "to": edge[1], "label": labels[edge]}
+                    for edge in expected
+                ]
+                if ordered != flows:
+                    result["flows"] = ordered
+                    normalizations.append(
+                        "workflow.flows restricted to the supplied consecutive chain"
+                    )
+    return result, normalizations
 
 
 def _bound_change_summary_evidence(raw: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:

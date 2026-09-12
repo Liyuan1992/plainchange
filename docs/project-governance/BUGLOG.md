@@ -263,6 +263,38 @@ Links: `src/change_passport/templates/review.html`, `src/change_passport/templat
 Follow-up: Validate the story map through an independent non-coder retelling; geometric non-overlap is not comprehension evidence by itself.
 Needs curation: yes
 
+ID: BUG-20260912-055
+Date: 2026-09-12
+Status: fixed
+Domain: model-contract
+Severity: medium
+Symptom fingerprint: Real model-assisted project understanding intermittently
+passes the provider's structured-output gate but fails PlainChange validation
+because workflows omit an adjacent edge, components cite unknown paths or source
+IDs, or source-reference lists exceed the local contract.
+Trigger / reproduction: Analyze the fixed PlainChange Git AI integration snapshot
+with a compatible provider before the contract hardening; consecutive attempts
+fail with `workflow must use one consecutive flow chain`, `unknown source or
+path`, and `source_ids ... at most 12 items`.
+Impact: Valid fixed Git evidence cannot produce a Change Passport even though the
+failure is in the semantic response shape, and retrying consumes time and tokens.
+Root cause: The JSON Schema exposed to the provider was looser than the local
+validator for source/path membership and list bounds, while the prompt did not
+make adjacent workflow edges explicit. The compatible endpoint also accepts only
+a subset of JSON Schema and rejects `uniqueItems`.
+Resolution: Bound source/path/flow/unknown lists in the provider schema, constrain
+code paths to the supplied allowlist, state the consecutive-edge rule in the
+prompt, and apply a loss-only normalizer that removes unknown, duplicate or
+surplus values. Do not synthesize missing semantic edges; those still fail closed.
+Omit unsupported `uniqueItems` and retain local deduplication.
+Verification: Focused model/semantic tests pass, the complete 148-test suite exits
+0, and the fixed self-review succeeds with `gpt-6-astra` without a target-specific
+rule. Python and Windows portable builds also pass.
+Links: `TASK-20260912-063`, `src/plainchange/model_adapter.py`,
+`src/plainchange/semantic_analysis.py`, `tests/test_model_adapter.py`,
+`tests/test_semantic_analysis.py`
+Needs curation: yes
+
 ID: BUG-20260911-033
 Date: 2026-09-11
 Status: fixed
@@ -1148,4 +1180,197 @@ through its real HTTP endpoint for the unchanged reported zero-version
 repository; no `fatal` or `commit` text appeared.
 Links: `TASK-20260912-059`, `src/plainchange/onboarding.py`,
 `tests/test_onboarding.py`
+Needs curation: yes
+
+ID: BUG-20260912-052
+Date: 2026-09-12
+Status: fixed
+Domain: project-governance
+Severity: low
+Symptom fingerprint: The new `EVO-20260912-045` record was inserted after an
+older ledger entry instead of being physically appended after
+`EVO-20260912-044`.
+Trigger / reproduction: Apply an underspecified patch anchored only on the
+repeated `Needs curation: yes` line in the append-only evolution ledger.
+Impact: File position no longer represents chronology for this entry, although
+the unique ID, date and content remain intact.
+Root cause: The patch matched the first repeated anchor rather than the end of
+the file.
+Resolution: Preserve the already written entry, because the ledger is
+append-only, and append `EVO-20260912-046` to make the physical-order exception
+and authoritative ID sequence explicit.
+Verification: `rg -n "^ID: EVO-"` locates `EVO-20260912-045` at its retained
+position and `EVO-20260912-046` at the physical end; no existing ledger entry
+was moved or deleted.
+Links: `EVO-20260912-045`, `EVO-20260912-046`
+Needs curation: no
+
+ID: BUG-20260912-053
+Date: 2026-09-12
+Status: mitigated
+Domain: git-ai-integration
+Severity: high
+Symptom fingerprint: Invoking `git-ai install-hooks --help` performs a real
+user-level hook/extension installation and starts a background scan instead of
+showing command help; the scan created a multi-gigabyte local metrics database.
+Trigger / reproduction: Run the official Git AI v1.7.5 Windows x64 binary as
+`git-ai install-hooks --help` on a machine with Codex, Claude Code and VS Code.
+Impact: The command changed global Agent configuration, installed an editor
+extension, started a daemon and wrote user-level state despite the validation
+task being explicitly scoped to an isolated repository.
+Root cause: PlainChange's validation procedure assumed conventional nested
+`--help` behavior without first confirming the command parser contract. Git AI
+treats the trailing token as irrelevant and executes `install-hooks`.
+Mitigation: Stop the Git AI daemon; run the documented `uninstall-hooks`;
+uninstall the exact VS Code extension; move only the newly created `.git-ai`
+state and extension residual to the recycle bin; verify both Agent configs parse
+and contain zero Git AI references. The release EXE remains only under `E:`.
+Verification: Final inventory reports zero Git AI processes, no user `.git-ai`
+directory, zero Git AI references in Codex/Claude configuration and zero
+registered VS Code Git AI extensions. The accidentally created state is
+recoverable from the recycle bin.
+Links: `TASK-20260912-061`, Git AI v1.7.5 CLI reference
+Follow-up: Treat mutating subcommands as mutating even when passed `--help`;
+inspect official reference/source before invoking them. A real integration must
+be separately approved as a user-level installation.
+Needs curation: yes
+
+ID: BUG-20260912-054
+Date: 2026-09-12
+Status: fixed
+Domain: git-ai-integration
+Severity: medium
+Symptom fingerprint: PlainChange reports Git AI as `invalid/nonzero_exit` on
+Windows even though the installed `git-ai diff <base>..<head> --json` command
+returns valid authorship data when invoked directly.
+Trigger / reproduction: Let `shutil.which("git-ai")` resolve the command through
+Windows `PATHEXT`; the returned path uses the uppercase suffix `git-ai.EXE`.
+Git AI v1.7.5 dispatches by invocation name and proxies `diff` to ordinary Git
+when called with that spelling, producing Git usage output and exit code 129.
+Impact: Installed Git AI provenance is silently downgraded to invalid on a
+normal Windows PATH, so users do not see valid authorship records.
+Root cause: The adapter preserved the filesystem path but did not account for
+Git AI's case-sensitive executable-name dispatch on a case-insensitive platform.
+Resolution: Normalize only an already discovered Windows `.EXE` suffix to
+lowercase `.exe`; do not rewrite the directory, executable base name, arguments
+or target-repository behavior.
+Verification: A dedicated regression covers Windows versus POSIX discovery.
+The real fixed range now produces an `available` summary with 4 AI additions,
+100% recorded coverage and one sanitized session; the full 146-test suite,
+package build and Windows portable build pass.
+Links: `TASK-20260912-061`, `src/plainchange/agent_provenance.py`,
+`tests/test_agent_provenance.py`
+Needs curation: yes
+
+ID: BUG-20260912-056
+Date: 2026-09-12
+Status: mitigated
+Domain: project-governance
+Severity: low
+Symptom fingerprint: `BUG-20260912-055` was appended after a repeated
+`Needs curation: yes` anchor rather than at the physical end of the append-only
+BugLog.
+Trigger / reproduction: Apply a patch whose only context is a footer repeated by
+many ledger entries.
+Impact: The source record remains intact but its physical location does not match
+the chronological ID order, which can confuse readers and append tooling.
+Root cause: The closeout patch used a non-unique anchor and matched the first
+eligible occurrence.
+Mitigation: Preserve the already-written record and add this explicit correction
+at the physical end; future appends must inspect and match the unique current tail.
+Verification: `BUG-20260912-055` occurs once, this correction is the last BugLog
+record, and neither record was deleted or rewritten.
+Links: `BUG-20260912-055`, `TASK-20260912-063`
+Needs curation: no
+
+ID: BUG-20260912-057
+Date: 2026-09-12
+Status: fixed
+Domain: owner-experience
+Severity: high
+Symptom fingerprint: A report with completed tests, builds and integration
+checks still tells the software owner only that behavior is unverified and asks
+them to perform engineering checks, so the report does not reduce decision work.
+Trigger / reproduction: Analyze PlainChange's Git AI integration with real
+historical test/build/integration results supplied only as unstructured task
+context; inspect the first report tab.
+Impact: The owner cannot distinguish completed verification from remaining
+boundaries, cannot see why a gap exists or who should close it, and may repeat
+checks that already passed.
+Root cause: Test receipts had no strict packet contract or owner projection;
+model unknown claims and generic attention cards were rendered without a fixed
+evidence source that could take precedence. A downgraded receipt claim in a
+non-attention section could also be misclassified as a new owner task.
+Resolution: Add hash- and commit-bound structured verification receipts; carry
+them through the packet, validated brief and review model; render completed
+checks separately from explicit attention gaps; attach reason, method and
+responsibility; and make supplied receipts override contradictory missing-
+receipt prose. Only attention claims can become owner-facing verification gaps.
+Verification: The Git AI self-report shows six passed checks, zero failures and
+one cross-project/version/production boundary. Model prose no longer claims the
+receipt is absent. The full 154-test suite, JavaScript syntax check, Python
+package build and Windows portable build pass.
+Links: `TASK-20260912-064`, `EVO-20260912-051`,
+`src/plainchange/verification.py`
+Needs curation: yes
+
+ID: BUG-20260912-058
+Date: 2026-09-12
+Status: fixed
+Domain: owner-experience
+Severity: high
+Symptom fingerprint: A report shows completed test receipts and declares no
+remaining gap even though an accepted attention claim includes limitations and
+an explicit next check such as final visual acceptance.
+Trigger / reproduction: Analyze VideoFactory `58d2149..d6594e3` with fixed
+receipts for the full suite, focused render tests and package build. The model
+correctly states that a finished video still needs human visual acceptance, but
+the verification control reports zero gaps.
+Impact: The owner may interpret completed automated checks as sufficient and
+miss the real-world acceptance step that the evidence explicitly preserves.
+Root cause: The control builder only projected `claim_type=unknown` attention
+claims. Verified receipt statements and supported attention inferences with a
+`next_check` were discarded from the remaining-work view.
+Resolution: Treat every explicit attention `next_check` as a remaining
+verification step, while keeping receipt results in the completed-check list.
+Non-unknown attention uses the next check as its gap label, retains the first
+limitation as the reason, assigns human acceptance to the owner/actual user and
+deduplicates identical checks.
+Verification: The VideoFactory report now shows three passed checks and one
+remaining human visual/delivery check with reason, method and responsibility.
+PlainChange's 155-test suite and both release builds pass.
+Links: `TASK-20260912-065`, `EVO-20260912-052`,
+`tests/test_verification.py`
+Needs curation: yes
+
+ID: BUG-20260912-059
+Date: 2026-09-12
+Status: fixed
+Domain: owner-experience
+Severity: high
+Symptom fingerprint: Different project reports with verification gaps show the
+same “one decision” acceptance sentence without naming what remains unverified;
+multiple gaps are also incorrectly counted as one.
+Trigger / reproduction: Open the owner decision panel in the PlainChange Git AI
+and VideoFactory verification reports, or build a control with two attention
+claims containing distinct `next_check` values.
+Impact: The owner must reread the technical gap panel to discover what they are
+accepting, and may mistake a generic acceptance prompt for a project-specific
+decision. The incorrect count can hide that several boundaries remain.
+Root cause: `build_verification_control` hard-coded both the decision count and
+body whenever `gaps` was non-empty; the decision object did not carry its source
+items.
+Resolution: Build the decision from the actual failed checks or gaps, retain the
+real count, list each item and responsible party, localize PlainChange-owned
+copy, and state that early acceptance does not change verification status.
+Verification: Single-gap, multi-gap, failed-check and ready-state regressions
+pass. Rebuilt PlainChange Git AI and VideoFactory reports contain different
+concrete decision items and zero matches for the old template. The full 157-test
+suite, JavaScript syntax check, Python package build and `git diff --check` pass.
+Automated browser acceptance was not recorded because the browser connection
+failed. The owner later inspected the Git AI v10 report in the real product
+surface and accepted it for an update; this does not cover the separate
+VideoFactory v3 visual state.
+Links: `TASK-20260912-066`, `EVO-20260912-053`,
+`src/plainchange/verification.py`, `tests/test_verification.py`
 Needs curation: yes

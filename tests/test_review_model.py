@@ -4,7 +4,7 @@ import copy
 
 import pytest
 
-from plainchange.models import ManifestError
+from plainchange.models import ManifestError, canonical_json_bytes, sha256_bytes
 from plainchange.review_model import (
     build_beginner_review_model,
     validate_beginner_review_model,
@@ -203,6 +203,36 @@ def test_beginner_review_preserves_claim_node_omission_and_truth_boundaries():
     assert model["node_details"]["module.core"]["label_source"] == "verified_responsibility"
     assert model["branch_groups"][0]["node_ids"] == ["module.folded"]
     assert model["validation"]["source_omitted_node_ids"] == ["module.folded"]
+    assert validate_beginner_review_model(model) == model
+
+
+def test_beginner_review_projects_structured_verification_and_remaining_reason():
+    brief = validated_brief()
+    receipt = {
+        "schema_version": "plainchange.verification-receipt.v1",
+        "change_identity": {"base_commit": "base", "head_commit": "head"},
+        "producer": {"kind": "agent", "name": "Codex"},
+        "checks": [
+            {
+                "id": "tests.full",
+                "category": "tests",
+                "status": "passed",
+                "label": {"zh-CN": "完整测试", "en": "Full tests"},
+                "summary": {"zh-CN": "148 项通过。", "en": "148 passed."},
+                "scope": {"zh-CN": "本地测试", "en": "Local tests"},
+                "limitations": [],
+                "observed_at": None,
+            }
+        ],
+    }
+    receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(receipt))
+    brief["verification_receipts"] = [receipt]
+
+    model = build_beginner_review_model(brief)
+
+    assert model["verification_control"]["passed_checks"][0]["id"] == "tests.full"
+    assert model["verification_control"]["gaps"] == []
+    assert model["verification_control"]["decision"]["tone"] == "ready"
     assert validate_beginner_review_model(model) == model
 
 

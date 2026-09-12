@@ -27,6 +27,7 @@ REVIEW_FIELDS = TEXT_FIELDS | frozenset({
     "eyebrow", "subtitle", "scope_note", "truth_label", "status_label", "icon",
     "before", "after", "impact", "unknown", "evidence_boundary", "limitation",
     "next_check", "action_label", "action_cost", "role_label", "source_label", "responsibility",
+    "reason", "how",
 })
 REVIEW_ARRAYS = TEXT_ARRAYS | frozenset({"limitations", "responsibilities"})
 REVIEW_SKIP = SKIP | frozenset({"original_text", "task_context", "evidence", "patch"})
@@ -138,6 +139,7 @@ def localized_control(control: dict | None, pack: Any) -> dict:
 
 def localize_report(directory: str, *, translations: str | None = None,
                     export: str | None = None, language: str = "en") -> dict:
+    from .agent_provenance import validate_agent_provenance
     from .html_renderer import render_review_html
     from .software_control import validate_software_control
 
@@ -161,7 +163,13 @@ def localize_report(directory: str, *, translations: str | None = None,
     if not translations:
         raise ManifestError("provide --translations or --export")
     pack = read(Path(translations))
-    html = render_review_html(model, control, pack)
+    provenance_path = root / "agent-provenance.json"
+    provenance = (
+        validate_agent_provenance(read(provenance_path))
+        if provenance_path.is_file()
+        else None
+    )
+    html = render_review_html(model, control, pack, provenance)
     (root / "review.html").write_text(html, encoding="utf-8")
     (root / "report-translations.json").write_text(json.dumps(pack, ensure_ascii=False, indent=2), encoding="utf-8")
     return {"review_html": str(root / "review.html"), "language": pack["target_language"]}

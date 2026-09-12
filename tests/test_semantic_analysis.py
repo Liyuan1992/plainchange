@@ -136,6 +136,22 @@ def test_project_understanding_limits_the_owner_map_to_six_items(sample_repo):
         validate_project_understanding(context, value)
 
 
+def test_project_understanding_schema_exposes_validator_reference_limits(sample_repo):
+    repo, _base, head = sample_repo
+    base = draft_target_profile(repo, head, 15, "Sample")
+    context = build_project_context_packet(repo, head, 15, "Sample", base)
+    schema = project_understanding_json_schema(context)
+    purpose_refs = schema["properties"]["purpose"]["properties"]["source_ids"]
+    component = schema["properties"]["components"]["items"]["properties"]
+
+    assert purpose_refs["maxItems"] == 12
+    assert component["source_ids"]["maxItems"] == 12
+    assert component["code_paths"]["maxItems"] == 24
+    assert component["code_paths"]["items"]["enum"] == context["source_paths"]
+    assert schema["properties"]["flows"]["maxItems"] == 5
+    assert schema["properties"]["unknowns"]["maxItems"] == 12
+
+
 def test_capability_map_derives_redundant_component_type(sample_repo):
     repo, _base, head = sample_repo
     base = draft_target_profile(repo, head, 15, "Sample")

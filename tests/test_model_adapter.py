@@ -9,6 +9,7 @@ from plainchange.generator_contract import validate_packet
 from plainchange.model_adapter import (
     ModelGenerationError,
     OpenAICompatibleRawBriefProvider,
+    _bound_project_understanding_contract,
     _bound_model_evidence_budgets,
     _bound_change_summary_evidence,
     _change_interpretation_prompt,
@@ -263,6 +264,46 @@ def test_model_evidence_budgets_cover_all_nested_contracts():
     assert len(bounded["change_summary"]["audience_candidates"][0]["evidence_ids"]) == 12
     assert len(bounded["owner_checks"][0]["evidence_ids"]) == 12
     assert len(normalizations) == 4
+
+
+def test_project_understanding_normalization_is_loss_only():
+    packet = {
+        "allowed_source_ids": ["source-1", "source-2"],
+        "source_paths": ["src/app.py"],
+    }
+    components = [
+        {
+            "id": f"step-{index}",
+            "source_ids": ["unknown", "source-1", "source-1"],
+            "code_paths": ["not/in/context.py", "src/app.py"],
+        }
+        for index in range(1, 5)
+    ]
+    raw = {
+        "purpose": {"source_ids": ["unknown"] + ["source-1", "source-2"] * 8},
+        "structure_kind": "workflow",
+        "components": components,
+        "flows": [
+            {"from": "step-3", "to": "step-4", "label": "三到四"},
+            {"from": "step-1", "to": "step-2", "label": "一到二"},
+            {"from": "step-1", "to": "step-4", "label": "额外关系"},
+            {"from": "step-2", "to": "step-3", "label": "二到三"},
+        ],
+        "unknowns": [f"unknown-{index}" for index in range(15)],
+    }
+
+    bounded, normalizations = _bound_project_understanding_contract(raw, packet)
+
+    assert bounded["purpose"]["source_ids"] == ["source-1", "source-2"]
+    assert all(item["source_ids"] == ["source-1"] for item in bounded["components"])
+    assert all(item["code_paths"] == ["src/app.py"] for item in bounded["components"])
+    assert [(item["from"], item["to"]) for item in bounded["flows"]] == [
+        ("step-1", "step-2"),
+        ("step-2", "step-3"),
+        ("step-3", "step-4"),
+    ]
+    assert len(bounded["unknowns"]) == 12
+    assert len(normalizations) == 11
 
 
 def test_english_change_prompt_has_no_chinese_instruction_text():

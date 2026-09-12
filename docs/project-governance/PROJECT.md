@@ -1,5 +1,78 @@
 # Project facts
 
+Current specific owner-decision correction: TASK-20260912-066 removes the
+hard-coded “one decision” template from the verification control. Decisions now
+carry the real gap/failure count, list every validated item and its responsible
+party, and state that early acceptance leaves those items unverified. The same
+implementation produces a cross-project/production boundary for the PlainChange
+Git AI report and a real-video/visual-acceptance boundary for VideoFactory; no
+repository-name rule was added. The full 157-test suite and Python package build
+pass. Automated browser control failed, but the owner inspected the generated
+Git AI v10 report in the real product surface and explicitly accepted it for an
+update; the VideoFactory v3 report has not received a separate human visual pass.
+
+Current cross-project owner-control regression: TASK-20260912-065 applies the
+same structured receipt and first-screen control surface to VideoFactory's real
+`58d2149..d6594e3` media-production change without target-specific rules. The
+model report says the background gains depth and stale video/QA results become
+invalid; it shows 151 full tests, 27 focused tests and the Python package build
+as completed, while assigning real-video visual and delivery acceptance to the
+product owner or actual user. The run exposed and fixed a generic gap: an
+accepted or inferred attention claim with an explicit next check must remain a
+verification gap even when it is not typed `unknown`. PlainChange now has 155
+passing tests and both release build paths pass.
+
+Current owner verification control: TASK-20260912-064 introduces a strict,
+hash-bound `plainchange.verification-receipt.v1` contract for fixed-range test,
+build, browser, integration, security and runtime checks. The first report tab
+now separates six completed Git AI integration checks from one remaining
+cross-project/version/production boundary and tells the owner that no engineering
+command remains for them to run. Structured receipts override contradictory
+model claims that a receipt is absent, but never upgrade their recorded scope to
+production correctness or user impact. The self-report was regenerated with a
+configured model; 155 tests, Python packages and the Windows portable build pass.
+Automated browser screenshots remain uncollected because the browser policy
+blocked direct access to the generated local `file://` report.
+
+Current Git AI integration self-review: TASK-20260912-063 corrects the earlier
+validation-object mismatch by analyzing PlainChange's complete Git AI adapter,
+pipeline, owner UI, Windows compatibility fix, tests and governance changes in
+an isolated fixed-revision copy. The final model-assisted report identifies
+code-source coverage as the product change and preserves runtime, compatibility
+and actual historical coverage as unknown. The run also hardened the generic
+project-understanding contract with bounded source/path references, an allowlist
+of supplied code paths, consecutive workflow guidance and loss-only output
+normalization; no PlainChange-specific semantic rule was added. The synthetic
+staging commit's mechanical attribution was removed from active notes, so the
+report honestly shows 1503 pre-hook additions as untracked rather than claiming
+human authorship. All 148 tests and both Python and Windows portable builds pass.
+
+Current real Git AI validation: after explicit user approval, TASK-20260912-061
+installed the official v1.7.5 Windows release at user scope and produced a real
+`refs/notes/ai` record in a disposable lab with the official `mock_ai`
+checkpoint. PlainChange now reads the fixed range as 4 AI-authored additions at
+100% recorded coverage without persisting prompt/session/person data, and leaves
+HEAD, notes and worktree state unchanged. TASK-20260912-062 then verified a
+fresh native Codex task end to end without a manual checkpoint: 5 added lines
+were recorded as `codex` / `gpt-5.6-sol`, persisted in Git notes and projected
+by PlainChange at 100% coverage without leaking the session identifier or test
+email. The first real run also found and fixed a general Windows executable-
+discovery bug: `git-ai.EXE` must retain Git AI's expected lowercase `.exe`
+invocation identity. The earlier accidental `install-hooks --help` mutation was
+fully rolled back before this later approved installation. Git AI's user state
+is currently about 3.5 GB after scanning existing Agent history, may still grow
+in the background, and remains an operational cost to monitor.
+
+Current optional code-provenance result: TASK-20260912-060 adds a read-only Git
+AI adapter over fixed `base..head` JSON. Raw Git AI output is never persisted:
+prompts, transcript locations, session/person identifiers, email, commit messages,
+diff text and base contents are discarded before a bounded
+`authorship_attestation` summary enters the packet or report. Missing Git AI is
+non-fatal; malformed, oversized, timed-out and mismatched data fail closed. The
+owner page now explains where a change was recorded as coming from and repeats
+that authorship does not prove correctness. The local host now has Git AI v1.7.5;
+historical changes without prior notes still cannot be reconstructed.
+
 Current open-source preparation: TASK-20260911-055 rewrites the English and
 Simplified Chinese public entry points around the owner job-to-be-done, local
 model-provider choice, evidence boundaries and Alpha limits. Public-doc tests

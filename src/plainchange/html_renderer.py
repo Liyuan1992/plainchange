@@ -6,6 +6,7 @@ import json
 from importlib import resources
 from typing import Any, Mapping
 
+from .agent_provenance import validate_agent_provenance
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
 from .owner_presentation import localized_owner_control
 from .review_presentation import automatic_review_presentation
@@ -117,7 +118,8 @@ def _technical_payload(system_architecture: Mapping[str, Any] | None) -> dict[st
 
 
 def render_review_html(model_value: Any, software_control_value: Any | None = None,
-                       translations_value: Any | None = None) -> str:
+                       translations_value: Any | None = None,
+                       agent_provenance_value: Any | None = None) -> str:
     model = validate_beginner_review_model(model_value)
     system_architecture = model.get("system_architecture")
     software_control = None
@@ -141,6 +143,11 @@ def render_review_html(model_value: Any, software_control_value: Any | None = No
         projection = localized_control(software_control, translations_value)
         localized[translations_value["target_language"]] = projection
         localized_review[translations_value["target_language"]] = validated_review_translations(model, translations_value)
+    agent_provenance = (
+        validate_agent_provenance(agent_provenance_value)
+        if agent_provenance_value is not None
+        else None
+    )
     compact_model.pop("system_architecture", None)
     template = _resource_text("templates/review.html")
     css = _resource_text("templates/review.css")
@@ -156,6 +163,7 @@ def render_review_html(model_value: Any, software_control_value: Any | None = No
         "{{TECHNICAL_PAYLOAD_JSON}}": _json_for_script(
             _technical_payload(system_architecture)
         ),
+        "{{AGENT_PROVENANCE_JSON}}": _json_for_script(agent_provenance),
         "{{I18N_JS}}": i18n_javascript,
         "{{APP_JS}}": javascript,
     }

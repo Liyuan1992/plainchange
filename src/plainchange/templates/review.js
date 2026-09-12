@@ -55,6 +55,7 @@
         : '报告说明支持独立译文；引用原话与技术证据保留原文，语言切换不改变证据状态。';
   }
   const technicalPayload = JSON.parse(document.getElementById("technical-payload-data").textContent);
+  const agentProvenance = JSON.parse(document.getElementById("agent-provenance-data").textContent);
   let architecture = data.system_architecture || null;
   const conceptualArchitecture = data.conceptual_architecture;
   let architectureGroups = new Map();
@@ -249,21 +250,77 @@
     }
     const host = byId("owner-status-list");
     clear(host);
-    [
-      ["impact", "影", "会影响我现在的软件吗？", summary.user_impact],
-      ["risk", "!", "我需要担心什么？", summary.residual_risk],
-      ["action", "✓", "我现在该怎么办？", summary.owner_action],
-    ].forEach(([tone, icon, question, item]) => {
-      const row = make("article", `owner-status-row ${tone}`);
-      const copy = make("div", "owner-status-copy");
-      append(
-        copy,
-        append(make("div", "owner-status-heading"), make("strong", "", question), stateDisclosure(item)),
-        make("p", "", item.text),
-      );
-      append(row, make("span", "owner-status-icon", icon), copy);
-      host.appendChild(row);
-    });
+    const verification = data.verification_control;
+    if (!verification) {
+      [
+        ["impact", "影", "会影响我现在的软件吗？", summary.user_impact],
+        ["risk", "!", "我需要担心什么？", summary.residual_risk],
+        ["action", "✓", "我现在该怎么办？", summary.owner_action],
+      ].forEach(([tone, icon, question, item]) => {
+        const row = make("article", `owner-status-row ${tone}`);
+        const copy = make("div", "owner-status-copy");
+        append(copy, append(make("div", "owner-status-heading"), make("strong", "", question), stateDisclosure(item)), make("p", "", item.text));
+        append(row, make("span", "owner-status-icon", icon), copy);
+        host.appendChild(row);
+      });
+      return;
+    }
+
+    const english = window.PlainChangeI18n.locale === "en";
+    const localized = (value) => value && typeof value === "object"
+      ? (value[window.PlainChangeI18n.locale] || value.en || value["zh-CN"] || "")
+      : String(value || "");
+    const verificationGrid = make("div", "owner-verification-grid");
+    const donePanel = make("section", "owner-control-panel owner-verified-panel");
+    const doneHeading = append(make("div", "owner-control-heading"), make("span", "owner-control-icon verified", "✓"), append(make("div", ""), make("p", "eyebrow", english ? "Completed checks" : "已完成检查"), make("h3", "", english ? "Already verified for you" : "已经替你验证")));
+    donePanel.appendChild(doneHeading);
+    const passed = verification.passed_checks || [];
+    if (!passed.length) {
+      donePanel.appendChild(make("p", "owner-empty-verification", english ? "No structured verification receipt was provided. This does not mean a check failed." : "这份报告没有收到结构化验证收据；这不代表检查失败。"));
+    } else {
+      const list = make("div", "owner-verification-list");
+      passed.forEach((check) => {
+        const item = make("article", "owner-verification-item passed");
+        append(item, make("span", "owner-verification-mark", "✓"), append(make("div", ""), make("strong", "", localized(check.label)), make("p", "", localized(check.summary)), make("small", "", `${english ? "Verified scope" : "验证范围"}：${localized(check.scope)}`)));
+        list.appendChild(item);
+      });
+      donePanel.appendChild(list);
+    }
+    verificationGrid.appendChild(donePanel);
+
+    const gapsPanel = make("section", "owner-control-panel owner-gaps-panel");
+    gapsPanel.appendChild(append(make("div", "owner-control-heading"), make("span", "owner-control-icon gap", "?"), append(make("div", ""), make("p", "eyebrow", english ? "Remaining boundary" : "剩余边界"), make("h3", "", english ? "What is not verified, and why?" : "还有什么没验证，为什么？"))));
+    const gaps = verification.gaps || [];
+    if (!gaps.length) {
+      gapsPanel.appendChild(make("p", "owner-empty-verification", english ? "No remaining verification gap was identified from the supplied evidence." : "现有证据没有列出仍需处理的验证缺口。"));
+    } else {
+      const list = make("div", "owner-gap-list");
+      gaps.forEach((gap) => {
+        const item = make("article", "owner-gap-item");
+        append(item, make("strong", "", localized(gap.label)), make("p", "", `${english ? "Why" : "为什么"}：${localized(gap.reason)}`), make("p", "", `${english ? "How to verify" : "怎么验证"}：${localized(gap.how)}`), make("small", "", `${english ? "Handled by" : "由谁处理"}：${localized(gap.responsibility)}`));
+        list.appendChild(item);
+      });
+      gapsPanel.appendChild(list);
+    }
+    verificationGrid.appendChild(gapsPanel);
+    host.appendChild(verificationGrid);
+
+    const decision = verification.decision;
+    const decisionPanel = make("article", `owner-decision-panel ${decision.tone}`);
+    const decisionCopy = append(make("div", ""), make("p", "eyebrow", english ? "Your decision" : "需要你决定"), make("h3", "", localized(decision.title)), make("p", "", localized(decision.text)));
+    const decisionItems = decision.items || [];
+    if (decisionItems.length) {
+      const list = make("ul", "owner-decision-list");
+      decisionItems.forEach((item) => {
+        const row = make("li", "owner-decision-item");
+        append(row, make("strong", "", localized(item.label)), make("small", "", `${english ? "Handled by" : "由谁处理"}：${localized(item.responsibility)}`));
+        list.appendChild(row);
+      });
+      decisionCopy.appendChild(list);
+    }
+    append(decisionPanel, make("span", "owner-decision-icon", decision.tone === "stop" ? "!" : "人"), decisionCopy);
+    host.appendChild(decisionPanel);
+    host.appendChild(make("p", "owner-verification-boundary", localized(verification.boundary)));
   }
 
   function stateDisclosure(item) {
@@ -271,6 +328,50 @@
     details.appendChild(make("summary", "owner-state-label", item.state_label));
     details.appendChild(make("p", "", item.state_explanation));
     return details;
+  }
+
+  function renderAgentProvenance() {
+    const host = byId("owner-provenance");
+    if (!host || !agentProvenance) return;
+    host.hidden = false;
+    clear(host);
+    const english = window.PlainChangeI18n.locale === "en";
+    const statusCopy = {
+      available: english ? ["Authorship recorded", "The selected change has recorded authorship for all added lines."] : ["已有记录", "这次新增代码都找到了来源记录。"],
+      partial: english ? ["Partially recorded", "Some added lines still have no recorded authorship."] : ["部分记录", "部分新增代码仍然没有来源记录。"],
+      no_record: english ? ["No historical record", "Git AI is installed, but these changes were made before an authorship record was captured. PlainChange will not guess the author afterwards."] : ["没有历史记录", "Git AI 已安装，但这批变化发生时没有留下来源记录；PlainChange 不会事后猜测作者。"],
+      not_installed: english ? ["Not recorded", "This change has no AI authorship record. After Git AI is installed, future changes can be recorded; earlier changes cannot be reconstructed automatically."] : ["尚未记录", "这次变化没有记录 AI 来源。安装 Git AI 后，可以从未来的变化开始记录；以前没有记录的变化不能自动补回。"],
+      invalid: english ? ["Record unavailable", "An authorship record was found but could not be safely matched to this change."] : ["记录不可用", "找到了来源数据，但它无法安全地与这次变化对应。"],
+    }[agentProvenance.status] || (english ? ["Record unavailable", "No usable authorship summary is available."] : ["记录不可用", "目前没有可用的来源摘要。"]);
+    const heading = make("div", "owner-provenance-heading");
+    const title = make("div", "");
+    append(title, make("p", "eyebrow", english ? "Code provenance" : "代码来源"), make("h2", "", english ? "Where did this change come from?" : "这次改动从哪里来"));
+    append(heading, title, make("span", `owner-provenance-state ${agentProvenance.status}`, statusCopy[0]));
+    host.appendChild(heading);
+    host.appendChild(make("p", "owner-provenance-copy", statusCopy[1]));
+
+    const summary = agentProvenance.summary;
+    if (["available", "partial", "no_record"].includes(agentProvenance.status)) {
+      const metrics = make("div", "owner-provenance-metrics");
+      const tools = summary.tools.length
+        ? summary.tools.map((item) => item.model === "unknown" ? item.tool : `${item.tool} · ${item.model}`).join(english ? ", " : "、")
+        : (english ? "No tool identified" : "未识别工具");
+      [
+        [english ? "AI-recorded additions" : "AI 记录的新增代码", `${summary.ai_added_lines}`],
+        [english ? "Human-recorded additions" : "人工记录的新增代码", `${summary.human_added_lines}`],
+        [english ? "Additions without a source record" : "未留下来源记录的新增代码", `${summary.untracked_added_lines}`],
+        [english ? "Recorded sessions" : "记录到的会话", `${summary.session_count}`],
+      ].forEach(([label, value]) => {
+        const metric = make("div", "owner-provenance-metric");
+        append(metric, make("span", "", label), make("strong", "", value));
+        metrics.appendChild(metric);
+      });
+      host.appendChild(metrics);
+      const toolRow = make("p", "owner-provenance-tools");
+      append(toolRow, make("strong", "", english ? "Recorded tool/model: " : "记录到的工具/模型："), make("span", "", tools));
+      host.appendChild(toolRow);
+    }
+    host.appendChild(make("p", "owner-provenance-warning", english ? "Authorship records show where code came from. They do not prove that the software works correctly." : "来源记录只能说明代码从哪里来，不能证明软件功能正确。"));
   }
 
   function renderComparison(host, comparison) {
@@ -884,6 +985,7 @@
       if (implementationDisclosure.open && await ensureArchitectureLoaded()) renderArchitecture();
     });
     renderOwnerStatus();
+    renderAgentProvenance();
     renderOwnerQuestions();
     renderOwnerMap();
   }

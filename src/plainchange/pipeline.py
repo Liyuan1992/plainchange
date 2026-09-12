@@ -14,6 +14,11 @@ from .architecture import (
 )
 from .analysis_cache import AnalysisCache, default_cache_root
 from .auto_draft import draft_raw_brief, draft_software_control, draft_target_profile
+from .agent_provenance import (
+    AgentProvenanceProvider,
+    collect_agent_provenance,
+    validate_agent_provenance,
+)
 from .generator_contract import build_generator_packet, validate_packet
 from .git_evidence import collect_git_evidence, materialize_repository
 from .html_renderer import render_review_html
@@ -70,6 +75,7 @@ def prepare_sample(
     *,
     target_profile_override: Path | None = None,
     progress_recorder: ProgressRecorder | None = None,
+    provenance_provider: AgentProvenanceProvider | None = None,
 ) -> dict[str, Any]:
     manifest = SampleManifest.load(manifest_path)
     if target_profile_override is not None:
@@ -100,6 +106,20 @@ def prepare_sample(
                 changed_files=len(git.files),
                 patch_bytes=git.patch_bytes,
             )
+        with progress.stage("agent_provenance", "读取可选的 AI 代码来源记录") as details:
+            agent_provenance = collect_agent_provenance(
+                materialized.repository.path,
+                git.base_commit,
+                git.head_commit,
+                expected_added_lines=git.added_lines,
+                expected_deleted_lines=git.deleted_lines,
+                provider=provenance_provider,
+            )
+            details.update(
+                provider=agent_provenance["provider"],
+                status=agent_provenance["status"],
+                coverage_percent=agent_provenance["summary"]["coverage_percent"],
+            )
         with progress.stage("architecture", "解析静态结构并复用缓存") as details:
             cache = AnalysisCache(default_cache_root())
             architecture = build_architecture_bundle(
@@ -118,6 +138,7 @@ def prepare_sample(
                 git,
                 architecture["delta"],
                 architecture["system_architecture"]["snapshot_identity"],
+                agent_provenance,
             )
             validate_packet(packet)
 
@@ -130,6 +151,7 @@ def prepare_sample(
                 "evidence": packet["evidence"],
                 "git_materialization": materialized.to_dict(),
                 "system_snapshot_identity": architecture["system_architecture"]["snapshot_identity"],
+                "agent_provenance_identity": agent_provenance["normalized_sha256"],
             }
             _write_json(output / "evidence.json", evidence_bundle)
             _write_json(output / "architecture-delta.json", architecture["delta"])
@@ -141,6 +163,7 @@ def prepare_sample(
             _write_json(output / "architecture-baseline.proposal.json", architecture["proposal"])
             _write_json(output / "baseline-decision.template.json", architecture["decision_template"])
             _write_json(output / "generator-packet.json", packet)
+            _write_json(output / "agent-provenance.json", agent_provenance)
             _write_text(
                 output / "GENERATOR_REQUEST.md",
                 "# 受约束模型生成请求\n\n"
@@ -166,6 +189,7 @@ def prepare_sample(
         "architecture_delta": str(output / "architecture-delta.json"),
         "architecture_map": str(output / "architecture-map.mmd"),
         "system_architecture": str(output / "system-architecture.json"),
+        "agent_provenance": str(output / "agent-provenance.json"),
         "baseline_proposal": str(output / "architecture-baseline.proposal.json"),
         "baseline_decision_template": str(output / "baseline-decision.template.json"),
         "baseline_status": architecture["delta"]["baseline_validation"]["status"],
@@ -186,6 +210,7 @@ def analyze_sample(
     model_config: Mapping[str, Any] | None = None,
     model_api_key: str | None = None,
     human_language: str = "zh-CN",
+    provenance_provider: AgentProvenanceProvider | None = None,
 ) -> dict[str, Any]:
     """Run the local path from manifest to an owner-facing candidate report."""
 
@@ -323,6 +348,7 @@ def analyze_sample(
             output,
             target_profile_override=profile_path,
             progress_recorder=progress,
+            provenance_provider=provenance_provider,
         )
         packet = validate_packet(_load_json(prepared["packet_path"], "generator packet"))
         model_receipt: Path | None = None
@@ -422,6 +448,12 @@ def finalize_brief(
 ) -> dict[str, Any]:
     packet_file = Path(packet_path).resolve(strict=True)
     packet = validate_packet(_load_json(packet_file, "generator packet"))
+    agent_provenance = None
+    agent_provenance_path = packet_file.parent / "agent-provenance.json"
+    if agent_provenance_path.is_file():
+        agent_provenance = validate_agent_provenance(
+            _load_json(agent_provenance_path, "agent provenance")
+        )
     raw = _load_json(raw_brief_path, "raw brief")
     brief = validate_raw_brief(packet, raw)
     output = Path(output_path).resolve(strict=False)
@@ -472,7 +504,8 @@ def finalize_brief(
             output / "review.html",
             render_review_html(beginner_review, software_control,
                 _load_json(output / "report-translations.json", "report translations")
-                if (output / "report-translations.json").is_file() else None),
+                if (output / "report-translations.json").is_file() else None,
+                agent_provenance),
         )
     _write_text(output / "brief.md", render_markdown(brief))
     annotation = build_annotation_template(brief)

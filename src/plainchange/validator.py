@@ -272,6 +272,10 @@ def validate_raw_brief(packet_value: Any, raw_value: Any) -> dict[str, Any]:
             "rejected": sum(item["status"] == "rejected" for item in claims) + len(rejected),
         },
     }
+    if packet.get("verification_receipts"):
+        result["verification_receipts"] = copy.deepcopy(
+            packet["verification_receipts"]
+        )
     if packet.get("architecture_delta") is not None:
         result["architecture_delta"] = copy.deepcopy(packet["architecture_delta"])
     return result

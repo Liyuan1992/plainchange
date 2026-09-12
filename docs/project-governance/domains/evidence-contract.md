@@ -3,6 +3,7 @@
 ## Active source-backed constraints
 
 - Target repositories are read-only. Git collection uses fixed argument arrays, `shell=False`, explicit timeouts, and `GIT_OPTIONAL_LOCKS=0`. Source: ADR-0001, EVO-20260904-003.
+- Git AI authorship is an optional, separate `authorship_attestation` authority. PlainChange may execute only the fixed-range, read-only `git-ai diff <base>..<head> --json` contract, then retain a bounded normalized summary and its SHA-256. Prompts, transcript URLs, session IDs, human emails, commit messages, raw diffs and base contents are discarded before persistence or model input. Missing Git AI is a normal `not_installed` state; malformed, oversized, timed-out or mismatched output fails closed as `invalid`. Authorship can explain where code came from but cannot prove intent, correctness, tests, runtime behavior or user impact. Windows discovery must preserve Git AI's lowercase `.exe` invocation identity because v1.7.5 dispatches by executable name. A fresh native Codex task has verified automatic checkpointing through Git notes and sanitized PlainChange consumption without a manual checkpoint. Source: ADR-0006, TASK-20260912-060, TASK-20260912-061, TASK-20260912-062, EVO-20260912-045, EVO-20260912-048, BUG-20260912-054.
 - The generator can see only `generator-packet.json`. The packet omits repository paths, manifest paths, hidden-ground-truth IDs, paths, and content. Source: ADR-0001, EVO-20260904-003.
 - Full-experience model generation is explicit and split into fixed-revision project understanding followed by change interpretation. The active adapter reads a user-selected OpenAI-compatible provider config, keeps credentials environment-only, records sanitized input/output identities, timing and token use, and fails without silent deterministic fallback. Project context uses declarations plus bounded code outlines; change context uses a bounded evidence subset while the complete local packet still performs final validation. The model's default owner map has at most six business-level items, while technical implementation remains in the evidence drill-down. A source-bound role candidate can identify who may need to pay attention, but it remains an unverified user-impact candidate. Model completion is not evidence correctness or human approval. Source: ADR-0004, ADR-0005, EVO-20260910-016, EVO-20260911-035, EVO-20260911-036, EVO-20260911-037. ADR-0003 and EVO-20260910-015 remain historical evidence of the earlier local experiment.
 - Input evidence and hidden ground truth cannot share the same resolved file path or exact content hash. Source: EVO-20260904-003.
@@ -65,6 +66,12 @@
 
 ## Regression checks
 
+- Model project-understanding outputs must reference only supplied source IDs and
+  code paths, respect bounded list sizes, and represent a workflow as one
+  consecutive chain. Provider output may be normalized only by removing unknown,
+  duplicate or surplus values; missing semantic edges must still fail validation
+  rather than be invented locally. Source: TASK-20260912-063,
+  BUG-20260912-055, EVO-20260912-049.
 - Manifest and copied-content leakage: `tests/test_models.py`.
 - Immutable read-only Git collection and truncation: `tests/test_git_evidence.py`.
 - Generator-packet exclusion and tamper detection: `tests/test_generator_contract.py`.
@@ -75,6 +82,7 @@
 - Batched immutable Git blob reads: `tests/test_git_evidence.py`.
 - Beginner-summary truth/identity/omission checks: `tests/test_review_model.py`.
 - Single-file HTML escaping, no-network, theme, and embedded-identity checks: `tests/test_html_renderer.py`.
+- Optional Git AI discovery, Windows invocation-name normalization, bounded subprocess output, mixed AI/human/untracked normalization, target-note preservation, privacy filtering and invalid-output downgrade: `tests/test_agent_provenance.py`, `tests/test_pipeline.py`, `tests/test_html_renderer.py`, TASK-20260912-061.
 - Full-system snapshot identity, complete assignment, source-edge aggregation, review embedding, top-level architecture tab, and formal DigitalSelf browser smoke: `tests/test_architecture.py`, `tests/test_pipeline.py`, `tests/test_html_renderer.py`, TASK-20260904-005.
 - Strict target-profile parsing, profile SHA/group-source binding, profile-neutral architecture facts, profile-sourced conceptual architecture, dynamic reader branding, and absence of repository-specific consumer branches: `tests/test_target_profile.py`.
 - Software-control canonical identity, source binding, ordered four-step coverage, non-sequential capability coverage, changed-node binding, optional pipeline input, collapsed explanation, progressive graph controls, fallback, and no-network HTML: `tests/test_software_control.py`, `tests/test_pipeline.py`, `tests/test_html_renderer.py`.
@@ -85,6 +93,21 @@
   target-name neutrality, and real browser switching: `tests/test_html_renderer.py`,
   `tests/test_public_docs.py`, `tests/test_target_profile.py`,
   `scripts/verify-review-i18n.cjs`.
+- Structured verification receipts use
+  `plainchange.verification-receipt.v1`, bind exactly to the analyzed base/head
+  commits and to a canonical content SHA-256, and reject unknown fields,
+  duplicate IDs, unsupported categories/statuses, oversized lists or range
+  mismatches. Only evidence declared as `test / actual_test_receipt` may enter
+  this control surface. A receipt proves only each listed check and scope; its
+  limitations remain visible, and model prose cannot replace a supplied receipt
+  with a contradictory “receipt missing” unknown. Source: TASK-20260912-064,
+  BUG-20260912-057, EVO-20260912-051.
+- An owner decision must be a projection of the actual failed checks or remaining
+  gaps, not a fixed acceptance sentence. It carries the real item count, lists
+  each validated item and responsible party, and states that early acceptance
+  leaves the item unverified. This presentation cannot add a gap, upgrade its
+  truth state or record an approval. Source: TASK-20260912-066,
+  BUG-20260912-059, EVO-20260912-053.
 
 ## Known gaps
 

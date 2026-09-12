@@ -3,10 +3,12 @@ from __future__ import annotations
 import copy
 from typing import Any, Mapping
 
+from .agent_provenance import provenance_evidence_entry, validate_agent_provenance
 from .architecture import DELTA_SCHEMA, architecture_evidence_entries
 from .behavior_signals import behavior_signal_evidence
 from .git_evidence import GitEvidence
 from .models import ManifestError, SampleManifest, canonical_json_bytes, sha256_bytes
+from .verification import parse_verification_receipt, validate_verification_receipt
 
 PACKET_SCHEMA = "change-passport.generator-packet.v1"
 RAW_BRIEF_SCHEMA = "change-passport.raw-brief.v1"
@@ -90,25 +92,38 @@ def build_generator_packet(
     git: GitEvidence,
     architecture_delta: Mapping[str, Any] | None = None,
     system_snapshot_identity: str | None = None,
+    agent_provenance: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     evidence = _git_evidence_entries(git)
+    verification_receipts: list[dict[str, Any]] = []
+    if agent_provenance is not None:
+        evidence.append(provenance_evidence_entry(agent_provenance))
     if architecture_delta is not None:
         if architecture_delta.get("schema_version") != DELTA_SCHEMA:
             raise ManifestError("architecture delta schema is invalid")
         evidence.extend(architecture_evidence_entries(architecture_delta))
     for item in manifest.evidence_inputs:
+        content = item.source.read_text(
+            manifest.manifest_dir, manifest.limits.max_input_bytes
+        )
         evidence.append(
             {
                 "id": item.evidence_id,
                 "kind": item.kind,
                 "authority": item.authority,
-                "content": item.source.read_text(
-                    manifest.manifest_dir, manifest.limits.max_input_bytes
-                ),
+                "content": content,
                 "source_ref": f"manifest:{item.evidence_id}:{item.source.source_type}",
                 "limitations": [],
             }
         )
+        if item.kind == "test" and item.authority == "actual_test_receipt":
+            receipt = parse_verification_receipt(
+                content,
+                expected_base=git.base_commit,
+                expected_head=git.head_commit,
+            )
+            if receipt is not None:
+                verification_receipts.append(receipt)
 
     packet: dict[str, Any] = {
         "schema_version": PACKET_SCHEMA,
@@ -170,6 +185,10 @@ def build_generator_packet(
         packet["architecture_delta"] = copy.deepcopy(dict(architecture_delta))
     if system_snapshot_identity is not None:
         packet["system_snapshot_identity"] = system_snapshot_identity
+    if agent_provenance is not None:
+        packet["agent_provenance"] = validate_agent_provenance(agent_provenance)
+    if verification_receipts:
+        packet["verification_receipts"] = verification_receipts
     packet["packet_sha256"] = sha256_bytes(canonical_json_bytes(packet))
     return packet
 
@@ -198,6 +217,24 @@ def validate_packet(packet: Any) -> dict[str, Any]:
         or architecture_delta.get("schema_version") != DELTA_SCHEMA
     ):
         raise ManifestError("generator packet architecture delta is invalid")
+    agent_provenance = result.get("agent_provenance")
+    if agent_provenance is not None:
+        try:
+            validate_agent_provenance(agent_provenance)
+        except ValueError as exc:
+            raise ManifestError("generator packet agent provenance is invalid") from exc
+    verification_receipts = result.get("verification_receipts", [])
+    if not isinstance(verification_receipts, list) or len(verification_receipts) > 8:
+        raise ManifestError("generator packet verification receipts are invalid")
+    try:
+        for receipt in verification_receipts:
+            validate_verification_receipt(
+                receipt,
+                expected_base=result["change"]["base_commit"],
+                expected_head=result["change"]["head_commit"],
+            )
+    except (KeyError, ManifestError) as exc:
+        raise ManifestError("generator packet verification receipt is invalid") from exc
     forbidden_keys = {"hidden_ground_truth", "ground_truth", "manifest_path", "repository_path"}
 
     def walk(value: Any) -> None:

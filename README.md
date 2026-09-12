@@ -31,6 +31,8 @@ Each offline report starts with the questions a software owner normally has:
 
 Then it lets the reader move from the change to **how this software works**: the business workflow or capability map, the affected step, adjacent steps, and finally the source-backed technical evidence. Technical details are there when needed; they are not the default reading task.
 
+When a fixed-range test, build, browser, integration, or security receipt is supplied, the report separates **already verified for you** from **what is still unverified and why**. Remaining checks name the minimum verification and who should handle it; PlainChange does not turn engineering commands into homework for the software owner.
+
 ## How it works
 
 ```text
@@ -46,6 +48,14 @@ offline Change Passport: HTML + JSON + Markdown + architecture evidence
 The full experience makes two constrained model calls: one to form a bounded project understanding, then one to explain the selected change. The model proposes language and salience; PlainChange still owns fixed Git collection, evidence IDs, source limits, downgrade rules, uncertainty, and report rendering. A model response cannot upgrade static code into runtime proof.
 
 Without a configured provider, PlainChange sends no network request and emits a clearly labelled **basic evidence** report instead. This is useful for private diagnostics, but it is not presented as a complete business understanding.
+
+### Optional AI code provenance with Git AI
+
+If [Git AI](https://github.com/git-ai-project/git-ai) is already installed and has recorded authorship for the selected commits, PlainChange reads its fixed-range JSON data in read-only mode and adds **Where did this change come from?** to the report. It shows a bounded summary of AI-recorded, human-recorded, and untracked additions, plus sanitized tool/model names and the number of recorded sessions.
+
+Git AI is optional. PlainChange does not install it, add hooks, open transcripts, or send prompts and conversation data to the configured model. Missing historical records are not reconstructed. Authorship records describe where code came from; they do not prove correctness, runtime behavior, or user impact.
+
+To opt in, install Git AI using its official instructions and restart the supported coding agent so future edits can be recorded. PlainChange discovers the installed command automatically; no PlainChange-specific hook is required.
 
 ## Windows: download, unzip, double-click
 
@@ -136,6 +146,7 @@ The report directory may contain:
 - `software-control.json` — the owner-oriented change and system view.
 - `architecture-delta.json` / `system-architecture.json` — supported static structure snapshots, not runtime architecture.
 - `project-understanding.json` — validated but non-authoritative model interpretation.
+- `agent-provenance.json` — optional, sanitized Git AI authorship summary; never a correctness or runtime receipt.
 - `run-receipt.json` and model-stage receipts — progress, timing, cache and sanitized provenance metadata.
 
 Technical data is loaded on demand inside the offline report. Generated artifacts and local model configurations are ignored by Git by default.

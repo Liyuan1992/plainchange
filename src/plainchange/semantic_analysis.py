@@ -195,6 +195,13 @@ def validate_project_context(packet: Any) -> dict[str, Any]:
 
 def project_understanding_json_schema(packet: Mapping[str, Any]) -> dict[str, Any]:
     source_ids = list(packet["allowed_source_ids"])
+    source_paths = list(packet["source_paths"])
+    source_id_item: dict[str, Any] = {"type": "string"}
+    code_path_item: dict[str, Any] = {"type": "string", "maxLength": 500}
+    if source_ids:
+        source_id_item["enum"] = source_ids
+    if source_paths:
+        code_path_item["enum"] = source_paths
     component = {
         "type": "object",
         "additionalProperties": False,
@@ -204,8 +211,16 @@ def project_understanding_json_schema(packet: Mapping[str, Any]) -> dict[str, An
             "label": {"type": "string", "maxLength": 48},
             "description": {"type": "string", "maxLength": 240},
             "type": {"type": "string", "enum": ["input", "process", "output", "human_gate", "state", "capability"]},
-            "source_ids": {"type": "array", "items": {"type": "string", "enum": source_ids}},
-            "code_paths": {"type": "array", "items": {"type": "string"}},
+            "source_ids": {
+                "type": "array",
+                "maxItems": 12,
+                "items": source_id_item,
+            },
+            "code_paths": {
+                "type": "array",
+                "maxItems": 24,
+                "items": code_path_item,
+            },
         },
     }
     return {
@@ -220,7 +235,11 @@ def project_understanding_json_schema(packet: Mapping[str, Any]) -> dict[str, An
                 "required": ["text", "source_ids"],
                 "properties": {
                     "text": {"type": "string", "maxLength": 480},
-                    "source_ids": {"type": "array", "items": {"type": "string", "enum": source_ids}},
+                    "source_ids": {
+                        "type": "array",
+                        "maxItems": 12,
+                        "items": source_id_item,
+                    },
                 },
             },
             "structure_kind": {"type": "string", "enum": ["workflow", "capability_map"]},
@@ -231,13 +250,18 @@ def project_understanding_json_schema(packet: Mapping[str, Any]) -> dict[str, An
             "components": {"type": "array", "minItems": 2, "maxItems": 6, "items": component},
             "flows": {
                 "type": "array",
+                "maxItems": 5,
                 "items": {
                     "type": "object", "additionalProperties": False,
                     "required": ["from", "to", "label"],
                     "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "label": {"type": "string"}},
                 },
             },
-            "unknowns": {"type": "array", "items": {"type": "string"}},
+            "unknowns": {
+                "type": "array",
+                "maxItems": 12,
+                "items": {"type": "string", "maxLength": 500},
+            },
         },
     }
 

@@ -1,0 +1,114 @@
+CHANGELOG.md
+  h_270be01ace3f44 7-10
+README.md
+  h_270be01ace3f44 34-35,52-59,149
+README.zh-CN.md
+  h_270be01ace3f44 30-31,48-55,143
+design/ui-flows/owner-verification-control-agent-20260912/00-inputs/user-request.md
+  h_270be01ace3f44 1-17
+design/ui-flows/owner-verification-control-agent-20260912/01-visual-spec/regions.json
+  h_270be01ace3f44 1-27
+design/ui-flows/owner-verification-control-agent-20260912/01-visual-spec/scope-lock.md
+  h_270be01ace3f44 1-28
+design/ui-flows/owner-verification-control-agent-20260912/01-visual-spec/visual-spec.md
+  h_270be01ace3f44 1-70
+design/ui-flows/owner-verification-control-agent-20260912/02-assets/asset-checklist.md
+  h_270be01ace3f44 1-32
+design/ui-flows/owner-verification-control-agent-20260912/02-assets/generated-assets.md
+  h_270be01ace3f44 1-5
+design/ui-flows/owner-verification-control-agent-20260912/03-implementation/implementation-plan.md
+  h_270be01ace3f44 1-40
+design/ui-flows/owner-verification-control-agent-20260912/03-implementation/touched-files.md
+  h_270be01ace3f44 1-16
+design/ui-flows/owner-verification-control-agent-20260912/04-validation/region-review.json
+  h_270be01ace3f44 1-22
+design/ui-flows/owner-verification-control-agent-20260912/04-validation/screenshot-review.md
+  h_270be01ace3f44 1-41
+design/ui-flows/owner-verification-control-agent-20260912/05-iterations/round-1.md
+  h_270be01ace3f44 1-7
+design/ui-flows/owner-verification-control-agent-20260912/05-iterations/round-2.md
+  h_270be01ace3f44 1-7
+design/ui-flows/owner-verification-control-agent-20260912/05-iterations/round-3.md
+  h_270be01ace3f44 1-7
+docs/project-governance/BUGLOG.md
+  h_270be01ace3f44 266-297,1184-1376
+docs/project-governance/EVOLUTION.md
+  h_270be01ace3f44 79-131,923-1078
+docs/project-governance/PROJECT.md
+  h_270be01ace3f44 3-75
+docs/project-governance/decisions/ADR-0006-optional-git-ai-provenance.md
+  h_270be01ace3f44 1-33
+docs/project-governance/decisions/README.md
+  h_270be01ace3f44 6-7
+docs/project-governance/domains/evidence-contract.md
+  h_270be01ace3f44 6,69-74,85,96-110
+docs/project-governance/tasks/TASK-20260912-060-git-ai-provenance-adapter.md
+  h_270be01ace3f44 1-143
+docs/project-governance/tasks/TASK-20260912-061-git-ai-real-provenance-validation.md
+  h_270be01ace3f44 1-132
+docs/project-governance/tasks/TASK-20260912-062-native-codex-git-ai-attribution.md
+  h_270be01ace3f44 1-74
+docs/project-governance/tasks/TASK-20260912-063-git-ai-integration-self-review.md
+  h_270be01ace3f44 1-71
+docs/project-governance/tasks/TASK-20260912-064-owner-verification-control.md
+  h_270be01ace3f44 1-81
+docs/project-governance/tasks/TASK-20260912-065-videofactory-owner-control-regression.md
+  h_270be01ace3f44 1-50
+docs/project-governance/tasks/TASK-20260912-066-specific-owner-decision.md
+  h_270be01ace3f44 1-65
+src/plainchange/agent_provenance.py
+  h_270be01ace3f44 1-504
+src/plainchange/generator_contract.py
+  h_270be01ace3f44 6,11,95,98-100,106-108,114,119-126,188-191,220-237
+src/plainchange/html_renderer.py
+  h_270be01ace3f44 9,121-122,146-150,166
+src/plainchange/model_adapter.py
+  h_270be01ace3f44 154-156,200,204,481-482,490-495,600-601,613-615,620-733
+src/plainchange/pipeline.py
+  h_270be01ace3f44 17-21,78,109-122,141,154,166,192,213,351,451-456,507-508
+src/plainchange/report_localization.py
+  h_270be01ace3f44 30,142,166-172
+src/plainchange/review_model.py
+  h_270be01ace3f44 13,501-511,829
+src/plainchange/semantic_analysis.py
+  h_270be01ace3f44 198-204,214-223,238-242,253,260-264
+src/plainchange/templates/review.css
+  h_270be01ace3f44 695-742,970,984-986,1029-1030
+src/plainchange/templates/review.html
+  h_270be01ace3f44 50,199
+src/plainchange/templates/review.js
+  h_270be01ace3f44 58,253-323,333-376,988
+src/plainchange/validator.py
+  h_270be01ace3f44 275-278
+src/plainchange/verification.py
+  h_270be01ace3f44 1-304
+tests/test_agent_provenance.py
+  h_270be01ace3f44 1-205
+tests/test_generator_contract.py
+  h_270be01ace3f44 10,45-90
+tests/test_html_renderer.py
+  h_270be01ace3f44 182-183,212-214
+tests/test_model_adapter.py
+  h_270be01ace3f44 12,269-308
+tests/test_pipeline.py
+  h_270be01ace3f44 93,100-101,129-130,291
+tests/test_report_localization.py
+  h_270be01ace3f44 16,98-105,119
+tests/test_review_model.py
+  h_270be01ace3f44 7,209-238
+tests/test_semantic_analysis.py
+  h_270be01ace3f44 139-154
+tests/test_verification.py
+  h_270be01ace3f44 1-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ac044dd80ef670da3d7bc9f0f708df72b8602f6",
+  "prompts": {},
+  "humans": {
+    "h_270be01ace3f44": {
+      "author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

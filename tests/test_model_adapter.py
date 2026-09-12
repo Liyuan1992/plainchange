@@ -321,3 +321,63 @@ def test_english_model_output_rejects_mixed_owner_prose_but_not_identifiers():
         _require_requested_human_language(
             {"headline": "中文标题"}, "en", stage="change interpretation"
         )
+
+
+def test_report_translation_is_complete_and_preserves_already_english_text(
+    tmp_path: Path, monkeypatch
+):
+    provider = OpenAICompatibleRawBriefProvider(
+        load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    )
+    requests = []
+
+    def fake_completion(*, system_prompt, payload, schema, schema_name):
+        requests.append((system_prompt, payload, schema, schema_name))
+        return (
+            {
+                "translations": [
+                    {"id": item["id"], "text": f"English {item['id']}"}
+                    for item in payload["items"]
+                ]
+            },
+            {"prompt_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+        )
+
+    monkeypatch.setattr(provider, "_structured_completion", fake_completion)
+    result, telemetry = provider.translate_report_texts(
+        ["负责人可追溯来源", "Already English"],
+        source_language="zh-CN",
+        target_language="en",
+    )
+
+    assert result["translations"]["Already English"] == "Already English"
+    assert result["translations"]["负责人可追溯来源"].startswith("English text-")
+    assert requests[0][1]["schema_version"] == "plainchange.report-translation-request.v1"
+    assert requests[0][3] == "plainchange_report_translation"
+    assert telemetry["translated_text_count"] == 1
+    assert telemetry["identity_text_count"] == 1
+
+
+@pytest.mark.parametrize("failure", ["duplicate", "mixed-language"])
+def test_report_translation_fails_closed(tmp_path: Path, monkeypatch, failure: str):
+    provider = OpenAICompatibleRawBriefProvider(
+        load_model_provider_config(_write_config(tmp_path / f"{failure}.json"))
+    )
+
+    def fake_completion(*, system_prompt, payload, schema, schema_name):
+        rows = [
+            {
+                "id": payload["items"][0]["id"] if failure == "duplicate" else item["id"],
+                "text": "仍然是中文" if failure == "mixed-language" else "English text",
+            }
+            for item in payload["items"]
+        ]
+        return {"translations": rows}, {}
+
+    monkeypatch.setattr(provider, "_structured_completion", fake_completion)
+    with pytest.raises(ModelGenerationError, match="duplicate ID|non-English owner text"):
+        provider.translate_report_texts(
+            ["第一项", "第二项"],
+            source_language="zh-CN",
+            target_language="en",
+        )

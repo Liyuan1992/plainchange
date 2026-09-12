@@ -22,17 +22,24 @@ from .agent_provenance import (
 from .generator_contract import build_generator_packet, validate_packet
 from .git_evidence import collect_git_evidence, materialize_repository
 from .html_renderer import render_review_html
-from .models import ManifestError, SampleManifest, canonical_json_bytes
+from .models import ManifestError, SampleManifest, canonical_json_bytes, sha256_bytes
 from .model_adapter import (
     OpenAICompatibleRawBriefProvider,
     _require_requested_human_language,
     generate_change_interpretation_with_model,
     generate_project_understanding_with_model,
+    generate_report_translations_with_model,
     load_model_provider_config,
     parse_model_provider_config,
 )
 from .progress import ProgressRecorder
 from .review_model import build_beginner_review_model
+from .report_localization import (
+    localized_control,
+    review_translation_template,
+    translation_template,
+    validated_review_translations,
+)
 from .scoring import build_annotation_template, score_annotations
 from .software_control import validate_software_control
 from .semantic_analysis import (
@@ -249,6 +256,7 @@ def analyze_sample(
     project_understanding_cache_hit: bool | None = None
     semantic_interpretation: dict[str, Any] | None = None
     change_interpretation_receipt: Path | None = None
+    report_translation_receipt: Path | None = None
     materialized = None
     try:
         profile_path = manifest.target_profile_path
@@ -400,6 +408,62 @@ def analyze_sample(
             )
             control_path = output / "software-control.auto.json"
             _write_json(control_path, control)
+            if configured_provider is not None:
+                target_language = "en" if human_language == "zh-CN" else "zh-CN"
+                control_pack = translation_template(control, target_language)
+                review_pack = review_translation_template(review, target_language)
+                source_texts = sorted(
+                    set(control_pack["translations"])
+                    | set(review_pack["translations"])
+                )
+                with progress.stage(
+                    "report_translation",
+                    "生成另一种语言的负责人说明",
+                ) as translation_details:
+                    translation_input_sha = sha256_bytes(
+                        canonical_json_bytes(
+                            {
+                                "control_identity": control["control_identity"],
+                                "review_identity": review["review_identity"],
+                                "source_language": human_language,
+                                "target_language": target_language,
+                                "texts": source_texts,
+                            }
+                        )
+                    )
+                    translated, report_translation_receipt = (
+                        generate_report_translations_with_model(
+                            source_texts,
+                            output,
+                            configured_provider,
+                            source_language=human_language,
+                            target_language=target_language,
+                            input_sha256=translation_input_sha,
+                        )
+                    )
+                    translations = translated["translations"]
+                    control_pack["translations"] = {
+                        source: translations[source]
+                        for source in control_pack["translations"]
+                    }
+                    control_pack["review_text"] = {
+                        "review_identity": review_pack["review_identity"],
+                        "translations": {
+                            source: translations[source]
+                            for source in review_pack["translations"]
+                        },
+                    }
+                    # Reuse the existing identity, completeness and language checks before
+                    # the pack can affect the offline report.
+                    localized_control(control, control_pack)
+                    validated_review_translations(review, control_pack)
+                    _write_json(output / "report-translations.json", control_pack)
+                    translation_details.update(
+                        source_language=human_language,
+                        target_language=target_language,
+                        text_count=len(source_texts),
+                        receipt=str(report_translation_receipt),
+                    )
             final = finalize_brief(
                 prepared["packet_path"],
                 raw_path,
@@ -433,6 +497,14 @@ def analyze_sample(
         "project_understanding_cache_hit": project_understanding_cache_hit,
         "change_interpretation": str(output / "change-interpretation.json") if semantic_interpretation else None,
         "change_interpretation_receipt": str(change_interpretation_receipt) if change_interpretation_receipt else None,
+        "report_translations": (
+            str(output / "report-translations.json")
+            if report_translation_receipt is not None else None
+        ),
+        "report_translation_receipt": (
+            str(report_translation_receipt)
+            if report_translation_receipt is not None else None
+        ),
         "software_control_auto": str(control_path),
         "review_html": str(output / "review.html"),
         "run_receipt": str(output / "run-receipt.json"),
@@ -504,7 +576,8 @@ def finalize_brief(
             output / "review.html",
             render_review_html(beginner_review, software_control,
                 _load_json(output / "report-translations.json", "report translations")
-                if (output / "report-translations.json").is_file() else None,
+                if software_control is not None
+                and (output / "report-translations.json").is_file() else None,
                 agent_provenance),
         )
     _write_text(output / "brief.md", render_markdown(brief))

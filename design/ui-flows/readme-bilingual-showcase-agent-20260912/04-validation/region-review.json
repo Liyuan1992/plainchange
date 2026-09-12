@@ -1,0 +1,27 @@
+{
+  "total_score": 9.4,
+  "delivery_allowed": true,
+  "regions": {
+    "report_header": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["English selected", "Both active Tab states are clear", "Chinese selector label is intentional"]
+    },
+    "change_view": {
+      "result": "pass",
+      "score": 9.4,
+      "notes": ["Conclusion and verification boundary are visible", "No mixed-language generated report text"]
+    },
+    "software_view": {
+      "result": "pass",
+      "score": 9.3,
+      "notes": ["Four-stage workflow is visible", "Changed state and selected inspector are visible"]
+    },
+    "animation": {
+      "result": "pass",
+      "score": 9.5,
+      "notes": ["Two frames", "4000 ms per frame", "Continuous loop", "1440x755 canvas"]
+    }
+  },
+  "next_round_fixes": []
+}

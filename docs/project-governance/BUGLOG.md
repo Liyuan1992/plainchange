@@ -1374,3 +1374,17 @@ VideoFactory v3 visual state.
 Links: `TASK-20260912-066`, `EVO-20260912-053`,
 `src/plainchange/verification.py`, `tests/test_verification.py`
 Needs curation: yes
+
+ID: BUG-20260912-060
+Date: 2026-09-12
+Status: fixed
+Domain: model-language-contract
+Severity: high
+Symptom fingerprint: A model-generated Chinese report switches its shell to English but keeps the owner headline, verification results, remaining boundary and software workflow in Chinese.
+Trigger / reproduction: Open `plainchange-git-ai-integration-review-v10-decision/review.html`, switch to English and inspect both top-level tabs. The report has no identity-bound `report-translations.json`; only deterministic shell and message-key projections are available.
+Impact: The English control appears successful while the core decision path remains unreadable to an English owner, and the report cannot be used as an honest English public screenshot.
+Root cause: The model pipeline generated one requested human language. The offline switch could project PlainChange-owned deterministic messages, but model-authored report prose had no second-language representation unless a complete translation pack was authored separately.
+Resolution: Model-assisted analysis now collects every eligible owner and technical-presentation string under stable IDs, uses a bounded translation stage to produce the other supported language, validates exact coverage and language, binds the result to the original control/review identities, and embeds it before the report becomes offline. Source quotations, code identifiers and evidence payloads remain unchanged.
+Verification: Unit regressions reject missing, duplicate, unknown, empty and mixed-language translation output. The 160-test suite, JavaScript syntax check, Python sdist/wheel build and `git diff --check` pass. A real fixed-range run generated `plainchange-git-ai-integration-review-v12-bilingual` in 45.012 seconds; its one translation batch produced 72 control and 88 review translations, with zero Han characters in English values and zero matches for the configured credential. Browser visual acceptance remains pending because the local-file browser control was policy-blocked.
+Links: `TASK-20260912-067`, `src/plainchange/model_adapter.py`, `src/plainchange/report_localization.py`, `src/plainchange/pipeline.py`, `tests/test_model_adapter.py`, `tests/test_pipeline.py`
+Needs curation: yes

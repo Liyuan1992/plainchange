@@ -14,6 +14,12 @@ def test_public_readmes_have_reciprocal_language_navigation_and_matching_boundar
     assert "[English](README.md) | 简体中文" in chinese
     assert "PlainChange turns AI-made software changes" in english
     assert "PlainChange 是 AI 生成代码与人类决策之间的理解和控制层" in chinese
+    assert "Understand what changed — and where the code came from." in english
+    assert "既知道软件发生了什么，也知道新增代码从哪里来。" in chinese
+    assert "Git AI records line-level provenance" in english
+    assert "Git AI 记录逐行代码来源" in chinese
+    assert "report-translation-run-receipt.json" in english
+    assert "report-translation-run-receipt.json" in chinese
     assert "target repository is always read-only" in english
     assert "目标仓库必须保持只读" in chinese
     assert "supports English and Simplified Chinese" in english

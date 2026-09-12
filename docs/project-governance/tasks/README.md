@@ -43,6 +43,12 @@ Current product-direction status: `TASK-20260909-019-software-control-layer-prd-
 Current implementation status: `TASK-20260909-018-interactive-top-down-architecture-graph.md` is DONE: the unified explorer now renders an actual top-down node-and-edge graph, keeps nodes clickable, opens mapped implementation in the same canvas, and uses an explicit narrow/safety fallback. `TASK-20260904-004-beginner-first-interactive-review.md` remains open only for the independent human 30-second retelling gate; three scored samples and the architecture-baseline decision are still pending.
 # Current validation
 
+- `TASK-20260912-067-model-assisted-bilingual-report.md` — DONE; adds an
+  identity-bound model translation stage so one model-assisted analysis embeds
+  both English and Simplified Chinese owner text before going offline. Code,
+  source quotations and evidence remain unchanged; owner-supplied real-browser
+  screenshots now drive the verified 4-second English README GIF.
+
 - `TASK-20260911-057-model-language-contract-hardening.md` — DONE; makes
   requested model language an enforceable contract, fixes PlainChange-owned
   English projection, refreshes the real English demo GIF, and preserves

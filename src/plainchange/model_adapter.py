@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping, Protocol
+from typing import Any, Mapping, Protocol, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -36,6 +36,8 @@ PROVIDER_CONFIG_SCHEMA = "change-passport.model-provider.v1"
 RESPONSE_FORMATS = ("json_schema", "json_object", "prompt_only")
 ENV_NAME_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 CHANGE_CONTEXT_SCHEMA = "plainchange.change-context.v1"
+REPORT_TRANSLATION_SCHEMA = "plainchange.report-translation.v1"
+REPORT_TRANSLATION_BATCH_SIZE = 160
 
 
 class ModelGenerationError(ManifestError):
@@ -543,6 +545,134 @@ class OpenAICompatibleRawBriefProvider:
         }
         return result, telemetry
 
+    def translate_report_texts(
+        self,
+        texts: Sequence[str],
+        *,
+        source_language: str,
+        target_language: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Translate report presentation text without reinterpreting its claims."""
+
+        if source_language not in {"zh-CN", "en"} or target_language not in {"zh-CN", "en"}:
+            raise ModelGenerationError("report translation supports only zh-CN and en")
+        if source_language == target_language:
+            raise ModelGenerationError("report translation target must differ from source")
+        unique = sorted({text for text in texts if isinstance(text, str) and text.strip()})
+        if not unique:
+            raise ModelGenerationError("report translation contains no presentation text")
+
+        # English source fragments such as product names or already-English labels do not
+        # need a model round trip. They remain byte-for-byte stable in the English view.
+        translated: dict[str, str] = {}
+        pending: list[tuple[str, str]] = []
+        for index, source in enumerate(unique):
+            item_id = f"text-{index:04d}"
+            if target_language == "en" and not _CJK.search(source):
+                translated[source] = source
+            else:
+                pending.append((item_id, source))
+
+        batch_telemetry: list[dict[str, Any]] = []
+        for offset in range(0, len(pending), REPORT_TRANSLATION_BATCH_SIZE):
+            batch = pending[offset : offset + REPORT_TRANSLATION_BATCH_SIZE]
+            ids = [item_id for item_id, _ in batch]
+            schema = {
+                "type": "object",
+                "properties": {
+                    "translations": {
+                        "type": "array",
+                        "minItems": len(batch),
+                        "maxItems": len(batch),
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string", "enum": ids},
+                                "text": {"type": "string", "minLength": 1, "maxLength": 16_000},
+                            },
+                            "required": ["id", "text"],
+                            "additionalProperties": False,
+                        },
+                    }
+                },
+                "required": ["translations"],
+                "additionalProperties": False,
+            }
+            payload = {
+                "schema_version": "plainchange.report-translation-request.v1",
+                "source_language": source_language,
+                "target_language": target_language,
+                "items": [{"id": item_id, "text": source} for item_id, source in batch],
+            }
+            target_instruction = (
+                "Use English for every translated value."
+                if target_language == "en"
+                else "所有翻译结果使用简体中文。"
+            )
+            raw, telemetry = self._structured_completion(
+                system_prompt=(
+                    "You translate PlainChange presentation text; you do not reinterpret the report. "
+                    "Preserve meaning, uncertainty, evidence boundaries, counts, product names and code identifiers exactly. "
+                    "Do not add claims, remove limitations or make verification stronger. "
+                    "Return exactly one translation for every supplied stable ID and output JSON only. "
+                    f"{target_instruction}"
+                ),
+                payload=payload,
+                schema=schema,
+                schema_name="plainchange_report_translation",
+            )
+            rows = raw.get("translations")
+            if not isinstance(rows, list):
+                raise ModelGenerationError("report translation response has no translations")
+            received: dict[str, str] = {}
+            for row in rows:
+                if not isinstance(row, Mapping):
+                    raise ModelGenerationError("report translation item must be an object")
+                item_id = row.get("id")
+                text = row.get("text")
+                if not isinstance(item_id, str) or item_id not in ids:
+                    raise ModelGenerationError("report translation returned an unknown ID")
+                if item_id in received:
+                    raise ModelGenerationError("report translation returned a duplicate ID")
+                if not isinstance(text, str) or not text.strip():
+                    raise ModelGenerationError("report translation returned empty text")
+                if target_language == "en" and _CJK.search(text):
+                    raise ModelGenerationError(
+                        f"report translation returned non-English owner text for {item_id}"
+                    )
+                received[item_id] = text.strip()
+            if set(received) != set(ids):
+                raise ModelGenerationError("report translation did not cover every requested ID")
+            source_by_id = dict(batch)
+            translated.update(
+                {source_by_id[item_id]: received[item_id] for item_id in ids}
+            )
+            batch_telemetry.append(telemetry)
+
+        result = {
+            "schema_version": REPORT_TRANSLATION_SCHEMA,
+            "source_language": source_language,
+            "target_language": target_language,
+            "translations": translated,
+        }
+        telemetry = {
+            "stage": "report_translation",
+            "batch_count": len(batch_telemetry),
+            "translated_text_count": len(pending),
+            "identity_text_count": len(unique) - len(pending),
+            "prompt_tokens": sum(
+                int(item.get("prompt_tokens") or 0) for item in batch_telemetry
+            ),
+            "output_tokens": sum(
+                int(item.get("output_tokens") or 0) for item in batch_telemetry
+            ),
+            "total_tokens": sum(
+                int(item.get("total_tokens") or 0) for item in batch_telemetry
+            ),
+            "batches": batch_telemetry,
+        }
+        return result, telemetry
+
     def generate(
         self, packet: Mapping[str, Any], *, human_language: str = "zh-CN"
     ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -926,5 +1056,29 @@ def generate_change_interpretation_with_model(
         human_language=human_language,
         operation=lambda: provider.interpret_change(
             validated, understanding, human_language=human_language
+        ),
+    )
+
+
+def generate_report_translations_with_model(
+    texts: Sequence[str],
+    output_dir: Path,
+    provider: OpenAICompatibleRawBriefProvider,
+    *,
+    source_language: str,
+    target_language: str,
+    input_sha256: str,
+) -> tuple[dict[str, Any], Path]:
+    return _run_model_stage(
+        output_dir=output_dir,
+        receipt_name="report-translation-run-receipt.json",
+        stage="report_translation",
+        input_sha256=input_sha256,
+        provider=provider,
+        human_language=target_language,
+        operation=lambda: provider.translate_report_texts(
+            texts,
+            source_language=source_language,
+            target_language=target_language,
         ),
     )

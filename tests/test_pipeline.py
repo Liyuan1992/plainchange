@@ -491,6 +491,22 @@ def test_analyze_can_use_configured_compatible_model(
                 ],
                 "unknowns": ["真实运行顺序尚未验证。"],
             }
+        elif request.get("schema_version") == "plainchange.report-translation-request.v1":
+            requested_stages.append("translation")
+            known = {
+                "这次让问候可以包含姓名。": "Greeting can now include a name.",
+                "可能受影响": "Possibly affected",
+                "问候功能的调用方": "Greeting callers",
+            }
+            raw = {
+                "translations": [
+                    {
+                        "id": item["id"],
+                        "text": known.get(item["text"], f"Translated owner text {item['id']}"),
+                    }
+                    for item in request["items"]
+                ]
+            }
         else:
             requested_stages.append("change")
             change_requests.append(request)
@@ -550,13 +566,14 @@ def test_analyze_can_use_configured_compatible_model(
     receipt = json.loads(Path(result["model_run_receipt"]).read_text(encoding="utf-8"))
     assert receipt["status"] == "succeeded"
     run_receipt = json.loads(Path(result["run_receipt"]).read_text(encoding="utf-8"))
-    assert [item["name"] for item in run_receipt["stages"]][-2:] == [
+    assert [item["name"] for item in run_receipt["stages"]][-3:] == [
         "change_interpretation",
         "owner_draft",
+        "report_translation",
     ]
     assert result["analysis_mode"] == "full_model"
     assert result["project_understanding"]
-    assert requested_stages == ["project", "change"]
+    assert requested_stages == ["project", "change", "translation"]
     assert change_requests[0]["change_context"]["schema_version"] == "plainchange.change-context.v1"
     assert "git.patch" not in change_requests[0]["change_context"]["allowed_evidence_ids"]
     assert len(json.dumps(change_requests[0])) < 150_000
@@ -573,11 +590,15 @@ def test_analyze_can_use_configured_compatible_model(
     )
     assert localized_match is not None
     english = json.loads(localized_match.group(1))["en"]
+    assert english["first_screen_summary"]["headline"] == "Greeting can now include a name."
     assert english["first_screen_summary"]["user_impact"]["state_label"] == "Possibly affected"
-    assert english["five_questions"][2]["details"]["audience_impacts"][0]["audience"] == "问候功能的调用方"
+    assert english["five_questions"][2]["details"]["audience_impacts"][0]["audience"] == "Greeting callers"
+    assert Path(result["report_translations"]).is_file()
+    assert Path(result["report_translation_receipt"]).is_file()
     for receipt_name in (
         "project-understanding-run-receipt.json",
         "change-interpretation-run-receipt.json",
+        "report-translation-run-receipt.json",
     ):
         receipt_text = (tmp_path / "model-analysis" / receipt_name).read_text(encoding="utf-8")
 
@@ -591,7 +612,9 @@ def test_analyze_can_use_configured_compatible_model(
         model_config_path=config_path,
     )
     assert repeated["project_understanding_cache_hit"] is True
-    assert requested_stages == ["project", "change", "change"]
+    assert requested_stages == [
+        "project", "change", "translation", "change", "translation"
+    ]
 
 
 def test_first_screen_never_confirms_a_validator_downgraded_architecture_claim(

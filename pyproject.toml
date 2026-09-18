@@ -13,6 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<9"]
+release = ["pyinstaller>=6.10,<7"]
 
 [project.scripts]
 plainchange = "plainchange.cli:main"

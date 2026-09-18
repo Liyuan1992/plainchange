@@ -23,6 +23,13 @@ def _embedded_model(html: str) -> dict:
     return json.loads(match.group(1))
 
 
+def test_css_contains_no_hardcoded_chinese_generated_content():
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[1] / 'src/plainchange/templates/review.css').read_text(encoding='utf-8')
+    values = re.findall(r'\bcontent\s*:\s*[\"\x27]([^\"\x27]*)[\"\x27]', css)
+    assert not any(re.search(r'[\u3400-\u9fff]', value) for value in values)
+
+
 def _embedded_software_control(html: str):
     match = re.search(
         r'<script id="software-control-data" type="application/json">(.*?)</script>',
@@ -76,7 +83,17 @@ def test_single_file_html_embeds_valid_review_without_network_capabilities():
     assert "DecompressionStream" in html
     assert "XMLHttpRequest" not in html
     assert "WebSocket" not in html
-    assert "localStorage" not in html
+    assert 'Object.freeze(["zh-CN", "en"])' in html
+    assert '"plainchange.review.language"' in html
+    assert "navigator.languages" in html
+    assert "localStorage.getItem" in html
+    assert "localStorage.setItem" in html
+    assert "location.reload()" in html
+    assert 'data-locale="zh-CN"' in html
+    assert 'data-locale="en"' in html
+    assert "项目说明、任务原话、技术证据和仅提供单语的解释正文保留来源语言" in html
+    assert 'node.dataset.preserveLanguage = "true"' in html
+    assert "closest?.(\"script, style, [data-preserve-language='true']\")" in html
     assert "innerHTML" not in html
     assert "prefers-reduced-motion" in html
     assert "aria-selected" in html
@@ -162,6 +179,8 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert "这次改了什么" in html
     assert "这个软件怎么工作" in html
     assert "owner-map-inspector" in html
+    assert "agent-provenance-data" in html
+    assert "Where did this change come from?" in html
     assert "ownerMapSelectedId" in html
     assert "查看详细验证步骤" in html
     assert "查看技术实现结构" in html
@@ -190,7 +209,9 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert "owner-question-column owner-question-column-secondary" in html
     assert '<details class="owner-relation-disclosure">' in html
     assert "owner-status-icon" in html
-    assert ".owner-status-list { display: grid; grid-template-columns: repeat(3" in html
+    assert ".owner-verification-grid { display: grid; grid-template-columns:" in html
+    assert "已经替你验证" in html
+    assert "还有什么没验证，为什么？" in html
     assert ".owner-audience-row { min-width: 0;" in html
     assert ".owner-audience-explanation { grid-column: 1 / -1;" in html
     assert ".owner-question-column { min-width: 0; display: grid;" in html
@@ -199,6 +220,9 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert html.count("ownerChangePresentation(") >= 4
     assert "function ownerMappedDetails(overviewNode)" in html
     assert "owner-map-inline-details" in html
+    assert 'ownerMapIsCapability() ? "◆"' in html
+    assert 'ownerMapIsCapability() ? "能"' not in html
+    assert "additional confirmed code relationships remain available" in html
     assert 'button.setAttribute("aria-expanded", String(expanded));' in html
     assert "state.ownerExpandedOverviewId === node.id" in html
     assert "在软件流程中查看 →" in html
@@ -220,6 +244,9 @@ def test_owner_control_renders_two_plain_language_screens_without_replacing_fall
     assert "四步总览 · 已展开" in html
     assert "legacy-change-content" in html
     assert "legacy-architecture-content" in html
+    assert ".unified-architecture-canvas .architecture-concept-canvas" in html
+    assert "overflow-x: auto;" in html
+    assert "overscroll-behavior-inline: contain;" in html
     assert "fetch(" not in html
 
 
@@ -228,3 +255,26 @@ def test_fallback_embeds_null_software_control():
     html = render_review_html(model)
 
     assert _embedded_software_control(html) is None
+
+
+def test_language_layer_does_not_rewrite_embedded_evidence_data():
+    model = build_beginner_review_model(
+        validated_brief(),
+        task_evidence_value=[
+            {
+                "id": "task.user.language-boundary",
+                "kind": "task",
+                "authority": "original_task",
+                "content": "Keep this exact mixed-language source: 用户原话 / API contract.",
+            }
+        ],
+    )
+
+    html = render_review_html(model)
+    embedded = _embedded_model(html)
+
+    assert embedded == {key: value for key, value in model.items() if key != "system_architecture"}
+    why = next(item for item in embedded["summary"] if item["id"] == "summary.why")
+    assert why["task_context"]["entries"][0]["text"] == (
+        "Keep this exact mixed-language source: 用户原话 / API contract."
+    )

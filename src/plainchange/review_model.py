@@ -10,6 +10,7 @@ from .architecture import (
     validate_system_architecture_snapshot,
 )
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
+from .verification import build_verification_control, validate_verification_receipt
 from .target_profile import PresentationProfile, default_presentation_profile
 
 REVIEW_SCHEMA = "change-passport.beginner-review.v2"
@@ -497,6 +498,17 @@ def build_beginner_review_model(
     claim_ids = [str(item["id"]) for item in claims]
     if len(claim_ids) != len(set(claim_ids)):
         raise ManifestError("validated brief contains duplicate claim IDs")
+    verification_receipts = [
+        validate_verification_receipt(
+            item,
+            expected_base=str(brief["change"]["base_commit"]),
+            expected_head=str(brief["change"]["head_commit"]),
+        )
+        for item in brief.get("verification_receipts", [])
+    ]
+    verification_control = build_verification_control(
+        verification_receipts, claims
+    )
 
     bindings = architecture_evidence_bindings(delta)
     binding_index = {str(item["evidence_id"]): item for item in bindings}
@@ -639,6 +651,20 @@ def build_beginner_review_model(
             "technical_label": _technical_label(node_id, before, after),
             "status": status,
             "status_label": _STATUS_LABELS.get(status, status),
+            "before_state": (
+                "absent"
+                if before_node is None
+                else "present_with_responsibility"
+                if _responsibility(before_node)
+                else "present_without_responsibility"
+            ),
+            "after_state": (
+                "absent"
+                if after_node is None
+                else "present_with_responsibility"
+                if _responsibility(after_node)
+                else "present_without_responsibility"
+            ),
             "before": before_text,
             "after": after_text,
             "impact": impact_text,
@@ -800,6 +826,7 @@ def build_beginner_review_model(
         "default_node_id": default_node_id,
         "branch_groups": branch_groups,
         "claims": [dict(item) for item in claims],
+        "verification_control": verification_control,
         "display_omissions": dict(omissions),
         "limitations": _stable_unique(
             [*delta.get("limitations", []), *delta.get("unknowns", [])]

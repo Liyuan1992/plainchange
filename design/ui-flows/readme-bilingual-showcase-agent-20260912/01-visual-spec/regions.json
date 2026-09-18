@@ -1,0 +1,22 @@
+{
+  "report_header": {
+    "target": "PlainChange report header and English language state",
+    "must_match": ["project title", "tab state", "evidence badges", "English selector"],
+    "allowed_deviation_px": 2
+  },
+  "change_view": {
+    "target": "change conclusion, completed checks, and remaining boundary",
+    "must_match": ["headline", "verification cards", "boundary card", "source content"],
+    "allowed_deviation_px": 2
+  },
+  "software_view": {
+    "target": "four-stage workflow and selected-stage inspector",
+    "must_match": ["workflow nodes", "changed state", "connectors", "inspector"],
+    "allowed_deviation_px": 2
+  },
+  "animation": {
+    "target": "two-frame README demonstration",
+    "must_match": ["change view first", "4000 ms hold", "software view second", "continuous loop"],
+    "allowed_deviation_px": 0
+  }
+}

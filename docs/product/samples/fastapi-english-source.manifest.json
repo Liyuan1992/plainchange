@@ -1,0 +1,26 @@
+{
+  "schema_version": "change-passport.sample.v1",
+  "sample_id": "fastapi-english-source-v3",
+  "repository": {
+    "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\change-passport-fastapi-0.136.3.git",
+    "base": "22b02e26f9e8c7e32bd8266e2b0ebe8bb3a0db2b",
+    "head": "82064857539e6286522c347b4b11331b48dd2378"
+  },
+  "evidence_inputs": [
+    {
+      "id": "task.original",
+      "kind": "task",
+      "authority": "original_task",
+      "source": {
+        "type": "inline",
+        "text": "Analyze the fixed FastAPI release change with the generic automatic workflow. Do not use a FastAPI-specific target profile or repository-specific rules."
+      }
+    }
+  ],
+  "hidden_ground_truth": [],
+  "limits": {
+    "max_patch_bytes": 200000,
+    "max_input_bytes": 64000,
+    "git_timeout_seconds": 30
+  }
+}

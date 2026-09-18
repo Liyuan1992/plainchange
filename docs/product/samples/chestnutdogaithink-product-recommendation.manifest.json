@@ -1,0 +1,26 @@
+{
+  "schema_version": "change-passport.sample.v1",
+  "sample_id": "chestnutdogaithink-product-recommendation",
+  "repository": {
+    "path": "D:\\Dev\\Archive\\OldLaptop-20260622\\work\\E-myProject\\ChestnutDogAiThink",
+    "base": "f76838f1133f0d5fbfbdb9c3d0fc13356912263b",
+    "head": "0883fe0676f0148139afc82e92101d732d75ed3b"
+  },
+  "evidence_inputs": [
+    {
+      "id": "task.original",
+      "kind": "task",
+      "authority": "original_task",
+      "source": {
+        "type": "inline",
+        "text": "分析 ChestnutDogAiThink 最近一次已提交的商品推荐总览变化。使用 PlainChange 通用自动流程，不添加项目名称、路径或业务词汇专用规则；目标迁移档案保持只读。"
+      }
+    }
+  ],
+  "hidden_ground_truth": [],
+  "limits": {
+    "max_patch_bytes": 200000,
+    "max_input_bytes": 64000,
+    "git_timeout_seconds": 30
+  }
+}

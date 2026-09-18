@@ -10,6 +10,7 @@ from .models import sha256_bytes
 
 
 _DECLARATION_PATHS = ("README.md", "README.rst")
+_MAX_IDENTIFIER_SCAN_FILES = 384
 _WORKFLOW_HEADINGS = {
     "pipeline",
     "workflow",
@@ -21,6 +22,34 @@ _WORKFLOW_HEADINGS = {
     "处理流程",
     "运行流程",
     "软件怎么工作",
+}
+_CAPABILITY_HEADING_SIGNALS = {
+    "capabilities",
+    "features",
+    "what it does",
+    "overview",
+    "current status",
+    "current progress",
+    "功能",
+    "能力",
+    "核心能力",
+    "项目概览",
+    "当前进度",
+    "主要功能",
+}
+_CAPABILITY_HEADING_PENALTIES = {
+    "changelog",
+    "release notes",
+    "installation",
+    "quickstart",
+    "roadmap",
+    "license",
+    "contributing",
+    "更新日志",
+    "安装",
+    "快速开始",
+    "路线图",
+    "许可证",
 }
 _ORCHESTRATOR_STEMS = {
     "app",
@@ -53,6 +82,68 @@ _COMMON_STAGE_LABELS = {
     "load": "载入结果",
     "test": "运行检查",
 }
+
+_WEAK_CODE_TOKENS = {
+    "app",
+    "application",
+    "core",
+    "data",
+    "digital",
+    "docs",
+    "engine",
+    "main",
+    "package",
+    "project",
+    "runtime",
+    "self",
+    "src",
+    "system",
+    "test",
+    "tests",
+    "workflow",
+}
+
+# These families describe common software responsibilities, not product-specific
+# business stages. They are used only inside an explicitly anchored code scope
+# and never establish runtime order.
+_INTERNAL_RESPONSIBILITY_FAMILIES = (
+    (
+        "input",
+        "接收输入与会话",
+        "接收调用方交来的内容，并维护这次交互需要的会话信息。",
+        {"entry", "input", "message", "messages", "request", "session", "turn", "turns"},
+    ),
+    (
+        "context",
+        "准备上下文与已有信息",
+        "整理本次处理需要的上下文、提示、记忆或已保存信息。",
+        {"context", "memory", "payload", "prompt", "prompts", "selection"},
+    ),
+    (
+        "decision",
+        "判断如何处理",
+        "根据规则、权限和当前状态判断接下来可以使用哪些能力。",
+        {"capability", "decision", "permission", "permissions", "policy", "route", "router", "visibility"},
+    ),
+    (
+        "execution",
+        "执行实际处理工作",
+        "调用实际处理能力，并协调任务、工具或并行工作。",
+        {"agent", "batch", "execute", "execution", "native", "parallel", "runtime", "skill", "skills", "tool", "tools"},
+    ),
+    (
+        "delivery",
+        "整理并交付结果",
+        "把处理结果整理成调用方可以接收的形式，并完成必要的交接。",
+        {"handoff", "output", "rendering", "response", "result", "results"},
+    ),
+    (
+        "state",
+        "记录状态与过程",
+        "记录处理中产生的状态、事件、缓存或可追踪过程信息。",
+        {"cache", "event", "events", "ledger", "receipt", "state", "status", "storage", "store"},
+    ),
+)
 
 
 def _git_source_ref(commit: str, path: str, content: bytes | None = None) -> str:
@@ -305,19 +396,317 @@ def extract_declared_workflow(
     return [], []
 
 
+def _capability_id(label: str, index: int) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+    return f"declared-capability-{slug[:42]}" if slug else f"declared-capability-{index + 1}"
+
+
+def _capability_item(
+    label: str,
+    raw_description: str,
+    index: int,
+    *,
+    token_source: str | None = None,
+) -> dict[str, Any] | None:
+    label = _strip_markdown(label).rstrip(":：")[:72]
+    code_tokens = re.findall(r"`([^`]{1,160})`", token_source or raw_description)
+    description = _strip_markdown(raw_description).lstrip(" (:：—-）)")[:600]
+    if not label or not description or len(label) > 72:
+        return None
+    tokens = _identifier_tokens(" ".join([label, *code_tokens]))
+    return {
+        "id": _capability_id(label, index),
+        "key": label,
+        "tokens": tokens,
+        "label": label,
+        "description": description,
+        "declared_text": description,
+        "explicit_refs": code_tokens,
+        "type": "capability",
+    }
+
+
+def _bullet_capability_groups(lines: list[str]) -> list[list[dict[str, Any]]]:
+    groups: list[list[dict[str, Any]]] = []
+    group: list[tuple[str, str]] = []
+    current: tuple[str, list[str]] | None = None
+
+    def finish_item() -> None:
+        nonlocal current
+        if current is not None:
+            group.append((current[0], " ".join(current[1])))
+            current = None
+
+    def finish_group() -> None:
+        finish_item()
+        if 3 <= len(group) <= 12:
+            parsed = [
+                item
+                for index, (label, description) in enumerate(group)
+                if (item := _capability_item(label, description, index)) is not None
+            ]
+            if 3 <= len(parsed) <= 10:
+                groups.append(parsed)
+        group.clear()
+
+    after_blank = False
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        if re.match(r"^\s*#{1,6}\s+", line):
+            finish_group()
+            after_blank = False
+            continue
+        match = re.match(r"^\s*[-*+]\s+\*\*(.{1,96}?)\*\*(.*)$", line)
+        if match:
+            finish_item()
+            current = (match.group(1), [match.group(2)])
+            after_blank = False
+            continue
+        if current is not None and (not line.strip() or line[:1].isspace()):
+            if line.strip():
+                current[1].append(line.strip())
+            after_blank = not line.strip()
+            continue
+        if current is not None:
+            finish_group()
+        elif group and (line.strip() or after_blank):
+            finish_group()
+        after_blank = not line.strip()
+    finish_group()
+    return groups
+
+
+def _table_capabilities(lines: list[str]) -> list[list[dict[str, Any]]]:
+    groups: list[list[dict[str, Any]]] = []
+    cursor = 0
+    while cursor + 2 < len(lines):
+        header = lines[cursor].strip()
+        separator = lines[cursor + 1].strip()
+        if not (
+            header.startswith("|")
+            and separator.startswith("|")
+            and re.fullmatch(r"[|:\-\s]+", separator)
+        ):
+            cursor += 1
+            continue
+        header_cells = [cell.strip().casefold() for cell in header.strip("|").split("|")]
+        description_signals = {
+            "description", "details", "coverage", "covered features", "features",
+            "purpose", "responsibility", "说明", "描述", "覆盖功能", "功能", "职责",
+        }
+        description_index = next(
+            (index for index, cell in enumerate(header_cells) if cell in description_signals),
+            1,
+        )
+        rows: list[list[str]] = []
+        cursor += 2
+        while cursor < len(lines) and lines[cursor].strip().startswith("|"):
+            cells = [cell.strip() for cell in lines[cursor].strip().strip("|").split("|")]
+            if len(cells) >= 2:
+                rows.append(cells)
+            cursor += 1
+        if 3 <= len(rows) <= 12:
+            parsed: list[dict[str, Any]] = []
+            for index, cells in enumerate(rows[:10]):
+                raw_description = cells[
+                    description_index if description_index < len(cells) else 1
+                ]
+                item = _capability_item(
+                    cells[0],
+                    raw_description,
+                    index,
+                    token_source=" ".join(cells[1:]),
+                )
+                if item is not None:
+                    parsed.append(item)
+            if len(parsed) >= 3:
+                groups.append(parsed)
+    return groups
+
+
+def extract_declared_capabilities(
+    declarations: list[dict[str, str]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    candidates: list[tuple[int, int, list[dict[str, Any]], str]] = []
+    sequence = 0
+    for declaration in declarations:
+        sections = _heading_sections(declaration["text"])
+        if not sections:
+            sections = [("", declaration["text"].splitlines())]
+        for heading, body in sections:
+            lowered = heading.lower()
+            heading_score = 12 if any(signal in lowered for signal in _CAPABILITY_HEADING_SIGNALS) else 0
+            if any(signal in lowered for signal in _CAPABILITY_HEADING_PENALTIES):
+                heading_score -= 18
+            for group in [*_bullet_capability_groups(body), *_table_capabilities(body)]:
+                descriptive = sum(len(item["description"]) >= 24 for item in group)
+                tokenized = sum(bool(item["tokens"]) for item in group)
+                # The deterministic owner draft is Chinese today. When the
+                # same README contains equivalent bilingual capability lists,
+                # prefer the list already written in the output language rather
+                # than translating or rewriting source claims.
+                output_language_match = sum(
+                    bool(re.search(r"[\u3400-\u9fff]", str(item["label"])))
+                    for item in group
+                )
+                score = (
+                    heading_score
+                    + len(group) * 3
+                    + descriptive
+                    + tokenized
+                    + output_language_match * 2
+                )
+                candidates.append((score, -sequence, group, declaration["source_ref"]))
+                sequence += 1
+    if not candidates:
+        return [], []
+    _, _, capabilities, source_ref = max(candidates, key=lambda item: (item[0], item[1]))
+    seen: set[str] = set()
+    for index, capability in enumerate(capabilities):
+        capability_id = capability["id"]
+        if capability_id in seen:
+            capability["id"] = f"{capability_id}-{index + 1}"
+        seen.add(capability["id"])
+    return capabilities, [source_ref]
+
+
 def _token_matches_name(token: str, name: str) -> bool:
-    token = token.lower().replace("-", "_")
-    name = name.lower().replace("-", "_")
-    if token == name:
-        return True
-    if len(token) >= 5 and len(name) >= 5:
-        return token[:5] == name[:5]
-    return False
+    token = re.sub(r"[^a-z0-9]+", "", token.lower())
+    name = re.sub(r"[^a-z0-9]+", "", name.lower())
+    return bool(token and token == name)
 
 
 def _path_matches_tokens(path: str, tokens: list[str]) -> bool:
     names = [part.lower() for part in re.split(r"[^A-Za-z0-9]+", path) if part]
-    return any(_token_matches_name(token, name) for token in tokens for name in names)
+    useful = [
+        token
+        for token in tokens
+        if (
+            len(re.sub(r"[^a-z0-9]+", "", token.lower())) >= 4
+            or token.lower() in _COMMON_STAGE_LABELS
+        )
+        and token.lower() not in _WEAK_CODE_TOKENS
+    ]
+    return any(_token_matches_name(token, name) for token in useful for name in names)
+
+
+def _explicit_anchor_paths(explicit_refs: list[str], supported: list[str]) -> list[str]:
+    result: list[str] = []
+    for raw_ref in explicit_refs:
+        candidate = raw_ref.strip().replace("\\", "/").removeprefix("./")
+        candidate = candidate.split("#", 1)[0].strip()
+        if not candidate:
+            continue
+        path_like = "/" in candidate or bool(PurePosixPath(candidate).suffix)
+        if path_like:
+            prefix = candidate.rstrip("/")
+            matches = [
+                path
+                for path in supported
+                if path == prefix or path.startswith(prefix + "/")
+            ]
+            if not matches and "/" not in candidate:
+                basename_matches = [
+                    path for path in supported if PurePosixPath(path).name == candidate
+                ]
+                matches = basename_matches if len(basename_matches) == 1 else []
+            result.extend(matches)
+            continue
+        if candidate.lower() in _WEAK_CODE_TOKENS:
+            continue
+        result.extend(
+            path
+            for path in supported
+            if _path_matches_tokens(path, [candidate])
+        )
+    return list(dict.fromkeys(result))
+
+
+def _explicit_identifiers(explicit_refs: list[str]) -> set[str]:
+    result: set[str] = set()
+    for raw_ref in explicit_refs:
+        if "/" in raw_ref or "\\" in raw_ref or "://" in raw_ref:
+            continue
+        for candidate in re.findall(r"[A-Za-z_][A-Za-z0-9_]{3,}", raw_ref):
+            lowered = candidate.lower()
+            if "_" in candidate or any(character.isupper() for character in candidate[1:]):
+                if lowered not in _WEAK_CODE_TOKENS:
+                    result.add(candidate)
+    return result
+
+
+def _source_identifiers(path: str, text: str) -> set[str]:
+    if path.endswith(".py"):
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            return set()
+        result: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                result.add(node.name)
+            elif isinstance(node, ast.Name):
+                result.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                result.add(node.attr)
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{3,}", node.value):
+                    result.add(node.value)
+        return result
+    return set(re.findall(r"\b[A-Za-z_$][A-Za-z0-9_$]{3,}\b", text))
+
+
+def _internal_capability_details(
+    step: dict[str, Any],
+    anchors: list[str],
+    declaration_refs: list[str],
+    commit: str,
+    category_for_path: Callable[[str], str],
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[str]] = {}
+    family_lookup = {item[0]: item for item in _INTERNAL_RESPONSIBILITY_FAMILIES}
+    assignment_order = ("state", "delivery", "decision", "context", "input", "execution")
+    eligible_anchors = [
+        path
+        for path in anchors[:96]
+        if not path.lower().startswith(("tests/", "test/", "docs/", "design/"))
+    ]
+    for path in eligible_anchors:
+        stem_tokens = {
+            token.lower()
+            for token in re.split(r"[^A-Za-z0-9]+", PurePosixPath(path).stem)
+            if token and token.lower() not in {"init", "base", "constants", "helpers", "utils"}
+        }
+        for family_id in assignment_order:
+            signals = family_lookup[family_id][3]
+            if stem_tokens & signals:
+                grouped.setdefault(family_id, []).append(path)
+                break
+    populated = [family_id for family_id, paths in grouped.items() if paths]
+    if len(populated) < 2 or sum(len(paths) for paths in grouped.values()) < 3:
+        return []
+    details: list[dict[str, Any]] = []
+    for family_id, label, description, _ in _INTERNAL_RESPONSIBILITY_FAMILIES:
+        paths = grouped.get(family_id, [])
+        if not paths:
+            continue
+        details.append(
+            {
+                "id": f"{step['id']}.{family_id}",
+                "type": "capability",
+                "label": label,
+                "description": description,
+                "group_ids": sorted({category_for_path(path) for path in paths}),
+                "evidence_status": "code_discovered",
+                "evidence_label": "从代码结构发现",
+                "evidence_note": "在这项能力明确引用的代码范围内，根据固定版本的文件和标识符名称形成候选职责；它不是项目声明或运行验证，仍需负责人确认。",
+                "source_refs": [
+                    *declaration_refs,
+                    *[_git_source_ref(commit, path) for path in paths[:4]],
+                ],
+            }
+        )
+    return details[:6]
 
 
 def _orchestrator_paths(supported: list[str]) -> list[str]:
@@ -396,8 +785,14 @@ def reconcile_workflow(
 ) -> dict[str, Any] | None:
     steps, declaration_refs = extract_declared_workflow(declarations)
     if not steps:
-        return None
+        steps, declaration_refs = extract_declared_capabilities(declarations)
+        if not steps:
+            return None
+        structure_kind = "capability_map"
+    else:
+        structure_kind = "workflow"
     orchestrators: list[dict[str, Any]] = []
+    source_identifier_cache: dict[str, set[str]] = {}
     for path in _orchestrator_paths(supported):
         raw = read_git_blob(repo, commit, path, timeout)[:128_000]
         text = raw.decode("utf-8", errors="replace")
@@ -410,11 +805,48 @@ def reconcile_workflow(
             }
         )
     for step in steps:
-        anchors = [path for path in supported if _path_matches_tokens(path, step["tokens"])]
-        for item in orchestrators:
-            if any(re.search(rf"(?i)\b{re.escape(token)}\w*\b", item["text"]) for token in step["tokens"]):
-                anchors.append(item["path"])
-        anchors = list(dict.fromkeys(anchors))[:8]
+        explicit_refs = [str(ref) for ref in step.get("explicit_refs", [])]
+        anchors = _explicit_anchor_paths(explicit_refs, supported)
+        explicit_identifiers = _explicit_identifiers(explicit_refs)
+        if explicit_identifiers and not anchors:
+            identifier_candidates = sorted(
+                (
+                    path
+                    for path in supported
+                    if not path.lower().startswith(("tests/", "test/", "docs/", "design/"))
+                ),
+                key=lambda path: (len(PurePosixPath(path).parts), len(path), path),
+            )[:_MAX_IDENTIFIER_SCAN_FILES]
+            for path in identifier_candidates:
+                if path not in source_identifier_cache:
+                    raw = read_git_blob(repo, commit, path, timeout)[:256_000]
+                    source_identifier_cache[path] = _source_identifiers(
+                        path, raw.decode("utf-8", errors="replace")
+                    )
+                if explicit_identifiers & source_identifier_cache[path]:
+                    anchors.append(path)
+        if not anchors and not explicit_refs:
+            anchors = [path for path in supported if _path_matches_tokens(path, step["tokens"])]
+            useful_tokens = [
+                token
+                for token in step["tokens"]
+                if token.lower() not in _WEAK_CODE_TOKENS and len(token) >= 4
+            ]
+            for item in orchestrators:
+                if any(
+                    re.search(rf"(?i)(?<![A-Za-z0-9_]){re.escape(token)}(?![A-Za-z0-9_])", item["text"])
+                    for token in useful_tokens
+                ):
+                    anchors.append(item["path"])
+        anchors = sorted(
+            dict.fromkeys(anchors),
+            key=lambda path: (
+                PurePosixPath(path).stem.lower()
+                in {"__init__", "constants", "helpers", "utils", "base"},
+                len(PurePosixPath(path).parts),
+                path,
+            ),
+        )[:96]
         step["group_ids"] = sorted({category_for_path(path) for path in anchors})
         step["evidence_status"] = "declared_and_code_supported" if anchors else "declared_only"
         step["evidence_label"] = "找到对应代码" if anchors else "仅来自项目说明"
@@ -424,6 +856,28 @@ def reconcile_workflow(
             else "项目说明提到了这一步，但在当前限定代码范围内没有找到稳定对应位置。"
         )
         step["source_refs"] = [*declaration_refs, *[_git_source_ref(commit, path) for path in anchors[:5]]]
+        step["details"] = (
+            _internal_capability_details(
+                step,
+                anchors,
+                declaration_refs,
+                commit,
+                category_for_path,
+            )
+            if structure_kind == "capability_map"
+            else []
+        )
+
+    if structure_kind == "capability_map":
+        return {
+            "kind": structure_kind,
+            "steps": steps,
+            "source_refs": declaration_refs,
+            "order_status": "not_applicable",
+            "order_label": "没有先后顺序",
+            "order_note": "项目说明把这些内容描述为并列能力，不代表调用顺序或运行时先后。",
+            "order_source_refs": declaration_refs,
+        }
 
     best_supported = 0
     conflict_ref: str | None = None
@@ -468,6 +922,7 @@ def reconcile_workflow(
         order_note = "当前只能确认项目说明列出了这些步骤，还没有足够编排代码证明它们的完整先后顺序。"
         order_refs = declaration_refs
     return {
+        "kind": structure_kind,
         "steps": steps,
         "source_refs": declaration_refs,
         "order_status": order_status,

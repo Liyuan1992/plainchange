@@ -1,0 +1,26 @@
+{
+  "schema_version": "change-passport.sample.v1",
+  "sample_id": "memdsl-mcp-registry-release",
+  "repository": {
+    "path": "D:\\Dev\\Projects\\memdsl",
+    "base": "f49bc0f9a398d25c39043aba8d77647b34e3243a",
+    "head": "a061bc4efb9a0dacab04c2fa847bcf4b236146b4"
+  },
+  "evidence_inputs": [
+    {
+      "id": "task.original",
+      "kind": "task",
+      "authority": "original_task",
+      "source": {
+        "type": "inline",
+        "text": "Analyze the fixed memdsl release change. Use PlainChange's generic model-assisted process and preserve the target worktree as read-only. Do not add project-specific rules."
+      }
+    }
+  ],
+  "hidden_ground_truth": [],
+  "limits": {
+    "max_patch_bytes": 200000,
+    "max_input_bytes": 64000,
+    "git_timeout_seconds": 30
+  }
+}

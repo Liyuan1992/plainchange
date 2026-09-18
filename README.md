@@ -1,187 +1,184 @@
 # PlainChange
 
-[MIT License](LICENSE)
+English | [简体中文](README.zh-CN.md)
 
-**Know what AI changed, what it affects, and what still needs verification.**
+**Understand what changed — and where the code came from.**
 
-Without reading every changed line.
+Know what AI changed, what it affects, and what still needs verification.
 
-PlainChange turns AI-made software changes into an evidence-backed **Change Passport**.
+PlainChange turns AI-made software changes into an evidence-backed **Change Passport**. It is for people responsible for software that AI helped build: founders, product owners, technical leads, and developers who cannot or do not want to review every changed line before deciding what to test or accept.
 
-PlainChange 是 AI 生成代码与人类决策之间的理解和控制层。它不要求软件负责人读完每一行代码，而是把一次固定的 Git 变化变成一份可核对的 Change Passport：改了什么、影响什么、哪些已经确认、哪些仍需验证，以及接下来该检查什么。
+> AI can write the code. You should still be able to understand what changed in your software.
 
-状态：`0.1.0a1` 本地 Alpha 已具备候选报告与首次使用入口；尚未完成独立人工复述、三份评分样本或 baseline 批准。因此自动分区和负责人语言仍是待确认初稿，不是运行事实或独立效果评估。
+PlainChange is an early local-first Alpha. It does not edit the project being analysed, create an account, send telemetry, or require a preferred model vendor.
 
-## 三步开始
+## See a real report
+
+![PlainChange analysing its own fixed Git change: what changed, then how the software works](docs/images/plainchange-self-demo-en.gif)
+
+*A real local report produced by PlainChange while analysing its own previously
+committed change. It shows **What changed**, then moves to **How this software
+works** after 4 seconds. This model-assisted example first forms a bounded
+project understanding, then explains the fixed change; PlainChange checks the
+result against local evidence and still shows what remains unverified.*
+
+## What you receive
+
+Each offline report starts with the questions a software owner normally has:
+
+1. What did AI change?
+2. Could this affect my software or its users?
+3. What should I be concerned about?
+4. What should I check next?
+5. Where did the new code come from? *(when Git AI has a record)*
+
+Then it lets the reader move from the change to **how this software works**: the business workflow or capability map, the affected step, adjacent steps, and finally the source-backed technical evidence. Technical details are there when needed; they are not the default reading task.
+
+When a fixed-range test, build, browser, integration, or security receipt is supplied, the report separates **already verified for you** from **what is still unverified and why**. Remaining checks name the minimum verification and who should handle it; PlainChange does not turn engineering commands into homework for the software owner.
+
+### Know where the code came from with Git AI
+
+When [Git AI](https://github.com/git-ai-project/git-ai) has recorded authorship for the selected commits, PlainChange reads that fixed-range record in read-only mode and adds **Where did this change come from?** to the same owner report. It distinguishes AI-recorded, human-recorded, and untracked additions, and shows sanitized tool/model names plus the number of recorded sessions.
+
+The two tools answer different questions: Git AI records line-level provenance; PlainChange connects that provenance to the change, its possible impact, the evidence boundary, and the decision still left to the software owner. Provenance never becomes proof that the code is correct, ran successfully, or is safe to release.
+
+Git AI remains optional. PlainChange does not install it, add hooks, reconstruct missing history, open transcripts, or send prompts and conversation bodies to the configured model. Install it using its official instructions and restart the supported coding agent so future edits can be recorded; PlainChange then discovers the installed command automatically.
+
+## How it works
+
+```text
+fixed Git change + optional task context + optional Git AI provenance
+                ↓
+bounded project understanding (your configured model, if enabled)
+                ↓
+local evidence checks, source bounds, and explicit unknowns
+                ↓
+offline Change Passport: HTML + JSON + Markdown + architecture evidence
+```
+
+The full experience makes two semantic model calls: one to form a bounded project understanding, then one to explain the selected change. It then makes bounded translation calls to prepare the other supported language before the offline report is written. The model proposes language and salience; PlainChange still owns fixed Git collection, evidence IDs, source limits, downgrade rules, uncertainty, and report rendering. Translation is identity-bound and cannot upgrade static code into runtime proof.
+
+Without a configured provider, PlainChange sends no network request and emits a clearly labelled **basic evidence** report instead. This is useful for private diagnostics, but it is not presented as a complete business understanding.
+
+## Windows: download, unzip, double-click
+
+The intended path for a software owner is a portable Windows download:
+
+1. Download `PlainChange-windows-x64-portable.zip` from the GitHub Release.
+2. Unzip it anywhere on your computer.
+3. Double-click `PlainChange.exe`.
+4. Choose the Git project, then enter your model endpoint, model name, and API key.
+
+No terminal, Python, `uv`, JSON file, or environment variable is needed. The API key is
+used only in PlainChange's process memory for that analysis; it is never written to the
+project, report, log, local configuration, or Git. Closing the app clears it. The portable
+app still needs Git installed because it compares committed versions.
+
+The portable ZIP is built locally by `scripts/build-windows-portable.ps1`; attaching it to
+a GitHub Release is a separate publishing step. Until an attachment is published, use the
+source/developer path below.
+
+## Source and developer path
+
+Requirements: Git, Python 3.12+, and [uv](https://docs.astral.sh/uv/).
 
 ```powershell
-uv sync
+git clone <your-fork-or-clone-url>
+cd plainchange
+uv sync --extra dev
 uv run plainchange .
 ```
 
-这会比较当前项目最近两个提交，并在项目外生成一份 Change Passport。想使用浏览器引导页，可以运行 `uv run plainchange serve`；Windows 用户也可以双击 `start-plainchange.cmd`。默认全程本地运行，不调用模型、不上传源码，也不修改目标项目。完整安装与 Alpha 限制见 [安装与首次使用](docs/INSTALL.md)。
-
-## 从这里看起
-
-这份项目自身的展示使用隔离、只读的目标克隆，分析范围为 `a4576ec..688fc5f`：它修复了“仅因重新验证而更换提交号的静态导入边被误判为变化”的问题。生成结果确认 2 个模块变更、0 条新增/删除/修改的结构边，并保留“运行时影响尚未知”的边界。完整的可复核记录在 [自举展示记录](docs/showcase/change-passport-self-688fc5f.md)。该固定样本早于 PlainChange 改名，因此历史文件名和证据身份继续保留原名。
-
-这个样本很适合检查工具是否把已知任务和真实代码变化对上；它不适合证明陌生项目上的泛化能力。后者仍需要独立样本、人工标注和评分。
-
-## 它做什么
-
-### 新增：理解系统流程（默认使用本机 Codex）
-
-在 `plainchange serve` 页面切换到 **理解系统**，选择项目后点击
-**用 Codex 生成系统地图**。不用选择前后版本，也不用逐个匹配文件。
-原来的变化说明、架构视图和命令继续可用。
+The last command compares the current repository's latest two commits and writes a report outside that target project. To use the guided local page:
 
 ```powershell
-uv run plainchange understand D:\Dev\Projects\your-project
-# 可选：围绕一个最想弄清的流程追查
-uv run plainchange understand . --focus "任务失败后如何重试，什么条件下会停止？"
+uv run plainchange serve
 ```
 
-需要本机官方 Codex CLI 已通过 ChatGPT 登录。请求通过官方 `codex exec`
-执行，使用订阅额度；不会读取登录令牌或修改全局 Codex 配置。源码目录清单和
-选中的代码片段会发送给 Codex，并非纯离线分析。可设置
-`PLAINCHANGE_CODEX_EXECUTABLE` 为 CLI 的绝对路径；也可以用
-`--model-config path\to\provider.json` 显式改用原有兼容 API 配置。
-失败不会自动切换服务或重试计费请求。
-
-系统默认分析 **最新提交**（支持只有一个提交的项目）；不会创建标签或冻结版本。
-**未提交修改暂不包含**，报告会提示这一范围。可用 `--revision <commit-id>` 指定
-已有提交。报告写入项目外的独立目录，包含：
-
-- `review.html`：可离线打开的交互地图；点击步骤看输入、输出、状态与代码，
-  点击条件看其他走向，沿分支查看待测场景。
-- `system-flow.json` / `system-flow.md`：完整结构化结果、项目说明与 Mermaid 导出。
-- `system-source-packet.json` / `source-inventory.json`：实际读取的代码片段、
-  commit/blob/行号、文件范围及排除原因。
-- `run-receipt.json` / `model-attempts/`：各次请求、Codex 事件、输出、耗时及失败记录。
-
-当前按源码范围最多列出 2500 个文件，模型最多进行六轮选读（每轮八段、每段
-160 行、总源码文本 400 KB），再生成地图。主要语言源文件和 README 可被选读；
-超过 2 MB 的文件、隐藏路径、私有目录、凭据命名文件、构建产物等不在范围内。这是有界的
-代码探索，**不是整个系统的穷尽分析，也不是完整秘密扫描器**。
-
-引用和图连接会被程序校验；业务语义与连接仍是 **有源码引用的模型解读**，
-不升级成静态架构事实或运行事实。每条分支的测试场景均标记未执行，设计动机
-在没有独立记录时保持未知。项目说明应结合实际代码与运行结果核对。
-报告和请求记录含源码，按项目资料保存和分享。
-
-### 原有：生成变化说明
-
-1. 只读固定的 Git base/head 与明确提供的任务、测试等证据。
-2. 生成受约束的证据包、静态架构变化和候选 baseline；模型若参与，只能读取证据包。
-3. 校验每个陈述引用的证据类型，不能支持的说法会降级，而不是伪装成事实。
-4. 输出 Markdown、结构化 JSON、Mermaid 图，以及可直接打开、无网络请求的单文件 HTML。
-
-它不会把静态 import 当成运行时执行，不会把 AI 的解释当成用户意图，也不会把候选 baseline 自动升级为已批准的项目理解。
-
-## 快速开始
+On Windows, `start-plainchange.cmd` starts the same local page. For another Git repository, either install PlainChange and run `plainchange .` inside that repository, or use:
 
 ```powershell
-uv sync --extra dev
-uv run plainchange --help
-uv run pytest -q
+uv run plainchange analyze D:\path\to\a\git-project
 ```
 
-新项目优先直接在项目目录运行：
+See [installation and first use](docs/INSTALL.md) for wheel installation, ports, and troubleshooting.
 
-```powershell
-plainchange analyze .
-# 等价简写
-plainchange .
-```
+## Advanced model configuration
 
-高级流程仍可传入 manifest 和显式输出目录：
-
-```powershell
-plainchange analyze path\to\sample-manifest.json --output artifacts\sample
-```
-
-这条命令会先检查固定 Git 版本所需对象；对象不完整时只在 PlainChange 受管缓存中补齐，不写目标仓库。随后读取固定版本中有限的根目录项目说明，把它当作“项目自述”而不是事实，并分别核对工作步骤是否有代码位置支持、声明的先后顺序是否有编排代码支持。找不到、对不上或存在歧义时会保留“仅项目说明”“自动候选”或“顺序未验证”，不会为了补齐流程而伪造结论。最后生成项目分区初稿、四步总览、可展开的详细工作图、负责人候选说明和 `review.html`。阶段进度会同时输出到终端并持续写入 `run-receipt.json`。重复分析按不可变 blob 内容复用解析缓存；可用 `PLAINCHANGE_CACHE_DIR` 指定缓存位置，否则优先使用 `E:\DevCache\plainchange`。
-
-默认的自动说明不调用模型，也不上传源码。它会把自动业务语义标成“候选说明”，把 README 自述、代码位置支持、静态顺序支持、真实运行和负责人确认分开。即使某一步显示“代码支持”，也只表示固定版本中找到了对应实现位置，不表示软件已经真实运行或 README 一定正确。
-
-需要模型增强时，复制通用配置模板并填写自己的兼容提供商地址和模型名：
+PlainChange accepts a user-owned OpenAI-compatible endpoint. This can be a domestic, international, hosted, or local service; the project does not choose your provider or model. The portable first-run page accepts a masked API key directly and keeps it only in memory. The environment-variable JSON path below remains available for CLI and automation.
 
 ```powershell
 Copy-Item examples\model-provider.template.json model-provider.local.json
-$env:PLAINCHANGE_MODEL_API_KEY = "你的密钥"
-uv run plainchange analyze path\to\sample-manifest.json --output artifacts\sample-model --generator model --model-config model-provider.local.json
+$env:PLAINCHANGE_MODEL_API_KEY = "your-key"
+uv run plainchange analyze D:\path\to\a\git-project --generator model --model-config model-provider.local.json --human-language auto
 ```
 
-接口使用通用的 OpenAI-compatible Chat Completions 协议，不绑定具体国内、国外或本地厂商。配置中的 `base_url` 可以填写 `/v1` 根地址或完整的 `/chat/completions` 地址；`model` 完全由用户决定。密钥只从 `api_key_env` 指定的环境变量读取，不能写入配置文件。
+Put only the **environment variable name** in `api_key_env` inside the local JSON configuration. Never place a real key in that file or commit it. The configuration supports `json_schema`, `json_object`, and `prompt_only` structured-output compatibility modes. Model requests receive a bounded, fixed-revision context—not an unrestricted checkout—and stage receipts retain only sanitized identities, hashes, timing, and token counters.
 
-不同兼容服务的结构化输出能力并不一致，可选择：
+`--human-language` accepts `auto`, `en`, or `zh-CN`. It selects the primary model language; `auto` follows the system language and the guided page follows the browser language. A model-assisted run now prepares the other supported language as an identity-bound report translation. English owner prose containing Chinese is rejected instead of being published as translated. Original project quotations, code paths, identifiers, and technical evidence remain in their source language.
 
-- `json_schema`：优先选择，服务端按严格 Schema 约束输出。
-- `json_object`：提供商只支持 JSON 模式时使用。
-- `prompt_only`：提供商不支持 `response_format` 时使用，输出仍必须通过本地 JSON 与证据校验。
+## What PlainChange does not claim
 
-只有显式选择 `--generator model` 才会把已校验的 `generator-packet.json` 发送到配置地址。模型、耗时、输入/输出 Token（服务返回时）、配置哈希和内容哈希会写入 `model-run-receipt.json`；密钥、请求头和响应正文不会进入收据。超时、无效 JSON、未知证据或缺少密钥会明确失败，不会静默伪装成规则版成功。项目仍保留下面的人工文件桥。
+- The target repository is always read-only. PlainChange reads fixed Git revisions and does not execute the target program.
+- Static imports, changed files, and model interpretation do not prove runtime execution, deployment topology, database effects, network effects, or user impact.
+- Project documentation is a project declaration, not ground truth. A matching code location means only that a fixed-version anchor was found.
+- Generated workflows, audience candidates, and recommended checks are evidence-constrained proposals. They can be accepted, downgraded, or remain unknown; they never approve a baseline or a release by themselves.
 
-标准的本地文件桥仍可用于人工或模型增强：
+Those limits are visible inside every report. “No evidence found” is not silently rewritten as “proved safe.”
+
+## Languages and report text
+
+The offline reader supports English and Simplified Chinese. It follows the browser/system preference on first open and remembers a manual choice locally. A model-assisted run writes both owner-facing languages before the report becomes offline: the requested language is the source, and bounded translation calls produce a complete identity-bound projection for the other language. Missing entries, stale identities, empty translations, or Chinese owner prose in the English projection fail closed. Original quotations, code paths, identifiers, and technical evidence remain unchanged in their source language.
+
+Export and apply a source-bound translation pack with `localize-report`:
 
 ```powershell
-# 1. 只读采集 Git 与显式输入证据，并建立结构变化事实
-uv run plainchange prepare examples\sample-manifest.json --output artifacts\sample
-
-# 2. 让人工或外部流程只读取 generator-packet.json，写出严格 JSON
-#    （不使用上面的配置接口时，文件桥本身不会发送任何内容）
-
-# 3. 校验引用和权威类型，再生成说明与可交互 HTML
-uv run plainchange finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample
+plainchange localize-report .\artifacts\example --export translations.en.json --language en
+# Translate every required entry without changing its uncertainty.
+plainchange localize-report .\artifacts\example --translations translations.en.json
 ```
 
-如已准备符合 `change-passport.software-control.v1` 的负责人解释层，可用同一条通用入口生成两屏报告；渲染器不按项目名分支：
+Translation packs are identity-bound to the source report. Coverage and identity are checked locally; translation quality still needs human review. The manual command remains available for deterministic reports or reviewed replacement translations.
 
-```powershell
-uv run plainchange finalize artifacts\sample\generator-packet.json artifacts\sample\raw-brief.input.json --output artifacts\sample --software-control path\to\software-control.json
-```
+## Generated artifacts
 
-要让同一套工具适配另一仓库，可在 manifest 中显式引用目标配置：
+The report directory may contain:
 
-```json
-{
-  "target_profile": {
-    "path": "examples/target-profiles/plainchange.v1.json"
-  }
-}
-```
+- `review.html` — an offline, interactive owner-facing report.
+- `brief.md` / `brief.json` — validated change explanation.
+- `software-control.json` — the owner-oriented change and system view.
+- `architecture-delta.json` / `system-architecture.json` — supported static structure snapshots, not runtime architecture.
+- `project-understanding.json` — validated but non-authoritative model interpretation.
+- `agent-provenance.json` — optional, sanitized Git AI authorship summary; never a correctness or runtime receipt.
+- `report-translations.json` — complete identity-bound owner-text projection for the second language.
+- `report-translation-run-receipt.json` — sanitized model, timing, batch, and token metadata for that projection.
+- `run-receipt.json` and model-stage receipts — progress, timing, cache and sanitized provenance metadata.
 
-配置可定义阅读分区、中文职责标签、术语、品牌，以及明确标注来源的产品/流程架构；它不能改变 Git、模块、静态边、影响路径或 baseline 的事实。每份结构快照都会记录配置 ID 和 SHA-256，并把该指纹绑定到每个分区来源。可参考 [项目自身展示 manifest 模板](examples/showcase/change-passport-self-688fc5f.manifest.json)、[本项目配置](examples/target-profiles/plainchange.v1.json) 与 [通用默认配置](src/plainchange/assets/default-target-profile.json)。
+Technical data is loaded on demand inside the offline report. Generated artifacts and local model configurations are ignored by Git by default.
 
-## 产物与边界
+## Current Alpha status
 
-- `architecture-delta.json`：唯一的 before/after 静态拓扑与一跳影响事实。
-- `system-architecture.json`：固定 Head 的完整受支持静态代码快照；不是运行时、部署、数据库或网络架构的证明。
-- `conceptual_architecture`：由目标配置声明并显式标注的产品/流程架构，用来解释输入、处理、输出与人工决定；不是静态 import 事实。
-- `architecture-baseline.proposal.json`：待人工决定的候选，不能直接复用为 approved baseline。
-- `brief.json` / `brief.md`：经证据校验后的变化说明。
-- `beginner-review.json` / `review.html`：从同一事实派生的小白阅读视图；不能反写事实或批准状态。
-- `software-control.json`：可选、单独校验和绑定来源的负责人解释层；存在时 `review.html` 默认展示“这次改了什么 / 这个软件怎么工作”，技术证据仍可下钻。
-- `target-profile.draft.json` / `software-control.auto.json`：`analyze` 生成的候选项目语义；负责人确认前不能升级为项目事实。
-- `run-receipt.json`：阶段、完成比例、耗时、Git 对象状态、缓存命中与失败位置。
-- `model-run-receipt.json`：仅在显式选择模型生成器时产生；记录非秘密的提供商/模型身份、配置哈希、耗时、Token 计数、包与输出哈希和失败状态。
+The core path has been exercised on framework, public-package, business-application, and media-production examples. It can distinguish a capability map from an ordered workflow, retain source-language evidence, and preserve runtime uncertainty. It is not yet a production assurance product:
 
-大仓库的 `review.html` 不再把完整静态快照放进首屏 JSON。技术快照以确定性 gzip 形式保存于同一离线 HTML，并绑定压缩前后 SHA-256；只有用户展开“查看技术实现结构”时才解压和建立模块/关系索引。浏览器不支持解压或校验失败时，技术层会保持不可用，而不会伪装成已有证据。
+- Independent non-technical comprehension studies are still pending.
+- Model quality, latency, and token cost vary by provider and project.
+- Dynamic language features, configuration injection, and runtime-only paths can remain unknown.
+- There is no hosted service, IDE plugin, account system, telemetry, or automatic code editing.
 
-“这个软件怎么工作”始终保留四步全局图。点击任一步会在该节点下方展开来源合同映射的详细步骤，再点同一步即可收起；切换步骤不会进入另一张详情图，也不需要返回总览。当本次变化能够唯一对应一个流程步骤时，“这次改了什么”会显示 `在软件流程中查看 →`，一键展开并定位到该节点；无法唯一映射时不显示这个入口。第二个 Tab 的右栏以步骤职责、前后关系、产出、修改位置和代码依据为主，变化影响与检查建议降为按需展开内容。
+Please treat Alpha reports as a stronger starting point for human review, not a replacement for running the software or making the release decision.
 
-目标仓库必须保持只读。分析产物写入分析项目自己的 `artifacts/`，而非目标仓库；`artifacts/` 默认不入版本控制。真正的 baseline 只有在有人填写并明确批准 decision 后才会生成：
+## Security, feedback, and contribution
 
-```powershell
-uv run plainchange approve-baseline artifacts\sample\architecture-baseline.proposal.json artifacts\sample\baseline-decision.json --output artifacts\sample\architecture-baseline.approved.json
-```
+Read [SECURITY.md](SECURITY.md) before analysing an untrusted repository. The local server listens only on loopback; do not share its local session URL or place credentials in reports, issues, or commits.
 
-## 项目治理
+The project is released under the [MIT License](LICENSE). For this Alpha, report issues through the repository once its public remote is configured. Include the PlainChange version, operating system, steps to reproduce, and sanitized error output—never source code or credentials you cannot share.
 
-跨代理流程、任务记录、原始问题/演进账本和架构决定位于 [docs/project-governance](docs/project-governance/README.md)。当前实现仍是本地证据实验，不包含服务端、IDE 插件、账号系统、远程集成、自动改代码或发布。
+For implementation, protocol, and validation details, see [installation and first use](docs/INSTALL.md), [the changelog](CHANGELOG.md), and [project governance records](docs/project-governance/README.md).
 
-### 连接流程与场景推演
+## Understand a system without selecting a change pair
 
-“理解系统”新增系统总览，点击模块进入子流程；有代码引用的跨流程连接区分本次调用、返回上层和下一轮请求。选择具体分支后，可以逐步查看条件、输入和预期结果，切换分支或退回前一步。推演不执行项目；目标分支的候选输入也不保证满足整条路径的所有前置条件。
+Run `plainchange understand <repository>` or choose **理解系统** on the guided page. This additive feature uses the locally signed-in Codex by default to explain a fixed Git commit through source-linked flows, decision branches, cross-flow connections and candidate test scenarios. An existing compatible provider config is an explicit alternative via `--model-config`.
 
-源文件按有界片段提供给 Codex，片段附带函数位置目录，支持定位长文件深处的实现。当前最多六轮补读、400 KB 源码正文，单文件上限 2 MB；这仍不是全项目或全部分支覆盖。新版产物为 `plainchange.system-flow.v2`，旧报告仍可读取；旧报告没有跨流程证据时不会自动补造连接。分析仍针对指定 Git 提交，未提交修改明确排除。
+The offline overview links subflows and distinguishes calls, returns and the next user request. A scenario walkthrough lets readers choose conditions, inspect expected results and backtrack; it does not execute the target or prove path feasibility. Project explanations stay neutral and source-grounded.
+
+Reports are saved outside the target repository as `review.html`, `system-flow.json` and `system-flow.md`, together with source excerpts and provider receipts. Exploration is bounded to six read rounds, 400 KB of source text and 2 MB per file; function indexes help locate deep implementations. Uncommitted changes are excluded. Code references and graph consistency are validated, while semantic correctness, complete branch coverage and runtime results remain unverified. Reports and request records contain project source code.

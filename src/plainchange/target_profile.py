@@ -158,6 +158,75 @@ class ModuleArea:
 
 
 @dataclass(frozen=True)
+class ConceptualDetail:
+    detail_id: str
+    component_type: str
+    label: str
+    description: str
+    group_ids: tuple[str, ...]
+    evidence_status: str
+    evidence_label: str
+    evidence_note: str
+    source_refs: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.detail_id,
+            "type": self.component_type,
+            "label": self.label,
+            "description": self.description,
+            "group_ids": list(self.group_ids),
+            "evidence_status": self.evidence_status,
+            "evidence_label": self.evidence_label,
+            "evidence_note": self.evidence_note,
+            "source_refs": list(self.source_refs),
+        }
+
+    @classmethod
+    def from_dict(cls, value: Any, index: int, label: str) -> "ConceptualDetail":
+        item_label = f"{label}.details[{index}]"
+        required = {
+            "id",
+            "type",
+            "label",
+            "description",
+            "group_ids",
+            "evidence_status",
+            "evidence_label",
+            "evidence_note",
+            "source_refs",
+        }
+        if not isinstance(value, Mapping) or set(value) != required:
+            raise ManifestError(f"{item_label} contains unsupported fields")
+        component_type = _text(value.get("type"), f"{item_label}.type")
+        if component_type != "capability":
+            raise ManifestError(f"{item_label}.type must be capability")
+        evidence_status = _text(value.get("evidence_status"), f"{item_label}.evidence_status")
+        if evidence_status not in {
+            "declared_and_code_supported",
+            "declared_only",
+            "code_discovered",
+            "model_interpreted_code_supported",
+            "model_interpreted_only",
+        }:
+            raise ManifestError(f"{item_label}.evidence_status is unsupported")
+        group_ids = _text_list(value.get("group_ids"), f"{item_label}.group_ids")
+        if len(group_ids) != len(set(group_ids)):
+            raise ManifestError(f"{item_label}.group_ids contains duplicate IDs")
+        return cls(
+            detail_id=_id(value.get("id"), f"{item_label}.id"),
+            component_type=component_type,
+            label=_text(value.get("label"), f"{item_label}.label"),
+            description=_text(value.get("description"), f"{item_label}.description"),
+            group_ids=group_ids,
+            evidence_status=evidence_status,
+            evidence_label=_text(value.get("evidence_label"), f"{item_label}.evidence_label"),
+            evidence_note=_text(value.get("evidence_note"), f"{item_label}.evidence_note"),
+            source_refs=_text_list(value.get("source_refs"), f"{item_label}.source_refs"),
+        )
+
+
+@dataclass(frozen=True)
 class ConceptualComponent:
     component_id: str
     component_type: str
@@ -170,6 +239,7 @@ class ConceptualComponent:
     evidence_label: str | None = None
     evidence_note: str | None = None
     source_refs: tuple[str, ...] | None = None
+    details: tuple[ConceptualDetail, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -190,6 +260,8 @@ class ConceptualComponent:
                     "source_refs": list(self.source_refs or ()),
                 }
             )
+        if self.details:
+            result["details"] = [item.to_dict() for item in self.details]
         return result
 
     @classmethod
@@ -204,7 +276,8 @@ class ConceptualComponent:
             "grid_row",
             "group_ids",
         }
-        optional = {"evidence_status", "evidence_label", "evidence_note", "source_refs"}
+        evidence_optional = {"evidence_status", "evidence_label", "evidence_note", "source_refs"}
+        optional = {*evidence_optional, "details"}
         if (
             not isinstance(value, Mapping)
             or not required.issubset(value)
@@ -215,9 +288,9 @@ class ConceptualComponent:
                 "id, type, label, description, grid_column, grid_row, and group_ids"
             )
         component_type = _text(value.get("type"), f"{item_label}.type")
-        if component_type not in {"input", "process", "output", "human_gate", "state"}:
+        if component_type not in {"input", "process", "output", "human_gate", "state", "capability"}:
             raise ManifestError(
-                f"{item_label}.type must be input, process, output, human_gate, or state"
+                f"{item_label}.type must be input, process, output, human_gate, state, or capability"
             )
         grid_column = value.get("grid_column")
         grid_row = value.get("grid_row")
@@ -240,6 +313,8 @@ class ConceptualComponent:
                 "declared_only",
                 "code_discovered",
                 "generated_candidate",
+                "model_interpreted_code_supported",
+                "model_interpreted_only",
             }:
                 raise ManifestError(f"{item_label}.evidence_status is unsupported")
             evidence_label = _text(value.get("evidence_label"), f"{item_label}.evidence_label")
@@ -248,13 +323,25 @@ class ConceptualComponent:
                 value.get("source_refs", []), f"{item_label}.source_refs"
             )
         else:
-            if optional & set(value):
+            if evidence_optional & set(value):
                 raise ManifestError(
                     f"{item_label} evidence fields require evidence_status"
                 )
             evidence_label = None
             evidence_note = None
             source_refs = None
+        raw_details = value.get("details", [])
+        if not isinstance(raw_details, list):
+            raise ManifestError(f"{item_label}.details must be an array")
+        if len(raw_details) == 1 or len(raw_details) > 6:
+            raise ManifestError(f"{item_label}.details must be empty or contain two to six items")
+        details = tuple(
+            ConceptualDetail.from_dict(item, detail_index, item_label)
+            for detail_index, item in enumerate(raw_details)
+        )
+        detail_ids = [item.detail_id for item in details]
+        if len(detail_ids) != len(set(detail_ids)):
+            raise ManifestError(f"{item_label}.details contains duplicate IDs")
         return cls(
             component_id=_id(value.get("id"), f"{item_label}.id"),
             component_type=component_type,
@@ -267,6 +354,7 @@ class ConceptualComponent:
             evidence_label=evidence_label,
             evidence_note=evidence_note,
             source_refs=source_refs,
+            details=details,
         )
 
 
@@ -302,6 +390,7 @@ class ConceptualArchitecture:
     boundary_note: str
     components: tuple[ConceptualComponent, ...]
     flows: tuple[ConceptualFlow, ...]
+    architecture_kind: str | None = None
     purpose_statement_state: str | None = None
     purpose_source_refs: tuple[str, ...] | None = None
     source_refs: tuple[str, ...] | None = None
@@ -321,6 +410,7 @@ class ConceptualArchitecture:
         if self.purpose_statement_state is not None:
             result.update(
                 {
+                    "architecture_kind": self.architecture_kind or "workflow",
                     "purpose_statement_state": self.purpose_statement_state,
                     "purpose_source_refs": list(self.purpose_source_refs or ()),
                     "source_refs": list(self.source_refs or ()),
@@ -338,6 +428,7 @@ class ConceptualArchitecture:
     def from_dict(cls, value: Any, label: str) -> "ConceptualArchitecture":
         required = {"title", "description", "boundary_note", "components", "flows"}
         optional = {
+            "architecture_kind",
             "purpose_statement_state",
             "purpose_source_refs",
             "source_refs",
@@ -359,8 +450,15 @@ class ConceptualArchitecture:
         raw_flows = value.get("flows")
         if not isinstance(raw_components, list) or not raw_components:
             raise ManifestError(f"{item_label}.components must be a non-empty array")
-        if not isinstance(raw_flows, list) or not raw_flows:
-            raise ManifestError(f"{item_label}.flows must be a non-empty array")
+        architecture_kind = value.get("architecture_kind", "workflow")
+        if architecture_kind not in {"workflow", "capability_map"}:
+            raise ManifestError(f"{item_label}.architecture_kind is unsupported")
+        if not isinstance(raw_flows, list):
+            raise ManifestError(f"{item_label}.flows must be an array")
+        if architecture_kind == "workflow" and not raw_flows:
+            raise ManifestError(f"{item_label}.flows must be a non-empty array for a workflow")
+        if architecture_kind == "capability_map" and raw_flows:
+            raise ManifestError(f"{item_label}.capability_map must not declare ordered flows")
         components = tuple(
             ConceptualComponent.from_dict(item, index, label)
             for index, item in enumerate(raw_components)
@@ -371,6 +469,14 @@ class ConceptualArchitecture:
         coordinates = [(item.grid_column, item.grid_row) for item in components]
         if len(coordinates) != len(set(coordinates)):
             raise ManifestError(f"{item_label}.components contains duplicate grid coordinates")
+        details = [detail for component in components for detail in component.details]
+        detail_ids = [detail.detail_id for detail in details]
+        if len(detail_ids) != len(set(detail_ids)) or set(detail_ids) & set(component_ids):
+            raise ManifestError(f"{item_label}.components contain duplicate detail IDs")
+        if details and architecture_kind != "capability_map":
+            raise ManifestError(f"{item_label}.details are supported only for capability maps")
+        if any(component.details and component.component_type != "capability" for component in components):
+            raise ManifestError(f"{item_label}.details require a capability component")
         flows = tuple(
             ConceptualFlow.from_dict(item, index, label)
             for index, item in enumerate(raw_flows)
@@ -394,9 +500,13 @@ class ConceptualArchitecture:
             purpose_statement_state = _text(
                 purpose_statement_state, f"{item_label}.purpose_statement_state"
             )
-            if purpose_statement_state not in {"project_declared", "unknown"}:
+            if purpose_statement_state not in {
+                "project_declared",
+                "supported_interpretation",
+                "unknown",
+            }:
                 raise ManifestError(
-                    f"{item_label}.purpose_statement_state must be project_declared or unknown"
+                    f"{item_label}.purpose_statement_state must be project_declared, supported_interpretation, or unknown"
                 )
             workflow_order_status = _text(
                 value.get("workflow_order_status"),
@@ -407,8 +517,17 @@ class ConceptualArchitecture:
                 "partially_supported",
                 "conflicting",
                 "unverified",
+                "not_applicable",
             }:
                 raise ManifestError(f"{item_label}.workflow_order_status is unsupported")
+            if architecture_kind == "capability_map" and workflow_order_status != "not_applicable":
+                raise ManifestError(
+                    f"{item_label}.capability_map order status must be not_applicable"
+                )
+            if architecture_kind == "workflow" and workflow_order_status == "not_applicable":
+                raise ManifestError(
+                    f"{item_label}.workflow order status cannot be not_applicable"
+                )
             purpose_source_refs: tuple[str, ...] | None = _text_list(
                 value.get("purpose_source_refs", []),
                 f"{item_label}.purpose_source_refs",
@@ -443,6 +562,7 @@ class ConceptualArchitecture:
             boundary_note=_text(value.get("boundary_note"), f"{item_label}.boundary_note"),
             components=components,
             flows=flows,
+            architecture_kind=str(architecture_kind),
             purpose_statement_state=purpose_statement_state,
             purpose_source_refs=purpose_source_refs,
             source_refs=source_refs,
@@ -456,7 +576,10 @@ class ConceptualArchitecture:
         unknown_group_ids = {
             group_id
             for component in self.components
-            for group_id in component.group_ids
+            for group_id in (
+                *component.group_ids,
+                *(group_id for detail in component.details for group_id in detail.group_ids),
+            )
             if group_id not in section_ids
         }
         if unknown_group_ids:

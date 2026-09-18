@@ -1,9 +1,61 @@
 (() => {
   "use strict";
 
-  const data = JSON.parse(document.getElementById("review-data").textContent);
-  const softwareControl = JSON.parse(document.getElementById("software-control-data").textContent);
+  const sourceData = JSON.parse(document.getElementById("review-data").textContent);
+  const reviewTranslation = JSON.parse(document.getElementById("localized-review-data").textContent)[window.PlainChangeI18n.locale];
+  function projectReview(value) {
+    if (reviewTranslation?.schema_version === "plainchange.generated-review-presentation.v1") {
+      const root = value?.schema_version === "change-passport.system-architecture.v1"
+        ? "architecture"
+        : "review";
+      for (const message of reviewTranslation.messages || []) {
+        if (message.root !== root || !Array.isArray(message.path) || !message.path.length) continue;
+        let parent = value;
+        for (const part of message.path.slice(0, -1)) {
+          if (parent === null || typeof parent !== "object" || !(part in parent)) {
+            parent = null;
+            break;
+          }
+          parent = parent[part];
+        }
+        const leaf = message.path.at(-1);
+        if (parent !== null && typeof parent === "object" && typeof parent[leaf] === "string") {
+          parent[leaf] = message.text;
+        }
+      }
+      return value;
+    }
+    if (!reviewTranslation?.translations) return value;
+    const {translations, fields, arrays, skip} = reviewTranslation;
+    const translated = text => Object.prototype.hasOwnProperty.call(translations, text) ? translations[text] : text;
+    const walk = (item) => {
+      if (Array.isArray(item)) return item.map(walk);
+      if (!item || typeof item !== 'object') return item;
+      return Object.fromEntries(Object.entries(item).map(([key, child]) => {
+        if (skip.includes(key)) return [key, child];
+        if (fields.includes(key) && typeof child === 'string') return [key, translated(child)];
+        if (arrays.includes(key) && Array.isArray(child)) return [key, child.map(text => typeof text === 'string' ? translated(text) : walk(text))];
+        return [key, walk(child)];
+      }));
+    };
+    return walk(value);
+  }
+  const data = projectReview(sourceData);
+  const sourceControl = JSON.parse(document.getElementById("software-control-data").textContent);
+  const controlTranslations = JSON.parse(document.getElementById("localized-control-data").textContent);
+  const softwareControl = controlTranslations[window.PlainChangeI18n.locale] || sourceControl;
+  const languageBoundary = document.querySelector('.language-boundary');
+  if (languageBoundary && sourceControl) {
+    languageBoundary.textContent = window.PlainChangeI18n.locale === 'zh-CN'
+      ? '报告说明支持独立译文；引用原话与技术证据保留原文，语言切换不改变证据状态。'
+      : controlTranslations[window.PlainChangeI18n.locale]
+      ? 'PlainChange-generated explanations are shown in English. Project descriptions, original quotations and technical evidence remain in their source language. Evidence states are unchanged.'
+      : window.PlainChangeI18n.locale === 'en'
+        ? 'English report text is not available for this report. The interface is translated; report text remains in its source language.'
+        : '报告说明支持独立译文；引用原话与技术证据保留原文，语言切换不改变证据状态。';
+  }
   const technicalPayload = JSON.parse(document.getElementById("technical-payload-data").textContent);
+  const agentProvenance = JSON.parse(document.getElementById("agent-provenance-data").textContent);
   let architecture = data.system_architecture || null;
   const conceptualArchitecture = data.conceptual_architecture;
   let architectureGroups = new Map();
@@ -51,7 +103,7 @@
       }
       architectureLoadPromise = decodeTechnicalPayload()
         .then((value) => {
-          architecture = value;
+          architecture = projectReview(value);
           indexArchitecture();
           if (status) status.hidden = true;
           return true;
@@ -110,6 +162,11 @@
     if (text !== undefined && text !== null) node.textContent = String(text);
     return node;
   };
+  const sourceText = (tag, className, text) => {
+    const node = make(tag, className, text);
+    node.dataset.preserveLanguage = "true";
+    return node;
+  };
   const makeSvg = (tag, className) => {
     const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
     if (className) node.setAttribute("class", className);
@@ -164,6 +221,18 @@
 
   function renderOwnerStatus() {
     const summary = softwareControl.first_screen_summary;
+    const modeBanner = byId("analysis-mode-banner");
+    if (softwareControl.analysis_mode === "basic_evidence") {
+      modeBanner.hidden = false;
+      clear(modeBanner);
+      append(
+        modeBanner,
+        make("strong", "", "基础证据模式：还没有让模型理解这个软件"),
+        make("span", "", "下面只展示固定代码事实、结构线索和未知项。它不能替代完整的业务理解，也不应被当成最终结论。"),
+      );
+    } else {
+      modeBanner.hidden = true;
+    }
     byId("owner-change-headline").textContent = summary.headline;
     byId("owner-confirmed-copy").textContent = summary.confirmed_change.text;
     const meta = byId("owner-change-meta");
@@ -171,30 +240,87 @@
     append(meta, stateDisclosure(summary.confirmed_change), make("span", "owner-concept-label", `涉及内部：${summary.internal_concept_label}`));
     const changeLocation = ownerChangeLocation();
     if (changeLocation) {
-      const locationLink = make("button", "owner-location-link", "在软件流程中查看 →");
+      const capabilityMap = softwareControl?.working_map?.map_kind === "capability_map";
+      const locationLink = make("button", "owner-location-link", capabilityMap ? "在软件能力图中查看 →" : "在软件流程中查看 →");
       locationLink.type = "button";
       locationLink.dataset.ownerLocationLink = changeLocation.detail.id;
-      locationLink.setAttribute("aria-label", `在软件流程中查看：${changeLocation.detail.label}`);
+      locationLink.setAttribute("aria-label", `${capabilityMap ? "在软件能力图中查看" : "在软件流程中查看"}：${changeLocation.detail.label}`);
       locationLink.addEventListener("click", openOwnerChangeLocation);
       meta.appendChild(locationLink);
     }
     const host = byId("owner-status-list");
     clear(host);
-    [
-      ["impact", "影", "会影响我现在的软件吗？", summary.user_impact],
-      ["risk", "!", "我需要担心什么？", summary.residual_risk],
-      ["action", "✓", "我现在该怎么办？", summary.owner_action],
-    ].forEach(([tone, icon, question, item]) => {
-      const row = make("article", `owner-status-row ${tone}`);
-      const copy = make("div", "owner-status-copy");
-      append(
-        copy,
-        append(make("div", "owner-status-heading"), make("strong", "", question), stateDisclosure(item)),
-        make("p", "", item.text),
-      );
-      append(row, make("span", "owner-status-icon", icon), copy);
-      host.appendChild(row);
-    });
+    const verification = data.verification_control;
+    if (!verification) {
+      [
+        ["impact", "影", "会影响我现在的软件吗？", summary.user_impact],
+        ["risk", "!", "我需要担心什么？", summary.residual_risk],
+        ["action", "✓", "我现在该怎么办？", summary.owner_action],
+      ].forEach(([tone, icon, question, item]) => {
+        const row = make("article", `owner-status-row ${tone}`);
+        const copy = make("div", "owner-status-copy");
+        append(copy, append(make("div", "owner-status-heading"), make("strong", "", question), stateDisclosure(item)), make("p", "", item.text));
+        append(row, make("span", "owner-status-icon", icon), copy);
+        host.appendChild(row);
+      });
+      return;
+    }
+
+    const english = window.PlainChangeI18n.locale === "en";
+    const localized = (value) => value && typeof value === "object"
+      ? (value[window.PlainChangeI18n.locale] || value.en || value["zh-CN"] || "")
+      : String(value || "");
+    const verificationGrid = make("div", "owner-verification-grid");
+    const donePanel = make("section", "owner-control-panel owner-verified-panel");
+    const doneHeading = append(make("div", "owner-control-heading"), make("span", "owner-control-icon verified", "✓"), append(make("div", ""), make("p", "eyebrow", english ? "Completed checks" : "已完成检查"), make("h3", "", english ? "Already verified for you" : "已经替你验证")));
+    donePanel.appendChild(doneHeading);
+    const passed = verification.passed_checks || [];
+    if (!passed.length) {
+      donePanel.appendChild(make("p", "owner-empty-verification", english ? "No structured verification receipt was provided. This does not mean a check failed." : "这份报告没有收到结构化验证收据；这不代表检查失败。"));
+    } else {
+      const list = make("div", "owner-verification-list");
+      passed.forEach((check) => {
+        const item = make("article", "owner-verification-item passed");
+        append(item, make("span", "owner-verification-mark", "✓"), append(make("div", ""), make("strong", "", localized(check.label)), make("p", "", localized(check.summary)), make("small", "", `${english ? "Verified scope" : "验证范围"}：${localized(check.scope)}`)));
+        list.appendChild(item);
+      });
+      donePanel.appendChild(list);
+    }
+    verificationGrid.appendChild(donePanel);
+
+    const gapsPanel = make("section", "owner-control-panel owner-gaps-panel");
+    gapsPanel.appendChild(append(make("div", "owner-control-heading"), make("span", "owner-control-icon gap", "?"), append(make("div", ""), make("p", "eyebrow", english ? "Remaining boundary" : "剩余边界"), make("h3", "", english ? "What is not verified, and why?" : "还有什么没验证，为什么？"))));
+    const gaps = verification.gaps || [];
+    if (!gaps.length) {
+      gapsPanel.appendChild(make("p", "owner-empty-verification", english ? "No remaining verification gap was identified from the supplied evidence." : "现有证据没有列出仍需处理的验证缺口。"));
+    } else {
+      const list = make("div", "owner-gap-list");
+      gaps.forEach((gap) => {
+        const item = make("article", "owner-gap-item");
+        append(item, make("strong", "", localized(gap.label)), make("p", "", `${english ? "Why" : "为什么"}：${localized(gap.reason)}`), make("p", "", `${english ? "How to verify" : "怎么验证"}：${localized(gap.how)}`), make("small", "", `${english ? "Handled by" : "由谁处理"}：${localized(gap.responsibility)}`));
+        list.appendChild(item);
+      });
+      gapsPanel.appendChild(list);
+    }
+    verificationGrid.appendChild(gapsPanel);
+    host.appendChild(verificationGrid);
+
+    const decision = verification.decision;
+    const decisionPanel = make("article", `owner-decision-panel ${decision.tone}`);
+    const decisionCopy = append(make("div", ""), make("p", "eyebrow", english ? "Your decision" : "需要你决定"), make("h3", "", localized(decision.title)), make("p", "", localized(decision.text)));
+    const decisionItems = decision.items || [];
+    if (decisionItems.length) {
+      const list = make("ul", "owner-decision-list");
+      decisionItems.forEach((item) => {
+        const row = make("li", "owner-decision-item");
+        append(row, make("strong", "", localized(item.label)), make("small", "", `${english ? "Handled by" : "由谁处理"}：${localized(item.responsibility)}`));
+        list.appendChild(row);
+      });
+      decisionCopy.appendChild(list);
+    }
+    append(decisionPanel, make("span", "owner-decision-icon", decision.tone === "stop" ? "!" : "人"), decisionCopy);
+    host.appendChild(decisionPanel);
+    host.appendChild(make("p", "owner-verification-boundary", localized(verification.boundary)));
   }
 
   function stateDisclosure(item) {
@@ -202,6 +328,50 @@
     details.appendChild(make("summary", "owner-state-label", item.state_label));
     details.appendChild(make("p", "", item.state_explanation));
     return details;
+  }
+
+  function renderAgentProvenance() {
+    const host = byId("owner-provenance");
+    if (!host || !agentProvenance) return;
+    host.hidden = false;
+    clear(host);
+    const english = window.PlainChangeI18n.locale === "en";
+    const statusCopy = {
+      available: english ? ["Authorship recorded", "The selected change has recorded authorship for all added lines."] : ["已有记录", "这次新增代码都找到了来源记录。"],
+      partial: english ? ["Partially recorded", "Some added lines still have no recorded authorship."] : ["部分记录", "部分新增代码仍然没有来源记录。"],
+      no_record: english ? ["No historical record", "Git AI is installed, but these changes were made before an authorship record was captured. PlainChange will not guess the author afterwards."] : ["没有历史记录", "Git AI 已安装，但这批变化发生时没有留下来源记录；PlainChange 不会事后猜测作者。"],
+      not_installed: english ? ["Not recorded", "This change has no AI authorship record. After Git AI is installed, future changes can be recorded; earlier changes cannot be reconstructed automatically."] : ["尚未记录", "这次变化没有记录 AI 来源。安装 Git AI 后，可以从未来的变化开始记录；以前没有记录的变化不能自动补回。"],
+      invalid: english ? ["Record unavailable", "An authorship record was found but could not be safely matched to this change."] : ["记录不可用", "找到了来源数据，但它无法安全地与这次变化对应。"],
+    }[agentProvenance.status] || (english ? ["Record unavailable", "No usable authorship summary is available."] : ["记录不可用", "目前没有可用的来源摘要。"]);
+    const heading = make("div", "owner-provenance-heading");
+    const title = make("div", "");
+    append(title, make("p", "eyebrow", english ? "Code provenance" : "代码来源"), make("h2", "", english ? "Where did this change come from?" : "这次改动从哪里来"));
+    append(heading, title, make("span", `owner-provenance-state ${agentProvenance.status}`, statusCopy[0]));
+    host.appendChild(heading);
+    host.appendChild(make("p", "owner-provenance-copy", statusCopy[1]));
+
+    const summary = agentProvenance.summary;
+    if (["available", "partial", "no_record"].includes(agentProvenance.status)) {
+      const metrics = make("div", "owner-provenance-metrics");
+      const tools = summary.tools.length
+        ? summary.tools.map((item) => item.model === "unknown" ? item.tool : `${item.tool} · ${item.model}`).join(english ? ", " : "、")
+        : (english ? "No tool identified" : "未识别工具");
+      [
+        [english ? "AI-recorded additions" : "AI 记录的新增代码", `${summary.ai_added_lines}`],
+        [english ? "Human-recorded additions" : "人工记录的新增代码", `${summary.human_added_lines}`],
+        [english ? "Additions without a source record" : "未留下来源记录的新增代码", `${summary.untracked_added_lines}`],
+        [english ? "Recorded sessions" : "记录到的会话", `${summary.session_count}`],
+      ].forEach(([label, value]) => {
+        const metric = make("div", "owner-provenance-metric");
+        append(metric, make("span", "", label), make("strong", "", value));
+        metrics.appendChild(metric);
+      });
+      host.appendChild(metrics);
+      const toolRow = make("p", "owner-provenance-tools");
+      append(toolRow, make("strong", "", english ? "Recorded tool/model: " : "记录到的工具/模型："), make("span", "", tools));
+      host.appendChild(toolRow);
+    }
+    host.appendChild(make("p", "owner-provenance-warning", english ? "Authorship records show where code came from. They do not prove that the software works correctly." : "来源记录只能说明代码从哪里来，不能证明软件功能正确。"));
   }
 
   function renderComparison(host, comparison) {
@@ -285,10 +455,11 @@
 
   function ownerChangePresentation(node) {
     const changed = node?.change_state === "changed";
+    const capability = ownerMapIsCapability();
     return {
       changed,
-      eyebrow: changed ? "AI 这次改了这里" : "当前工作步骤",
-      question: changed ? "这次改了什么" : "这次这里变了吗",
+      eyebrow: changed ? (capability ? "AI 这次改了这项能力" : "AI 这次改了这里") : (capability ? "当前能力" : "当前工作步骤"),
+      question: changed ? "这次改了什么" : (capability ? "这项能力变了吗" : "这次这里变了吗"),
       badge: changed ? "本次改动" : null,
     };
   }
@@ -314,6 +485,10 @@
     return {nodes: map.overview_map.nodes, flows: map.overview_map.flows};
   }
 
+  function ownerMapIsCapability() {
+    return softwareControl?.working_map?.map_kind === "capability_map";
+  }
+
   function ownerMappedDetails(overviewNode) {
     const nodesById = new Map(softwareControl.working_map.nodes.map((node) => [node.id, node]));
     return (overviewNode?.detail_node_ids || []).map((id) => nodesById.get(id)).filter(Boolean);
@@ -337,6 +512,12 @@
   }
 
   function ownerRelationContext(node, nodes, flows) {
+    if (ownerMapIsCapability()) {
+      return {
+        incoming: "这是并列能力之一；当前证据没有声明固定的前一步。",
+        outgoing: "它可能被不同入口或其他能力组合使用；当前证据没有声明固定的后一步。",
+      };
+    }
     const labels = new Map(nodes.map((item) => [item.id, item.label]));
     const incoming = flows.filter((flow) => flow.to === node.id);
     const outgoing = flows.filter((flow) => flow.from === node.id);
@@ -348,6 +529,9 @@
       }
       const names = [...new Set(items.map((flow) => labels.get(direction === "incoming" ? flow.from : flow.to)).filter(Boolean))];
       const relationLabels = [...new Set(items.map((flow) => flow.label).filter(Boolean))];
+      if (window.PlainChangeI18n.locale === "en") {
+        return `${direction === "incoming" ? "Previous step" : "Next step"}: ${names.join(", ")}${relationLabels.length ? `. Relationship: ${relationLabels.join(", ")}` : ""}.`;
+      }
       const stepLabel = direction === "incoming" ? "前一步" : "后一步";
       const relationNote = relationLabels.length ? `；连接依据标为“${relationLabels.join("、")}”` : "";
       return `${stepLabel}：${names.map((name) => `「${name}」`).join("、")}${relationNote}。`;
@@ -367,13 +551,14 @@
   }
 
   function ownerSystemContext({responsibility, incoming, result, outgoing, change, evidence}) {
+    const capability = ownerMapIsCapability();
     const section = make("section", "owner-system-context");
     append(
       section,
-      ownerSystemFact("责", "这个步骤负责什么", responsibility),
-      ownerSystemFact("前", "它从哪里来 / 前一步", incoming),
+      ownerSystemFact("责", capability ? "这项能力负责什么" : "这个步骤负责什么", responsibility),
+      ownerSystemFact("前", capability ? "它在结构中的位置" : "它从哪里来 / 前一步", incoming),
       ownerSystemFact("出", "它会产生什么", result),
-      ownerSystemFact("后", "它会交给哪里 / 后一步", outgoing),
+      ownerSystemFact("后", capability ? "它可以怎样被使用" : "它会交给哪里 / 后一步", outgoing),
       ownerSystemFact("改", "这次修改发生在哪里", change),
       ownerSystemFact("据", "代码依据到哪里", evidence),
     );
@@ -435,6 +620,18 @@
   function computeOwnerMapLayout() {
     const map = ownerMapData();
     const nodes = map.nodes;
+    if (ownerMapIsCapability()) {
+      const columns = nodes.length === 1 ? 1 : 2;
+      const placement = new Map();
+      nodes.forEach((node, index) => {
+        placement.set(node.id, {
+          row: Math.floor(index / columns) + 1,
+          column: index % columns + 1,
+          span: 1,
+        });
+      });
+      return {mode: "capability", nodes, placement, columns};
+    }
     const byNode = new Map(nodes.map((node) => [node.id, node]));
     const pending = new Map(nodes.map((node) => [node.id, 0]));
     const outgoing = new Map(nodes.map((node) => [node.id, []]));
@@ -481,6 +678,7 @@
       if (!overviewNode) return;
       const presentation = ownerChangePresentation(overviewNode);
       const detailNodes = ownerMappedDetails(overviewNode);
+      const canExpand = !ownerMapIsCapability() || detailNodes.length > 1;
       const changedDetail = detailNodes.find((item) => item.change_state === "changed");
       const relation = ownerRelationContext(
         overviewNode,
@@ -492,20 +690,22 @@
       host.dataset.changeState = overviewNode.change_state;
       append(
         host,
-        make("p", "eyebrow", presentation.changed ? "本次改动所在阶段" : "当前系统位置"),
+        make("p", "eyebrow", presentation.changed ? (ownerMapIsCapability() ? "本次改动所在能力" : "本次改动所在阶段") : "当前系统位置"),
         make("h3", "", overviewNode.label),
         make("p", "owner-inspector-lead", overviewNode.description),
         ownerSystemContext({
           responsibility: overviewNode.description,
           incoming: relation.incoming,
-          result: firstDetail && lastDetail
+          result: ownerMapIsCapability() && firstDetail
+            ? firstDetail.owner_view.visible_result
+            : firstDetail && lastDetail
             ? `按当前工作图，这个阶段从“${firstDetail.label}”推进到“${lastDetail.label}”。`
             : "当前工作图没有声明这个阶段更细的产出。",
           outgoing: relation.outgoing,
           change: changedDetail
-            ? `本次修改定位在这个阶段中的“${changedDetail.label}”。`
-            : "当前证据没有把本次修改定位在这个阶段。",
-          evidence: `${overviewNode.evidence_label || "依据状态未标注"}：${overviewNode.evidence_note || "当前工作图没有提供更具体的代码依据说明。"}`,
+            ? (ownerMapIsCapability() ? `本次修改定位在“${changedDetail.label}”这项能力。` : `本次修改定位在这个阶段中的“${changedDetail.label}”。`)
+            : (ownerMapIsCapability() ? "当前证据没有把本次修改定位在这项能力。" : "当前证据没有把本次修改定位在这个阶段。"),
+          evidence: `${window.PlainChangeI18n.translateText(overviewNode.evidence_label || "依据状态未标注")}: ${window.PlainChangeI18n.translateText(overviewNode.evidence_note || "当前工作图没有提供更具体的代码依据说明。")}`,
         }),
       );
       if (changedDetail) {
@@ -514,8 +714,12 @@
       const hint = make("div", "owner-overview-hint");
       append(
         hint,
-        make("strong", "", `这里包含 ${detailNodes.length} 个详细步骤`),
-        make("p", "", "点击左侧这一步，在同一张图里展开详细过程。"),
+        make("strong", "", ownerMapIsCapability()
+          ? (canExpand ? `已识别 ${detailNodes.length} 项内部职责` : "暂未识别出更细的内部结构")
+          : `这里包含 ${detailNodes.length} 个详细步骤`),
+        make("p", "", ownerMapIsCapability()
+          ? (canExpand ? "点击左侧能力，在全局结构中展开；再次点击即可收起。" : "当前证据只支持这一级，不会为了展示效果重复或编造子节点。")
+          : "点击左侧这一步，在同一张图里展开详细过程。"),
       );
       host.appendChild(hint);
       return;
@@ -527,7 +731,7 @@
     host.dataset.changeState = node.change_state;
     append(
       host,
-      make("p", "eyebrow", presentation.changed ? "本次改动所在步骤" : "当前系统位置"),
+      make("p", "eyebrow", presentation.changed ? (ownerMapIsCapability() ? "本次改动所在能力" : "本次改动所在步骤") : "当前系统位置"),
       make("h3", "", node.label),
       make("p", "owner-inspector-lead", node.owner_view.meaning),
       ownerSystemContext({
@@ -538,7 +742,7 @@
         change: presentation.changed
           ? `本次修改定位在当前步骤。${node.owner_view.current_change}`
           : node.owner_view.current_change,
-        evidence: `${node.evidence_label || "依据状态未标注"}：${node.evidence_note || "当前工作图没有提供更具体的代码依据说明。"}`,
+        evidence: `${window.PlainChangeI18n.translateText(node.evidence_label || "依据状态未标注")}: ${window.PlainChangeI18n.translateText(node.evidence_note || "当前工作图没有提供更具体的代码依据说明。")}`,
       }),
       ownerSecondaryContext(node, presentation),
     );
@@ -550,7 +754,7 @@
   function drawOwnerMapLinks() {
     const svg = byId("owner-map-links");
     clear(svg);
-    if (!softwareControl || state.page !== "architecture" || window.innerWidth <= 720 || state.ownerMapLayout?.mode === "fallback") return;
+    if (!softwareControl || ownerMapIsCapability() || state.page !== "architecture" || window.innerWidth <= 720 || state.ownerMapLayout?.mode === "fallback") return;
     const canvas = byId("owner-map-canvas");
     const canvasRect = canvas.getBoundingClientRect();
     const width = canvas.clientWidth;
@@ -625,17 +829,21 @@
     byId("owner-map-overview").textContent = screen.overview;
     byId("owner-map-state").textContent = screen.boundary_label;
     byId("owner-map-depth-label").textContent = expandedOverview
-      ? `四步总览 · 已展开「${expandedOverview.label}」`
+      ? (ownerMapIsCapability() ? `能力全景 · 已展开「${expandedOverview.label}」` : `四步总览 · 已展开「${expandedOverview.label}」`)
       : map.overview_map.title;
+    byId("owner-map-back").textContent = ownerMapIsCapability() ? "收起当前能力" : "收起当前步骤";
     byId("owner-map-back").hidden = !expandedOverview;
     byId("owner-map-boundary").textContent = map.boundary_note;
     const evidenceKey = byId("owner-map-evidence-key");
     const hasDeclaredSource = map.nodes.some((node) => node.statement_state === "project_declared");
-    const hasCodeLocation = map.nodes.some((node) => ["declared_and_code_supported", "partially_supported"].includes(node.evidence_status));
-    evidenceKey.hidden = !hasDeclaredSource && !hasCodeLocation;
+    const hasCodeLocation = map.nodes.some((node) => ["declared_and_code_supported", "partially_supported", "code_discovered", "model_interpreted_code_supported"].includes(node.evidence_status));
+    const hasModelInterpretation = map.nodes.some((node) => ["model_interpreted_code_supported", "model_interpreted_only"].includes(node.evidence_status));
+    evidenceKey.hidden = !hasDeclaredSource && !hasCodeLocation && !hasModelInterpretation;
     evidenceKey.querySelector('[data-evidence-key="declared"]').hidden = !hasDeclaredSource;
     evidenceKey.querySelector('[data-evidence-key="code"]').hidden = !hasCodeLocation;
+    evidenceKey.querySelector('[data-evidence-key="model"]').hidden = !hasModelInterpretation;
     byId("owner-map-canvas").dataset.ownerMapState = expandedOverview ? "expanded" : "overview";
+    byId("owner-map-canvas").dataset.ownerMapKind = ownerMapIsCapability() ? "capability" : "workflow";
     const layout = computeOwnerMapLayout();
     state.ownerMapLayout = layout;
     const host = byId("owner-map-nodes");
@@ -645,22 +853,28 @@
     layout.nodes.forEach((node, index) => {
       const presentation = ownerChangePresentation(node);
       const expanded = state.ownerExpandedOverviewId === node.id;
+      const detailNodes = ownerMappedDetails(node);
+      const canExpand = !ownerMapIsCapability() || detailNodes.length > 1;
       const group = make("section", `owner-map-overview-group${expanded ? " expanded" : ""}`);
       group.dataset.ownerOverviewGroupId = node.id;
-      const button = make("button", `owner-map-node overview${node.change_state === "changed" ? " changed" : ""}`);
+      const button = make("button", `owner-map-node overview${node.change_state === "changed" ? " changed" : ""}${canExpand ? "" : " leaf"}`);
       button.type = "button";
       button.dataset.ownerNodeId = node.id;
       button.dataset.changeState = node.change_state;
       button.setAttribute("aria-pressed", String(state.ownerOverviewSelectedId === node.id));
-      button.setAttribute("aria-expanded", String(expanded));
-      button.setAttribute("aria-controls", `owner-inline-details-${node.id}`);
+      if (canExpand) {
+        button.setAttribute("aria-expanded", String(expanded));
+        button.setAttribute("aria-controls", `owner-inline-details-${node.id}`);
+      }
       const placement = layout.placement.get(node.id);
-      if (placement) {
+      if (ownerMapIsCapability() && expanded) {
+        group.style.gridColumn = "1 / -1";
+      } else if (placement && !ownerMapIsCapability()) {
         group.style.gridColumn = placement.span > 1 ? `${placement.column} / span ${placement.span}` : String(placement.column);
         group.style.gridRow = String(placement.row);
       }
       const head = make("span", "owner-map-node-head");
-      head.appendChild(make("span", "owner-map-number", String(index + 1).padStart(2, "0")));
+      head.appendChild(make("span", "owner-map-number", ownerMapIsCapability() ? "◆" : String(index + 1).padStart(2, "0")));
       const copy = append(
         make("span", "owner-map-node-copy"),
         make("strong", "", node.label),
@@ -668,12 +882,19 @@
       );
       append(button, head, copy, ownerNodeBadges(node, presentation.badge));
       button.addEventListener("click", () => {
+        if (!canExpand) {
+          state.ownerOverviewSelectedId = node.id;
+          state.ownerExpandedOverviewId = null;
+          state.ownerMapSelectedId = detailNodes[0]?.id || state.ownerMapSelectedId;
+          renderOwnerMap();
+          document.querySelector(`[data-owner-node-id="${node.id}"]`)?.focus();
+          return;
+        }
         const collapsing = state.ownerExpandedOverviewId === node.id;
         state.ownerOverviewSelectedId = node.id;
         if (collapsing) {
           state.ownerExpandedOverviewId = null;
         } else {
-          const detailNodes = ownerMappedDetails(node);
           state.ownerMapSelectedId = detailNodes.find((item) => item.change_state === "changed")?.id
             || detailNodes[0]?.id
             || state.ownerMapSelectedId;
@@ -692,12 +913,12 @@
         const detailLabels = new Map(detailNodes.map((item) => [item.id, item.label]));
         const panel = make("section", "owner-map-inline-details");
         panel.id = `owner-inline-details-${node.id}`;
-        panel.setAttribute("aria-label", `${node.label}的详细过程`);
+        panel.setAttribute("aria-label", ownerMapIsCapability() ? `${node.label}的能力依据` : `${node.label}的详细过程`);
         const panelHeading = make("div", "owner-inline-heading");
         append(
           panelHeading,
-          append(make("div", ""), make("strong", "", "这一步的详细过程"), make("span", "", "总览仍保留在这里")),
-          make("span", "owner-inline-count", `${detailNodes.length} 个步骤`),
+          append(make("div", ""), make("strong", "", ownerMapIsCapability() ? "这项能力内部包含什么" : "这一步的详细过程"), make("span", "", "总览仍保留在这里")),
+          make("span", "owner-inline-count", ownerMapIsCapability() ? `${detailNodes.length} 项依据` : `${detailNodes.length} 个步骤`),
         );
         panel.appendChild(panelHeading);
         const detailList = make("div", "owner-inline-detail-list");
@@ -710,7 +931,7 @@
           detailButton.setAttribute("aria-pressed", String(state.ownerMapSelectedId === detailNode.id));
           append(
             detailButton,
-            make("span", "owner-inline-number", String(detailIndex + 1).padStart(2, "0")),
+            make("span", "owner-inline-number", ownerMapIsCapability() ? "职" : String(detailIndex + 1).padStart(2, "0")),
             append(make("span", "owner-map-node-copy"), make("strong", "", detailNode.label), make("span", "", detailNode.owner_view.meaning)),
             ownerNodeBadges(detailNode, detailPresentation.badge),
           );
@@ -739,6 +960,8 @@
     const labels = new Map(activeMap.nodes.map((node) => [node.id, node.label]));
     const relationHost = byId("owner-map-relations");
     clear(relationHost);
+    const relationDisclosure = document.querySelector(".owner-relation-disclosure");
+    if (relationDisclosure) relationDisclosure.hidden = activeMap.flows.length === 0;
     activeMap.flows.forEach((flow) => {
       const row = make("div", "owner-map-relation");
       append(row, make("strong", "", `${labels.get(flow.from)} → ${labels.get(flow.to)}`), make("span", "", flow.label));
@@ -762,6 +985,7 @@
       if (implementationDisclosure.open && await ensureArchitectureLoaded()) renderArchitecture();
     });
     renderOwnerStatus();
+    renderAgentProvenance();
     renderOwnerQuestions();
     renderOwnerMap();
   }
@@ -822,8 +1046,8 @@
               make("strong", "", entry.role_label),
               make("span", "", entry.source_label),
             ),
-            make("p", "", entry.text),
-            entry.warning ? make("small", "summary-context-warning", entry.warning) : null,
+            sourceText("p", "", entry.text),
+            entry.warning ? sourceText("small", "summary-context-warning", entry.warning) : null,
           );
           panel.appendChild(row);
         });
@@ -1138,9 +1362,10 @@
       append(card, head, make("p", "", component.description));
       if (component.implementation_groups.length) {
         const mapping = make("div", "concept-implementation");
+        const implementationSeparator = window.PlainChangeI18n.locale === "en" ? ", " : "、";
         mapping.textContent = directGroup
           ? `点击展开：${directGroup.label}`
-          : `对应实现：${component.implementation_groups.map((item) => item.label).join("、")}`;
+          : `对应实现：${component.implementation_groups.map((item) => item.label).join(implementationSeparator)}`;
         card.appendChild(mapping);
         if (!directGroup) card.appendChild(make("span", "concept-unmapped", "一个工作步骤可能对应多个实现分区；请在右侧核对。"));
       } else if (component.type === "human_gate") {
@@ -1148,6 +1373,7 @@
       } else {
         card.appendChild(make("span", "concept-unmapped", "外部输入或状态，不映射为单一代码分区"));
       }
+      if (directGroup) card.appendChild(make("span", "concept-expanded-label", "实现已展开"));
       grid.appendChild(card);
     });
 
@@ -2298,7 +2524,7 @@
       append(
         row,
         nodeButton(changed, linked),
-        make("div", "path-arrow", `→ ${path.relation_label} →`),
+        make("div", "path-arrow", `→ ${window.PlainChangeI18n.translateText(path.relation_label)} →`),
         nodeButton(impacted, linked),
       );
       host.appendChild(row);
@@ -2505,6 +2731,12 @@
         `限制：${claim.limitations.join("；") || "无"}`,
         claim.next_check ? `最小检查：${claim.next_check}` : null,
       ].filter(Boolean).forEach((text) => body.appendChild(make("div", "", text)));
+      const originalClaim = sourceData.claims.find(item => item.id === claim.id);
+      if (originalClaim && originalClaim.text !== claim.text) {
+        const original = make("details", "claim-original");
+        append(original, make("summary", "", "查看原始结论"), sourceText("p", "", originalClaim.text));
+        body.appendChild(original);
+      }
       append(details, summary, body);
       host.appendChild(details);
     });

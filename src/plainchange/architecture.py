@@ -19,6 +19,11 @@ from .git_evidence import (
     read_git_blobs,
 )
 from .models import ManifestError, SampleManifest, canonical_json_bytes, sha256_bytes
+from .source_scope import (
+    SUPPORTED_SOURCE_SUFFIXES,
+    is_supported_source_path,
+    is_vendored_or_generated_path,
+)
 from .target_profile import PresentationProfile, TargetProfile, load_target_profile
 
 BASELINE_SCHEMA = "change-passport.architecture-baseline.v1"
@@ -26,7 +31,7 @@ DELTA_SCHEMA = "change-passport.architecture-delta.v1"
 PROPOSAL_SCHEMA = "change-passport.baseline-proposal.v1"
 DECISION_SCHEMA = "change-passport.baseline-decision.v1"
 SYSTEM_ARCHITECTURE_SCHEMA = "change-passport.system-architecture.v1"
-SUPPORTED_SUFFIXES = {".py", ".js", ".jsx", ".ts", ".tsx"}
+SUPPORTED_SUFFIXES = SUPPORTED_SOURCE_SUFFIXES
 MAX_ARCHITECTURE_BLOB_BYTES = 300_000
 MAX_DISPLAY_NODES = 14
 
@@ -322,7 +327,7 @@ def _aliases_for_path(path: str) -> tuple[str, ...]:
 def _alias_index(tree: Mapping[str, GitTreeEntry]) -> dict[str, str]:
     index: dict[str, str] = {}
     for path in sorted(tree):
-        if PurePosixPath(path).suffix not in SUPPORTED_SUFFIXES:
+        if not is_supported_source_path(path):
             continue
         for alias in _aliases_for_path(path):
             index.setdefault(alias, path)
@@ -586,10 +591,19 @@ def _parse_full_snapshot(
     supported = {
         path: entry
         for path, entry in tree.items()
-        if PurePosixPath(path).suffix in SUPPORTED_SUFFIXES
+        if is_supported_source_path(path)
     }
     parsed: dict[str, ParsedModule] = {}
-    unknowns: list[str] = []
+    excluded_count = sum(
+        PurePosixPath(path).suffix.casefold() in SUPPORTED_SUFFIXES
+        and is_vendored_or_generated_path(path)
+        for path in tree
+    )
+    unknowns: list[str] = (
+        [f"excluded vendored/generated source files: {excluded_count}"]
+        if excluded_count
+        else []
+    )
     readable_paths = [
         path
         for path, entry in sorted(supported.items())
@@ -695,7 +709,7 @@ def _bounded_snapshot(
                 *(
                     f"unsupported changed file: {path}"
                     for path in sorted(changed_paths)
-                    if PurePosixPath(path).suffix not in SUPPORTED_SUFFIXES
+                    if not is_supported_source_path(path)
                 ),
             ]
         ),
@@ -738,7 +752,7 @@ def _incremental_head_snapshot(
         if path in parsed_by_path:
             return parsed_by_path[path]
         entry = tree.get(path)
-        if entry is None or PurePosixPath(path).suffix not in SUPPORTED_SUFFIXES:
+        if entry is None or not is_supported_source_path(path):
             return None
         try:
             cached = analysis_cache.get_many([(path, entry.object_id)]) if analysis_cache is not None else {}
@@ -780,8 +794,12 @@ def _incremental_head_snapshot(
             edges[edge.edge_id] = edge
     baseline_paths = set(baseline_path_nodes)
     for path in sorted(changed_paths):
-        if path in tree and PurePosixPath(path).suffix not in SUPPORTED_SUFFIXES:
-            unknowns.append(f"unsupported changed file: {path}")
+        if path in tree and not is_supported_source_path(path):
+            unknowns.append(
+                f"excluded changed vendored/generated source file: {path}"
+                if is_vendored_or_generated_path(path)
+                else f"unsupported changed file: {path}"
+            )
         if path not in baseline_paths and path in tree:
             unknowns.append(f"baseline expanded for newly tracked path: {path}")
     return Snapshot(
@@ -789,7 +807,7 @@ def _incremental_head_snapshot(
         edges=edges,
         parsed_files=len(parsed_by_path),
         supported_files=sum(
-            PurePosixPath(path).suffix in SUPPORTED_SUFFIXES for path in tree
+            is_supported_source_path(path) for path in tree
         ),
         unknowns=tuple(unknowns),
         cache_hits=cache_hits,
@@ -1495,7 +1513,7 @@ def build_architecture_bundle(
             path
             for path in changed_paths
             if path not in baseline_paths
-            and PurePosixPath(path).suffix in SUPPORTED_SUFFIXES
+            and is_supported_source_path(path)
             and not any(change.path == path and change.status == "A" for change in git.files)
         }
         if existing_untracked:

@@ -1,6 +1,6 @@
 # ADR-0004: Use a configurable OpenAI-compatible provider boundary
 
-- Status: Accepted
+- Status: Accepted, default-experience item revised by ADR-0005
 - Date: 2026-09-10
 - Decision owner: Project owner
 - Related task: `TASK-20260910-033`
@@ -15,7 +15,7 @@ The loopback Ollama experiment proved that a model can add semantic specificity 
 1. Expose one strict provider-config contract based on OpenAI-compatible Chat Completions rather than provider-specific adapters or defaults.
 2. Users supply the compatible base URL, model name, response-format capability, timeout, and the name of an environment variable containing the credential.
 3. Support `json_schema`, `json_object`, and `prompt_only` modes. These are compatibility levels, not changes in evidence authority; all outputs still pass the same local validator.
-4. Keep deterministic analysis as the default. A request is transmitted only when the user explicitly selects the model generator and provides a config path.
+4. Historical decision: deterministic analysis was the default. ADR-0005 now makes configured two-stage model semantics the full experience while retaining an explicit no-network basic-evidence mode.
 5. Never store a key in provider JSON, generated artifacts, logs, or receipts. Receipts retain only provider/model identity, sanitized config hash, endpoint origin, timing, token counters, packet hash, and output hash.
 
 ## Consequences

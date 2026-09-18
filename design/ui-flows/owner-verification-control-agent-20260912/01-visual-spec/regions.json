@@ -1,0 +1,27 @@
+{
+  "change_outcome": {
+    "target": "具体说明以前不能做什么、现在可以做什么",
+    "must_match": ["result-first headline", "before-after contrast", "plain owner language"],
+    "allowed_deviation_px": 10
+  },
+  "verification_done": {
+    "target": "真实验证收据列表",
+    "must_match": ["scope", "passed state", "evidence boundary", "scanability"],
+    "allowed_deviation_px": 10
+  },
+  "verification_gaps": {
+    "target": "未验证原因和方法",
+    "must_match": ["missing fact", "reason", "how to verify", "responsible party"],
+    "allowed_deviation_px": 10
+  },
+  "owner_decision": {
+    "target": "只保留负责人需要决定的事项",
+    "must_match": ["no engineering checklist", "clear next decision", "no fake action"],
+    "allowed_deviation_px": 10
+  },
+  "responsive": {
+    "target": "桌面与 390px 窄屏",
+    "must_match": ["no horizontal overflow", "readable cards", "no clipped text"],
+    "allowed_deviation_px": 8
+  }
+}

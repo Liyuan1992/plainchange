@@ -6,9 +6,13 @@ import json
 from importlib import resources
 from typing import Any, Mapping
 
+from .agent_provenance import validate_agent_provenance
 from .models import ManifestError, canonical_json_bytes, sha256_bytes
+from .owner_presentation import localized_owner_control
+from .review_presentation import automatic_review_presentation
 from .review_model import validate_beginner_review_model
 from .software_control import validate_software_control
+from .report_localization import localized_control, validated_review_translations
 
 THEME_SCHEMA = "change-passport.review-theme.v1"
 EXPECTED_THEME_PROPERTIES = {
@@ -113,7 +117,9 @@ def _technical_payload(system_architecture: Mapping[str, Any] | None) -> dict[st
     }
 
 
-def render_review_html(model_value: Any, software_control_value: Any | None = None) -> str:
+def render_review_html(model_value: Any, software_control_value: Any | None = None,
+                       translations_value: Any | None = None,
+                       agent_provenance_value: Any | None = None) -> str:
     model = validate_beginner_review_model(model_value)
     system_architecture = model.get("system_architecture")
     software_control = None
@@ -124,18 +130,41 @@ def render_review_html(model_value: Any, software_control_value: Any | None = No
             system_architecture=system_architecture,
         )
     compact_model = dict(model)
+    localized = {}
+    localized_review = {}
+    automatic_review = automatic_review_presentation(model)
+    if automatic_review is not None:
+        localized_review["en"] = automatic_review
+    if software_control is not None:
+        automatic_english = localized_owner_control(software_control, "en")
+        if automatic_english is not None:
+            localized["en"] = automatic_english
+    if translations_value is not None:
+        projection = localized_control(software_control, translations_value)
+        localized[translations_value["target_language"]] = projection
+        localized_review[translations_value["target_language"]] = validated_review_translations(model, translations_value)
+    agent_provenance = (
+        validate_agent_provenance(agent_provenance_value)
+        if agent_provenance_value is not None
+        else None
+    )
     compact_model.pop("system_architecture", None)
     template = _resource_text("templates/review.html")
     css = _resource_text("templates/review.css")
     javascript = _resource_text("templates/review.js")
+    i18n_javascript = _resource_text("templates/review-i18n.js")
     replacements = {
         "{{THEME_CSS}}": _theme_css(_load_theme()),
         "{{APP_CSS}}": css,
         "{{REVIEW_JSON}}": _json_for_script(compact_model),
         "{{SOFTWARE_CONTROL_JSON}}": _json_for_script(software_control),
+        "{{LOCALIZED_CONTROL_JSON}}": _json_for_script(localized),
+        "{{LOCALIZED_REVIEW_JSON}}": _json_for_script(localized_review),
         "{{TECHNICAL_PAYLOAD_JSON}}": _json_for_script(
             _technical_payload(system_architecture)
         ),
+        "{{AGENT_PROVENANCE_JSON}}": _json_for_script(agent_provenance),
+        "{{I18N_JS}}": i18n_javascript,
         "{{APP_JS}}": javascript,
     }
     rendered = template

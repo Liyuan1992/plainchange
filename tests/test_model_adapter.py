@@ -9,6 +9,11 @@ from plainchange.generator_contract import validate_packet
 from plainchange.model_adapter import (
     ModelGenerationError,
     OpenAICompatibleRawBriefProvider,
+    _bound_project_understanding_contract,
+    _bound_model_evidence_budgets,
+    _bound_change_summary_evidence,
+    _change_interpretation_prompt,
+    _require_requested_human_language,
     generate_raw_brief_with_model,
     load_model_provider_config,
     raw_brief_json_schema,
@@ -160,7 +165,219 @@ def test_missing_environment_credential_fails_before_request_and_keeps_receipt(
     assert receipt["output_sha256"] is None
 
 
+def test_ephemeral_credential_overrides_environment_without_entering_receipt(
+    sample_repo, manifest_factory, tmp_path: Path, monkeypatch
+):
+    repo, base, head = sample_repo
+    manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
+    prepared = prepare_sample(manifest, tmp_path / "prepared")
+    packet = validate_packet(
+        json.loads(Path(prepared["packet_path"]).read_text(encoding="utf-8"))
+    )
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    captured = {}
+
+    def fake_post(_url, _payload, _timeout, headers):
+        captured["headers"] = headers
+        return _completion(_model_claims(packet))
+
+    monkeypatch.setenv("TEST_MODEL_API_KEY", "environment-secret")
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
+    direct_secret = "ephemeral-direct-secret"
+    _raw, receipt_path = generate_raw_brief_with_model(
+        packet,
+        tmp_path / "prepared",
+        OpenAICompatibleRawBriefProvider(config, api_key=direct_secret),
+    )
+
+    assert captured["headers"]["Authorization"] == f"Bearer {direct_secret}"
+    assert direct_secret not in receipt_path.read_text(encoding="utf-8")
+    assert direct_secret not in config.config_sha256
+
+
+def test_ephemeral_credential_rejects_empty_or_oversized_values(tmp_path: Path):
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    with pytest.raises(ModelGenerationError, match="direct model credential"):
+        OpenAICompatibleRawBriefProvider(config, api_key=" ")
+    with pytest.raises(ModelGenerationError, match="direct model credential"):
+        OpenAICompatibleRawBriefProvider(config, api_key="x" * 8_193)
+
+
 def test_raw_brief_schema_requires_bounded_claims():
     claims = raw_brief_json_schema(["git.diff_summary"])["properties"]["claims"]
     assert claims["minItems"] == 4
     assert claims["maxItems"] == 12
+
+
+def test_model_prompt_uses_explicit_english_owner_language(
+    sample_repo, manifest_factory, tmp_path: Path, monkeypatch
+):
+    repo, base, head = sample_repo
+    manifest = manifest_factory(tmp_path / "sample.json", repo, base, head)
+    prepared = prepare_sample(manifest, tmp_path / "prepared")
+    packet = validate_packet(json.loads(Path(prepared["packet_path"]).read_text(encoding="utf-8")))
+    config = load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    captured = {}
+
+    def fake_post(_url, payload, _timeout, _headers):
+        captured.update(payload=payload)
+        raw = _model_claims(packet)
+        for claim in raw["claims"]:
+            claim["text"] = "Model candidate explanation."
+            claim["limitations"] = ["Only the bounded evidence packet was used."]
+        return _completion(raw)
+
+    monkeypatch.setenv("TEST_MODEL_API_KEY", "secret-test-value")
+    monkeypatch.setattr("plainchange.model_adapter._post_json", fake_post)
+    raw, _telemetry = OpenAICompatibleRawBriefProvider(config).generate(
+        packet, human_language="en"
+    )
+
+    assert "Use English for all human-facing text" in captured["payload"]["messages"][0]["content"]
+    assert raw["generator_metadata"]["human_language"] == "en"
+
+
+def test_model_evidence_budget_only_removes_surplus_references():
+    raw = {"change_summary": {"evidence_ids": [f"git.file.{index:03d}" for index in range(30)]}}
+
+    bounded, normalizations = _bound_change_summary_evidence(raw)
+
+    assert len(bounded["change_summary"]["evidence_ids"]) == 24
+    assert bounded["change_summary"]["evidence_ids"] == raw["change_summary"]["evidence_ids"][:24]
+    assert normalizations == ["change_summary.evidence_ids deduplicated and capped at 24"]
+
+
+def test_model_evidence_budgets_cover_all_nested_contracts():
+    raw = {
+        "raw_brief": {"claims": [{"evidence_ids": [f"git.file.{index}" for index in range(20)]}]},
+        "change_summary": {
+            "evidence_ids": [f"git.summary.{index}" for index in range(30)],
+            "audience_candidates": [{"evidence_ids": [f"git.audience.{index}" for index in range(20)]}],
+        },
+        "owner_checks": [{"evidence_ids": [f"git.check.{index}" for index in range(20)]}],
+    }
+
+    bounded, normalizations = _bound_model_evidence_budgets(raw)
+
+    assert len(bounded["raw_brief"]["claims"][0]["evidence_ids"]) == 16
+    assert len(bounded["change_summary"]["evidence_ids"]) == 24
+    assert len(bounded["change_summary"]["audience_candidates"][0]["evidence_ids"]) == 12
+    assert len(bounded["owner_checks"][0]["evidence_ids"]) == 12
+    assert len(normalizations) == 4
+
+
+def test_project_understanding_normalization_is_loss_only():
+    packet = {
+        "allowed_source_ids": ["source-1", "source-2"],
+        "source_paths": ["src/app.py"],
+    }
+    components = [
+        {
+            "id": f"step-{index}",
+            "source_ids": ["unknown", "source-1", "source-1"],
+            "code_paths": ["not/in/context.py", "src/app.py"],
+        }
+        for index in range(1, 5)
+    ]
+    raw = {
+        "purpose": {"source_ids": ["unknown"] + ["source-1", "source-2"] * 8},
+        "structure_kind": "workflow",
+        "components": components,
+        "flows": [
+            {"from": "step-3", "to": "step-4", "label": "三到四"},
+            {"from": "step-1", "to": "step-2", "label": "一到二"},
+            {"from": "step-1", "to": "step-4", "label": "额外关系"},
+            {"from": "step-2", "to": "step-3", "label": "二到三"},
+        ],
+        "unknowns": [f"unknown-{index}" for index in range(15)],
+    }
+
+    bounded, normalizations = _bound_project_understanding_contract(raw, packet)
+
+    assert bounded["purpose"]["source_ids"] == ["source-1", "source-2"]
+    assert all(item["source_ids"] == ["source-1"] for item in bounded["components"])
+    assert all(item["code_paths"] == ["src/app.py"] for item in bounded["components"])
+    assert [(item["from"], item["to"]) for item in bounded["flows"]] == [
+        ("step-1", "step-2"),
+        ("step-2", "step-3"),
+        ("step-3", "step-4"),
+    ]
+    assert len(bounded["unknowns"]) == 12
+    assert len(normalizations) == 11
+
+
+def test_english_change_prompt_has_no_chinese_instruction_text():
+    assert not any("\u3400" <= char <= "\u9fff" for char in _change_interpretation_prompt("en"))
+
+
+def test_english_model_output_rejects_mixed_owner_prose_but_not_identifiers():
+    _require_requested_human_language(
+        {"id": "中文_identifier", "evidence_ids": ["git.中文"], "headline": "English result"},
+        "en",
+        stage="change interpretation",
+    )
+
+    with pytest.raises(ModelGenerationError, match="non-English owner text"):
+        _require_requested_human_language(
+            {"headline": "中文标题"}, "en", stage="change interpretation"
+        )
+
+
+def test_report_translation_is_complete_and_preserves_already_english_text(
+    tmp_path: Path, monkeypatch
+):
+    provider = OpenAICompatibleRawBriefProvider(
+        load_model_provider_config(_write_config(tmp_path / "provider.json"))
+    )
+    requests = []
+
+    def fake_completion(*, system_prompt, payload, schema, schema_name):
+        requests.append((system_prompt, payload, schema, schema_name))
+        return (
+            {
+                "translations": [
+                    {"id": item["id"], "text": f"English {item['id']}"}
+                    for item in payload["items"]
+                ]
+            },
+            {"prompt_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+        )
+
+    monkeypatch.setattr(provider, "_structured_completion", fake_completion)
+    result, telemetry = provider.translate_report_texts(
+        ["负责人可追溯来源", "Already English"],
+        source_language="zh-CN",
+        target_language="en",
+    )
+
+    assert result["translations"]["Already English"] == "Already English"
+    assert result["translations"]["负责人可追溯来源"].startswith("English text-")
+    assert requests[0][1]["schema_version"] == "plainchange.report-translation-request.v1"
+    assert requests[0][3] == "plainchange_report_translation"
+    assert telemetry["translated_text_count"] == 1
+    assert telemetry["identity_text_count"] == 1
+
+
+@pytest.mark.parametrize("failure", ["duplicate", "mixed-language"])
+def test_report_translation_fails_closed(tmp_path: Path, monkeypatch, failure: str):
+    provider = OpenAICompatibleRawBriefProvider(
+        load_model_provider_config(_write_config(tmp_path / f"{failure}.json"))
+    )
+
+    def fake_completion(*, system_prompt, payload, schema, schema_name):
+        rows = [
+            {
+                "id": payload["items"][0]["id"] if failure == "duplicate" else item["id"],
+                "text": "仍然是中文" if failure == "mixed-language" else "English text",
+            }
+            for item in payload["items"]
+        ]
+        return {"translations": rows}, {}
+
+    monkeypatch.setattr(provider, "_structured_completion", fake_completion)
+    with pytest.raises(ModelGenerationError, match="duplicate ID|non-English owner text"):
+        provider.translate_report_texts(
+            ["第一项", "第二项"],
+            source_language="zh-CN",
+            target_language="en",
+        )

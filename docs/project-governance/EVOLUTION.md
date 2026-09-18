@@ -570,3 +570,46 @@ Impact / tradeoff: The brand can grow beyond one report while existing artifact 
 Verification: Distribution, clean-install, direct-project CLI, shorthand CLI, loopback UI, report generation, browser branding, full tests, compilation, JavaScript syntax, package-content, and checksum checks are required before the local Alpha tag.
 Links: `ADR-0005`, `pyproject.toml`, `src/plainchange/cli.py`, `src/plainchange/onboarding.py`, `README.md`, `TASK-20260910-038`
 Needs curation: yes
+
+ID: EVO-20260916-001
+Date: 2026-09-16
+Domain: system-understanding
+Type: additive-codex-system-flow
+What changed: Added a separate understand command and guided system mode. A local Codex JSON provider explores bounded fixed-commit source excerpts and produces source-linked flows, branch conditions, pending tests, interview explanation, coverage, offline HTML, JSON and Markdown. Existing comparison remains available. Compatible API is an explicit alternative.
+Why now: Owner primarily iterates by observed product behavior, then needs implementation understanding for version review, interviews and test discovery; owner explicitly authorized the additive feature and selected Codex.
+Impact / tradeoff: System chooses matching source locations. Semantic flow edges remain model interpretations; no approved/static topology or runtime evidence is invented. Uncommitted changes and unexamined code remain excluded. Real first sample took 614.47 s and four subscription-backed requests.
+Verification: 108 tests pass; real Codex sample on c54fc7f2 produced 5 flows, 43 nodes, 55 edges from 14 files / 24 excerpts; source/graph validation and 1440/390 browser checks pass. No branch tests or independent human acceptance claimed.
+Links: TASK-20260916-039, ADR-0006, src/plainchange/system_flow.py, src/plainchange/flow_provider.py
+Needs curation: yes
+
+ID: EVO-20260917-001
+Date: 2026-09-17
+Domain: system-understanding
+Type: external-project-validation
+What changed: Exercised the new system-map flow on ChestnutDogAiThink's June 18 commit 0883fe06. Preserved a real Codex-generated report and bounded citation normalization evidence.
+Why now: Owner requested this project as the first external example.
+Impact / tradeoff: Six flows and 45 test candidates are available, but only 13/517 eligible files were sampled. Large parse.py and ChatView.vue were excluded; their internals and uncommitted changes remain uncovered. No complete-system or runtime claim is made.
+Verification: Four real provider requests, 535.53 s; 42 nodes / 45 edges; Git blob/line/hash and unchanged target-status checks pass. All six maps pass desktop/narrow interaction and label collision checks. Branch tests and owner acceptance not performed.
+Links: TASK-20260917-040, artifacts/chestnutdog-validation/checks.json
+Needs curation: yes
+
+ID: EVO-20260917-002
+Date: 2026-09-17
+Domain: system-understanding
+Type: connected-map-and-scenario-walkthrough
+What changed: Function-indexed bounded source exploration now admits long source files; v2 maps include cited cross-flow connections and call/return/next-request boundaries. Offline UI adds overview navigation and stepwise scenario branches with backtracking and visited-path highlighting. Legacy reports remain readable.
+Why now: Owner approved the three priorities from the code and actual-report review.
+Impact / tradeoff: Six read rounds and a 400 KB source budget improve depth without claiming exhaustive coverage. Commit-only scope stays visible. Scenario input is a branch candidate, not proof of whole-path feasibility.
+Verification: 111-test suite before reference repair and 22 focused tests after it; real sample reads 40 excerpts including previously excluded parse.py/ChatView.vue, generates 4 flows/8 connections. Source identity and desktop/narrow browser checks pass. Final suite recorded in TASK-041. Runtime/human acceptance not claimed.
+Links: TASK-20260917-041, artifacts/flow-v2-validation/checks.json
+Needs curation: yes
+
+EVO-20260917-002 verification closeout: final full suite 115 passed in 127.78 s; next-request walkthrough and backtracking also pass in the real report at both tested widths. Windows receipt contention fix is tracked by BUG-20260917-003.
+
+ID: EVO-20260918-001
+Date: 2026-09-18
+Domain: system-understanding
+Type: neutral-project-explanation-copy
+What changed: Owner requested neutral product wording. Updated summary heading/button, generation instruction, Markdown heading, README and three existing local rendered reports. Retained legacy JSON field and historical request data for compatibility and provenance. Corrected adjacent stale README exploration limits to current constants.
+Verification: Visible HTML markup and Markdown text checks pass. No model request or source-evidence mutation. Prior worktree changes preserved.
+Needs curation: no

@@ -78,6 +78,17 @@ textarea { width: calc(100% - 50px); margin-left: 50px; }
 .boundary { margin-top: 18px; padding: 18px 22px; border-left: 4px solid #8eb5e8; background: #edf4fc; border-radius: 10px; }
 .boundary p { margin: 7px 0 0; color: var(--muted); line-height: 1.65; }
 [hidden] { display: none !important; }
+.mode-picker { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.system-path-row { display:flex; gap:10px; }
+.system-path-row input { min-width:0; flex:1; }
+.system-label { display:block; margin:22px 0 8px; font-weight:700; }
+.system-label small { color:var(--muted); font-weight:400; }
+textarea.system-focus { width:100%; margin:0; }
+.system-hint { margin:14px 0; color:var(--muted); line-height:1.7; }
+.system-options { margin:18px 0; }
+.system-options summary { cursor:pointer; color:var(--muted); }
+.system-options label { display:block; margin:12px 0 6px; }
+#system-error { margin-left:0; }
 @media (max-width: 760px) {
   .shell { padding: 34px 16px 60px; }
   .topbar { padding: 0 16px; }

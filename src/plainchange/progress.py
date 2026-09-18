@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .models import canonical_json_bytes
+from .atomic_io import replace_with_retry
 
 
 class ProgressRecorder:
@@ -37,7 +38,7 @@ class ProgressRecorder:
         self.value["elapsed_seconds"] = round(time.perf_counter() - self._started, 3)
         temporary = self.path.with_name(self.path.name + ".tmp")
         temporary.write_bytes(canonical_json_bytes(self.value) + b"\n")
-        os.replace(temporary, self.path)
+        replace_with_retry(temporary, self.path)
 
     def _emit(self, event: str, **fields: Any) -> None:
         print(

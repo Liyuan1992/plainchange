@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .atomic_io import replace_with_retry
+
 import json
 import os
 import re
@@ -70,7 +72,7 @@ def _write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_bytes(canonical_json_bytes(value) + b"\n")
-    os.replace(temporary, path)
+    replace_with_retry(temporary, path)
 
 
 def _required_text(value: Any, label: str, *, max_length: int = 300) -> str:

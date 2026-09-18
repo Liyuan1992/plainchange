@@ -33,6 +33,59 @@
     return data;
   }
 
+  let systemBusy = false;
+  async function switchMode(system) {
+    byId("system-workspace").hidden = !system;
+    byId("change-workspace").hidden = system;
+    for (const [id, active] of [["system-mode",system],["change-mode",!system]]) {
+      byId(id).setAttribute("aria-pressed", String(active));
+      byId(id).className = active ? "primary" : "secondary";
+    }
+    if (system) {
+      if (!byId("system-path").value) byId("system-path").value = pathInput.value;
+      try { const data = await api("/api/codex-status",null,"GET"); byId("codex-status").textContent = data.codex.message; }
+      catch (error) { byId("codex-status").textContent = error.message; }
+    }
+  }
+  byId("system-mode").onclick = () => switchMode(true);
+  byId("change-mode").onclick = () => switchMode(false);
+  if (new URLSearchParams(location.search).get("mode") === "system") switchMode(true);
+  byId("system-pick").onclick = async () => {
+    try { const result = await api("/api/pick-directory",{}); if(result.path) byId("system-path").value=result.path; }
+    catch(error) { byId("system-error").textContent=error.message; }
+  };
+  byId("system-config").oninput = () => {
+    byId("system-generate").textContent = byId("system-config").value.trim() ? "用配置的模型生成系统地图" : "用 Codex 生成系统地图";
+  };
+  async function pollSystem(id) {
+    try {
+      const result = await api(`/api/jobs/${id}`,null,"GET"), job=result.job;
+      byId("system-progress").textContent = job.receipt?.latest_progress?.message || "正在准备源码，可能需要几分钟…";
+      if (job.status === "failed") throw new Error(job.error || "生成失败");
+      if (job.status === "succeeded") {
+        byId("system-open").href=`${job.report_url}?token=${encodeURIComponent(token)}`;
+        byId("system-open").hidden=false; systemBusy=false; byId("system-generate").disabled=false;
+        byId("system-progress").textContent="系统地图已生成，分支测试尚未执行。";
+      } else window.setTimeout(()=>pollSystem(id),1000);
+    } catch(error) {
+      byId("system-error").textContent=error.message; byId("system-progress").textContent="";
+      systemBusy=false;byId("system-generate").disabled=false;
+    }
+  }
+  byId("system-generate").onclick = async () => {
+    if(systemBusy) return;
+    systemBusy=true;byId("system-generate").disabled=true;byId("system-open").hidden=true;
+    byId("system-error").textContent="";byId("system-progress").textContent="正在准备系统分析…";
+    try {
+      const result=await api("/api/understand",{repository:byId("system-path").value,
+        focus:byId("system-focus").value,model_config:byId("system-config").value.trim() || null});
+      pollSystem(result.job.id);
+    } catch(error) {
+      byId("system-error").textContent=error.message;byId("system-progress").textContent="";
+      systemBusy=false;byId("system-generate").disabled=false;
+    }
+  };
+
   function setStep(number) {
     document.querySelectorAll(".step").forEach((item) => {
       item.classList.toggle("active", Number(item.dataset.step) <= number);

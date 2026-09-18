@@ -59,6 +59,13 @@ def _parser() -> argparse.ArgumentParser:
         help="OpenAI-compatible provider config JSON; required with --generator model",
     )
 
+    understand = subcommands.add_parser("understand", help="explain a system's flows and branches using local Codex")
+    understand.add_argument("target", help="Git project directory")
+    understand.add_argument("--revision", default="HEAD", help="HEAD or a fixed commit id; never freezes a release")
+    understand.add_argument("--focus", default="", help="optional flow or question to explore")
+    understand.add_argument("--output", help="empty report directory outside the target")
+    understand.add_argument("--model-config", help="optional compatible API config instead of local Codex")
+
     finalize = subcommands.add_parser("finalize", help="validate model claims and render the brief")
     finalize.add_argument("packet")
     finalize.add_argument("raw_brief")
@@ -85,7 +92,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def _normalized_argv(argv: Sequence[str] | None) -> list[str]:
     values = list(sys.argv[1:] if argv is None else argv)
-    commands = {"serve", "prepare", "analyze", "finalize", "score", "approve-baseline"}
+    commands = {"serve", "prepare", "analyze", "understand", "finalize", "score", "approve-baseline"}
     if values and not values[0].startswith("-") and values[0] not in commands:
         values.insert(0, "analyze")
     return values
@@ -110,7 +117,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "serve":
             serve_onboarding(args.host, args.port, open_browser=not args.no_open)
             return 0
-        if args.command == "analyze":
+        if args.command == "understand":
+            from .system_flow import understand_system
+            result = understand_system(args.target, revision=args.revision, focus=args.focus,
+                                       output=args.output, model_config=args.model_config)
+        elif args.command == "analyze":
             target = Path(args.target).expanduser()
             if target.is_dir():
                 direct_project = True

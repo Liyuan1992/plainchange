@@ -1,5 +1,27 @@
 # Project facts
 
+TASK-20260917-041 adds function-guided excerpts (2 MB file gate, six read rounds, 400 KB source budget), v2 cited cross-flow links, overview navigation and scenario walkthrough. Connections distinguish call/return/next request; scenario steps remain unexecuted. One bounded reference-only correction preserves failed raw output. ChestnutDogAiThink v2: 4 flows, 28 nodes, 41 edges, 8 connections from 40 excerpts including previously excluded parsing/UI implementations. Git source and desktop/narrow browser checks pass; final full suite: 115 passed; detailed verification is recorded in TASK-041. Commit-only and non-exhaustive scope remain explicit.
+
+Current additive capability (2026-09-16, TASK-20260916-039): `plainchange understand`
+and guided “理解系统” add model-assisted, source-linked system flow maps without
+replacing the existing Change Passport or freezing a release. Local signed-in Codex
+is the default provider selected by the owner; compatible API config remains an
+explicit alternative. The host selects bounded immutable-commit excerpts requested
+by the model; no target worktree writes or commands. `system-flow.json` retains
+semantic interpretations separately from deterministic static topology, with
+condition-linked pending tests, code references, coverage and interview explanation.
+Only the latest/specified commit is analyzed; uncommitted edits are excluded.
+
+Verification: 108 tests pass (90 existing + 18 new). One real Codex run on existing
+commit `c54fc7f2fcfccf987adb357dc1a917fa6caa981b` completed four requests in 614.47 s,
+reading 14 files / 24 excerpts (136,520 source bytes) and producing 5 flows, 43 nodes
+and 55 edges/test candidates. Citation bounds and graph validation pass. Three
+version/output-handling branches were manually checked against supplied excerpts;
+not all semantic claims are independently verified. Edge browser interaction at
+1440/390 px passes with no page overflow, JS exceptions or label/node overlap across
+all five flows. Human acceptance, branch test execution and complete system coverage
+remain unclaimed. See ADR-0006 and TASK-039 for authority and limitations.
+
 Current Alpha delivery: TASK-20260910-038 is DONE. It freezes the approved core at `c09652efb34f` and establishes **PlainChange** as the product, Python package, import namespace, CLI, cache, and guided local UI. PlainChange generates an evidence-backed **Change Passport**; existing `change-passport.*` schemas remain the artifact/protocol family. The local entrypoints are `plainchange analyze .`, shorthand `plainchange .`, and loopback UI `plainchange serve`. The MIT `0.1.0a1` wheel/sdist, clean installation, direct analysis, 90-test suite, package/privacy checks, and real Edge 1280/390 px checks pass; local release tag `v0.1.0-alpha.1` identifies the accepted Alpha. No remote, push, deployment, registry publication, telemetry, or automatic model request occurred.
 
 Current behavior-semantic result: TASK-20260910-037 adds conservative, source-bound diff signals for newly added raises, explicit non-zero returns, and callable-signature changes. The no-model owner draft now says `还没判断` instead of presenting unperformed semantic analysis as `目前没发现`, maps only the primary source path when unique, and recommends separate normal and stop/failure checks. The fixed VideoFactory report now locates the change at `检查视频质量`; static signals still do not prove reachability, runtime, breaking impact, or user impact.

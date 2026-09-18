@@ -266,6 +266,36 @@ class OnboardingState:
     jobs: dict[str, GuidedJob] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
+    def start_system_job(self, payload: dict[str, Any]) -> GuidedJob:
+        from .flow_provider import codex_status
+        from .system_flow import create_flow_output, understand_system
+        config = payload.get("model_config") or None
+        if config is not None and not isinstance(config, str):
+            raise OnboardingError("模型配置路径格式无效。")
+        focus = payload.get("focus", "")
+        if not isinstance(focus, str) or len(focus) > 12000:
+            raise OnboardingError("关注流程请控制在 12000 字以内。")
+        if config is None:
+            status = codex_status()
+            if not status["chatgpt"]:
+                raise OnboardingError(status["message"])
+        prepared = create_flow_output(payload.get("repository", ""), payload.get("revision", "HEAD"), payload.get("output"))
+        job = GuidedJob(secrets.token_hex(12), prepared[1])
+        with self.lock:
+            self.jobs[job.job_id] = job
+
+        def run() -> None:
+            job.status = "running"
+            try:
+                job.result = understand_system(payload.get("repository", ""), focus=focus,
+                                               model_config=config, prepared=prepared)
+                job.status = "succeeded"
+            except Exception as exc:
+                job.status = "failed"
+                job.error = str(exc)
+        threading.Thread(target=run, name=f"system-map-{job.job_id}", daemon=True).start()
+        return job
+
     def start_job(self, payload: dict[str, Any]) -> GuidedJob:
         manifest_path, output, _manifest = build_guided_manifest(
             payload.get("repository", ""),
@@ -380,6 +410,12 @@ class OnboardingHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/codex-status":
+            if not self._authorized():
+                return
+            from .flow_provider import codex_status
+            self._json({"ok": True, "codex": codex_status()})
+            return
         if parsed.path == "/":
             html = _asset_text("onboarding.html")
             html = html.replace("__SESSION_TOKEN__", self.server.state.token)
@@ -429,6 +465,9 @@ class OnboardingHandler(BaseHTTPRequestHandler):
                 self._json({"ok": True, "repository": inspect_repository(payload.get("path", ""))})
             elif self.path == "/api/analyze":
                 job = self.server.state.start_job(payload)
+                self._json({"ok": True, "job": job.public()}, HTTPStatus.ACCEPTED)
+            elif self.path == "/api/understand":
+                job = self.server.state.start_system_job(payload)
                 self._json({"ok": True, "job": job.public()}, HTTPStatus.ACCEPTED)
             else:
                 self._json({"ok": False, "error": "接口不存在。"}, HTTPStatus.NOT_FOUND)

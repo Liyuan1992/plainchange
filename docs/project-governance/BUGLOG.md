@@ -710,3 +710,74 @@ Verification: Clean-wheel direct-project analysis must show readable Chinese sta
 Links: `src/plainchange/cli.py`, `TASK-20260910-038`
 Follow-up: Preserve machine-readable receipts as UTF-8 JSON and test future native launchers on their actual console hosts.
 Needs curation: yes
+
+ID: BUG-20260916-001
+Date: 2026-09-16
+Status: fixed
+Domain: system-flow-rendering
+Severity: medium
+Symptom fingerprint: Real multi-branch generated maps placed common failure/join nodes too early and overlapped long condition labels.
+Trigger / reproduction: Render the 11-node background-analysis flow in the real c54fc7f2 Codex sample with BFS ranks and midpoint labels.
+Impact: Branch conditions became hard to distinguish even though node/edge identities and citation checks were valid.
+Root cause: Shortest-distance ranking ignores later incoming paths; neighboring midpoint labels have insufficient separation.
+Change made: Rank the acyclic projection by longest path, retain cycle connections, route non-adjacent edges through outside lanes, and place bounded condition labels with collision checks; full conditions remain in inspector/tooltips.
+Verification: All five real flows have no label/label or label/node overlap at 1440/390 px; browser interaction and screenshots inspected. Graph topology unchanged.
+Links: TASK-20260916-039, src/plainchange/templates/system-flow.js, scripts/verify-system-flow.cjs
+Follow-up: Test larger/cyclic real projects before claiming broad layout coverage.
+Needs curation: yes
+
+ID: BUG-20260916-002
+Date: 2026-09-16
+Status: fixed
+Domain: model-provider
+Severity: low
+Symptom fingerprint: A truncated compatible-model completion lost its specific error and was reported as generic invalid output.
+Trigger / reproduction: Return finish_reason=length from the local transport fixture.
+Impact: Users could not distinguish incomplete generation from JSON parsing errors.
+Root cause: ModelGenerationError inherits ValueError and was caught by a broad parsing handler.
+Change made: Preserve ModelGenerationError before catching parsing/IO errors in both new providers.
+Verification: Six provider tests cover success, missing completion, failed exit, timeout uncertainty, malformed JSON and truncated compatible output.
+Links: TASK-20260916-039, tests/test_flow_provider.py
+Needs curation: yes
+
+ID: BUG-20260917-001
+Date: 2026-09-17
+Status: fixed
+Domain: system-flow-evidence
+Severity: medium
+Symptom fingerprint: ChestnutDogAiThink map generation completed but five citations spanning decision.py lines 160-162 failed excerpt-bound validation.
+Trigger / reproduction: Validate raw map from the real 0883fe06 run, where the model attached ranges ending at line 162 to the excerpt ID for lines 1-160; the next same-blob excerpt already contains lines 161-320.
+Impact: A usable result was rejected despite all requested lines being included in the model's input.
+Root cause: A logical same-file reference crossed source-packet chunk boundaries; the validator required every range to fit a single ID without deterministic splitting.
+Change made: Split only ranges fully covered by supplied same-path/same-blob/same-kind excerpts; preserve raw output and record normalizations. Unknown IDs, gaps and wrong blobs still fail closed. No new source is fetched and no claim text is changed.
+Verification: 19 focused flow/provider tests pass, including new contiguous/gap/blob/input-preservation regression. Saved actual model output validates after five recorded splits; all excerpts rechecked against Git objects. Original failure receipt retained alongside successful finalization receipt; no further model call.
+Links: TASK-20260917-040, src/plainchange/system_flow.py, tests/test_system_flow.py
+Needs curation: yes
+
+ID: BUG-20260917-002
+Date: 2026-09-17
+Status: fixed
+Domain: system-flow-evidence
+Severity: medium
+Symptom fingerprint: Key parsing/UI implementations entirely omitted by the 180 KB whole-file limit; later real v2 generation rejected an inverse citation range 2949..101.
+Reproduction: ChestnutDogAiThink parse.py is 453,082 bytes and ChatView.vue is 238,885 bytes. Saved v2 raw f1_e6 has the inverse range.
+Impact: Missing core explanations and no usable map after otherwise successful model work.
+Root cause: Whole-file exclusion despite excerpt reading; malformed model citation lacked bounded recovery.
+Change made: Retain file gate at 2 MB and expose function indexes for targeted reads. Permit one source-bound model reference correction without changing claims; preserve original artifacts and reject unsupported ranges.
+Verification: Large-file deep-function regression, invalid connection/citation regression and one-shot repair/preservation/failure regression pass. Real correction succeeded; every final source checked against Git. See TASK-041 for browser and full-suite results.
+Links: TASK-20260917-041, tests/test_system_flow.py
+Needs curation: yes
+
+ID: BUG-20260917-003
+Date: 2026-09-17
+Status: fixed
+Domain: local-report-progress
+Severity: medium
+Symptom fingerprint: Full-suite old guided-report test intermittently fails with WinError 5 replacing run-receipt.json.tmp while status is polled.
+Reproduction: pytest-3230 saved failure receipt; 111 other tests passed. Isolated retry passed, consistent with a transient Windows destination handle.
+Impact: A polling reader can cause an otherwise valid analysis to fail during progress persistence.
+Root cause: Atomic replace had no retry for Windows destination-sharing/access-denied errors; exact competing handle was not traced.
+Change made: Shared replace helper retries only Windows errors 5/32/33, at most six attempts over 0.62 seconds. Progress and model JSON receipts use it. Persistent errors still propagate and old destination is preserved.
+Verification: Regression cases cover transient recovery, retry exhaustion and immediate non-Windows permission failure. Final full-suite result is recorded in TASK-041.
+Links: src/plainchange/atomic_io.py, tests/test_atomic_io.py, TASK-20260917-041
+Needs curation: yes

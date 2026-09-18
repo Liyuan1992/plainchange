@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'">
+<title>__TITLE__ · PlainChange</title><style>__STYLE__</style></head>
+<body><header><strong>PlainChange <span>系统流程地图</span></strong><span id="version"></span></header>
+<main><section class="intro"><p class="eyebrow">理解系统 · 查看分支 · 补充测试</p><h1 id="title"></h1><p id="summary"></p>
+<div class="notice">代码引用与图连接已校验 · 流程语义为模型解读 · 运行未验证 · 测试均未执行</div><p id="scope"></p></section>
+<details class="explanation"><summary>项目说明：系统如何工作</summary><p id="interview"></p><button id="copy-summary">复制说明</button><span id="copy-status" role="status"></span></details>
+<nav id="flows" aria-label="选择核心流程"></nav>
+<details class="explanation" id="overview" open><summary>系统总览 · 点击模块展开</summary><p>连接仅表示有代码引用的模型解读。下一轮请求单独标出。</p><div class="overview-layout"><div id="overview-map"></div><div id="overview-links"></div></div></details>
+<section class="explanation" id="walkthrough"><h2>拿一个场景走一遍</h2><label for="scenario">选择要理解的分支</label> <select id="scenario"></select><button id="start-scenario">开始推演</button><p id="scenario-description"></p><p id="walk-status" aria-live="polite">这是沿代码解释的推演，不会执行项目或测试。</p><div id="walk-trail"></div><div id="walk-actions"></div></section>
+<section class="workspace"><div class="map-panel"><h2 id="flow-title"></h2><p id="flow-purpose"></p>
+<div class="toolbar"><span>点击步骤或连线上的条件，查看处理依据</span><button id="zoom-out" aria-label="缩小地图">−</button><button id="zoom-in" aria-label="放大地图">＋</button><button id="zoom-reset">适合宽度</button></div>
+<div id="graph-scroll" tabindex="0" aria-label="可滚动的系统流程图"><svg id="graph" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="流程与条件分支"></svg></div></div>
+<aside id="inspector" aria-live="polite"></aside></section>
+<section class="tests"><h2>沿着分支，补充测试</h2><p>以下是根据实现推导的候选测试场景。点击分支可回到地图；未执行不代表通过。</p><div id="tests"></div></section>
+<details class="explanation"><summary>分析范围与尚未确定的部分</summary><div id="coverage"></div><ul id="unknowns"></ul><details><summary>未读取的范围内文件</summary><pre id="unread"></pre></details></details>
+<footer>固定提交的系统说明，可离线保存与查看。源代码片段随报告保存，请按项目资料管理。</footer></main>
+<script id="flow-data" type="application/json">__DATA__</script><script>__SCRIPT__</script></body></html>

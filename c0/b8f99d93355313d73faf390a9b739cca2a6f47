@@ -1,0 +1,100 @@
+src/plainchange/progress.py
+  s_93d3e89aae0a76::t_d164871d3095da 13,41
+src/plainchange/templates/onboarding.html
+  s_93d3e89aae0a76::t_407927641f2040 21-41,115
+src/plainchange/cli.py
+  s_93d3e89aae0a76::t_407927641f2040 62-68,95,120-124
+tests/test_flow_provider.py
+  s_93d3e89aae0a76::t_4f3f26a062a5b5 1-61
+docs/project-governance/decisions/README.md
+  s_93d3e89aae0a76::t_42e9cac5b9bc5f 3-5
+docs/project-governance/PROJECT.md
+  s_93d3e89aae0a76::t_42e9cac5b9bc5f 24
+  s_93d3e89aae0a76::t_72ac34ae6e031d 3
+  s_93d3e89aae0a76::t_bab1b5321ab5cd 4-23
+docs/project-governance/tasks/TASK-20260917-040-chestnutdog-system-map.md
+  s_93d3e89aae0a76::t_2465e18ce17466 1-61
+src/plainchange/atomic_io.py
+  s_93d3e89aae0a76::t_d164871d3095da 1-17
+docs/project-governance/EVOLUTION.md
+  s_93d3e89aae0a76::t_bd9f876ee4a2de 584-594
+  s_93d3e89aae0a76::t_72ac34ae6e031d 606-607
+  s_93d3e89aae0a76::t_096e5310973eec 608-615
+  s_93d3e89aae0a76::t_3f09f589d03e9a 573-583
+  s_93d3e89aae0a76::t_bab1b5321ab5cd 595-605
+src/plainchange/model_adapter.py
+  s_93d3e89aae0a76::t_d164871d3095da 3-4,75
+src/plainchange/flow_provider.py
+  s_93d3e89aae0a76::t_64e6ef35338196 1-113,116-158,161-167
+  s_93d3e89aae0a76::t_b7978379d14ac3 114-115,159-160
+tests/test_atomic_io.py
+  s_93d3e89aae0a76::t_d164871d3095da 1-29
+src/plainchange/templates/onboarding.css
+  s_93d3e89aae0a76::t_407927641f2040 81-91
+src/plainchange/system_flow.py
+  s_93d3e89aae0a76::t_d18d39b45479dd 1-498
+src/plainchange/templates/system-flow.css
+  s_93d3e89aae0a76::t_7fa883790db320 1-3
+  s_93d3e89aae0a76::t_17a54820e048f5 4-5
+  s_93d3e89aae0a76::t_07ac733e6c7d38 6-9
+scripts/verify-system-flow.cjs
+  s_93d3e89aae0a76::t_17a54820e048f5 1-66,81,83-103
+  s_93d3e89aae0a76::t_7e3cf302a1fc30 67-80,82
+src/plainchange/templates/onboarding.js
+  s_93d3e89aae0a76::t_407927641f2040 36-88
+docs/project-governance/BUGLOG.md
+  s_93d3e89aae0a76::t_3f09f589d03e9a 713-741
+  s_93d3e89aae0a76::t_bd9f876ee4a2de 742-755
+  s_93d3e89aae0a76::t_bab1b5321ab5cd 756-769
+  s_93d3e89aae0a76::t_6597edb79d2487 770-783
+src/plainchange/templates/system-flow.html
+  s_93d3e89aae0a76::t_e78cdea3f4490e 11
+  s_93d3e89aae0a76::t_f206cc206f6f09 1-7,9,12-19
+  s_93d3e89aae0a76::t_d18d39b45479dd 8
+  s_93d3e89aae0a76::t_f61827ec85cf6b 10
+docs/project-governance/tasks/TASK-20260916-039-system-flow-map.md
+  s_93d3e89aae0a76::t_f3b04fdd568ca4 47-60
+  s_93d3e89aae0a76::t_f9abb151212cf8 1-2,4-46
+  s_93d3e89aae0a76::t_42e9cac5b9bc5f 3,61-97
+docs/project-governance/decisions/ADR-0006-system-flow-interpretation.md
+  s_93d3e89aae0a76::t_6597edb79d2487 37-39
+  s_93d3e89aae0a76::t_f3b04fdd568ca4 1-36
+tests/test_system_flow.py
+  s_93d3e89aae0a76::t_6c2c5d9c42d554 231,241-242
+  s_93d3e89aae0a76::t_25b3cb14fab563 210-230,232-240,243-252
+  s_93d3e89aae0a76::t_77e94945acd1e4 253-285
+  s_93d3e89aae0a76::t_6e56158751cda2 1-209
+README.md
+  s_93d3e89aae0a76::t_467e34d84dbe8f 32-56,58-61,65-68,70-73,182-187
+  s_93d3e89aae0a76::t_d18d39b45479dd 57,62-64,69
+src/plainchange/onboarding.py
+  s_93d3e89aae0a76::t_407927641f2040 269-298,413-418,469-471
+src/plainchange/templates/system-flow.js
+  s_93d3e89aae0a76::t_17a54820e048f5 85,156
+  s_93d3e89aae0a76::t_c74df59b88abf6 36-38
+  s_93d3e89aae0a76::t_467e34d84dbe8f 132,137-143,148-151
+  s_93d3e89aae0a76::t_7fa883790db320 1-35,39-84,86-103,105-131,133-136,144-147,152-155,157-192,195,199-203,206-210,212
+  s_93d3e89aae0a76::t_318acf67a24140 104,211
+  s_93d3e89aae0a76::t_7c5ab5d6d33b60 193-194,196-198,204-205
+docs/project-governance/tasks/TASK-20260917-041-system-flow-depth-and-walkthrough.md
+  s_93d3e89aae0a76::t_1d76e185985b5d 1-2,4-17
+  s_93d3e89aae0a76::t_72ac34ae6e031d 3,35-36
+  s_93d3e89aae0a76::t_6597edb79d2487 32-34
+  s_93d3e89aae0a76::t_bab1b5321ab5cd 18-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c0b8f99d93355313d73faf390a9b739cca2a6f47",
+  "prompts": {},
+  "sessions": {
+    "s_93d3e89aae0a76": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a817-da32-7fd3-83bb-ac8e1ca315ad",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

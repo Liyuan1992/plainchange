@@ -1,0 +1,119 @@
+src/plainchange/templates/system-flow.css
+  s_b9e5125ebb65db::t_760d27234320f6 7-8
+src/plainchange/templates/system-flow.js
+  s_b9e5125ebb65db::t_22db80407651ae 260-269
+  s_b9e5125ebb65db::t_555ba235dd28f7 13-23,270
+  s_b9e5125ebb65db::t_dc431394b6f04c 225
+  s_b9e5125ebb65db::t_760d27234320f6 223-224,226-259
+src/plainchange/templates/onboarding.html
+  s_b9e5125ebb65db::t_8cff89ecb05bbc 21
+  s_b9e5125ebb65db::t_74986dafc3c5ac 28
+docs/project-governance/EVOLUTION.md
+  s_b9e5125ebb65db::t_e62d8c12ae8278 1132-1142
+  s_b9e5125ebb65db::t_a2a8ddc531780f 1176-1186
+  s_b9e5125ebb65db::t_e7fc07dd313022 1143-1153
+  s_b9e5125ebb65db::t_2170c8edecfb01 1165-1175
+  s_b9e5125ebb65db::t_d89ea4cf436d40 1154-1164
+docs/project-governance/decisions/ADR-0006-system-flow-interpretation.md
+  s_b9e5125ebb65db::t_2334439a70a65a 40-52
+docs/project-governance/PROJECT.md
+  s_b9e5125ebb65db::t_2334439a70a65a 13-21,23-24,32
+  s_b9e5125ebb65db::t_7fad97757e1e03 3-12
+  s_b9e5125ebb65db::t_2c264b0478fba6 22,25-31
+docs/project-governance/tasks/TASK-20260920-046-self-evaluation-fixes.md
+  s_b9e5125ebb65db::t_7fad97757e1e03 3,17-24
+  s_b9e5125ebb65db::t_f41778cf56c67d 1-2,4-16
+README.md
+  s_b9e5125ebb65db::t_74986dafc3c5ac 184-186
+docs/project-governance/tasks/TASK-045-self-evaluation-results.md
+  s_b9e5125ebb65db::t_c1de5bb529d504 13,18-19
+  s_b9e5125ebb65db::t_d08938f8806ce7 60-81,87-97
+  s_b9e5125ebb65db::t_f87ef9db9d3ddf 1-12,14-17,20-59,82-86,98-115
+tests/test_self_evaluation_regressions.py
+  s_b9e5125ebb65db::t_9f1745d8c13678 1-70,72-97
+  s_b9e5125ebb65db::t_11118e8d32472c 71
+  s_b9e5125ebb65db::t_bc795daa5f9ac4 98-113
+docs/INSTALL.md
+  s_b9e5125ebb65db::t_7fcf614ca86dd8 88-96
+docs/project-governance/tasks/TASK-20260920-043-product-understanding-evaluation.md
+  s_b9e5125ebb65db::t_da51c663e55e76 1-2,4-34
+  s_b9e5125ebb65db::t_2334439a70a65a 3,35-68
+src/plainchange/system_flow.py
+  s_b9e5125ebb65db::t_022d0442281e73 432,539
+  s_b9e5125ebb65db::t_555ba235dd28f7 146-171,490,495-496,500,540-543
+  s_b9e5125ebb65db::t_8ccbb56349b76a 369-373
+  s_b9e5125ebb65db::t_a14e7081fb2904 447
+  s_b9e5125ebb65db::t_da51c663e55e76 190
+  s_b9e5125ebb65db::t_773919597f67ed 21,105-106,467-468
+  s_b9e5125ebb65db::t_7189a3dcd80acd 18,427,474-476
+  s_b9e5125ebb65db::t_30dd04045c563c 366-368,535-538
+docs/project-governance/tasks/TASK-20260920-044-issue-reproduction.md
+  s_b9e5125ebb65db::t_469d1b55e6e863 1-2,4-29
+  s_b9e5125ebb65db::t_2c264b0478fba6 3,30-49
+docs/project-governance/tasks/TASK-20260920-045-self-evaluation.md
+  s_b9e5125ebb65db::t_0c6b2d3e626ed6 1-2,4-11
+  s_b9e5125ebb65db::t_d08938f8806ce7 3,12-21
+src/plainchange/source_safety.py
+  s_b9e5125ebb65db::t_7189a3dcd80acd 20-23,29
+  s_b9e5125ebb65db::t_da51c663e55e76 1-19,24-28
+docs/project-governance/tasks/TASK-043-product-evaluation.md
+  s_b9e5125ebb65db::t_648deecdc1249e 64-78,102,106
+  s_b9e5125ebb65db::t_2334439a70a65a 79-83
+  s_b9e5125ebb65db::t_7667d532ce215c 1-63,84-101,103-105,107-113
+src/plainchange/templates/onboarding.js
+  s_b9e5125ebb65db::t_8cff89ecb05bbc 84,86-88,92-127
+  s_b9e5125ebb65db::t_90e4ba87a690b6 85,89-91
+tests/test_system_flow.py
+  s_b9e5125ebb65db::t_11118e8d32472c 181,185-186
+  s_b9e5125ebb65db::t_22db80407651ae 61-64,66-67,94,296
+  s_b9e5125ebb65db::t_f7ec5d9be033ff 58-60,95
+docs/project-governance/BUGLOG.md
+  s_b9e5125ebb65db::t_e62d8c12ae8278 1473-1498
+  s_b9e5125ebb65db::t_2170c8edecfb01 1499-1546
+README.zh-CN.md
+  s_b9e5125ebb65db::t_74986dafc3c5ac 178-180
+src/plainchange/templates/system-flow.html
+  s_b9e5125ebb65db::t_760d27234320f6 8-9
+docs/project-governance/tasks/TASK-043-reader-test.md
+  s_b9e5125ebb65db::t_213829819a4a4d 1-24
+docs/project-governance/tasks/TASK-046-fix-verification.md
+  s_b9e5125ebb65db::t_7fad97757e1e03 1-30
+src/plainchange/product_review.py
+  s_b9e5125ebb65db::t_8ccbb56349b76a 113,121-122,143
+  s_b9e5125ebb65db::t_22db80407651ae 207-211
+  s_b9e5125ebb65db::t_30dd04045c563c 1-4,6-7,10-29,31-43,47,63-77,79-84,174-176,179-180,182-206,212
+  s_b9e5125ebb65db::t_022d0442281e73 5,8-9,30,44-46,48-50,85-112,114-120,123-142,144-168,172-173,177-178,181
+  s_b9e5125ebb65db::t_7dd40580385cd5 51-62,78,169-171
+docs/project-governance/tasks/TASK-044-verification-results.md
+  s_b9e5125ebb65db::t_89fb81f81f2dd1 1-37
+src/plainchange/onboarding.py
+  s_b9e5125ebb65db::t_773919597f67ed 257,273,287-306,320-325,345,350,362-367,369,372,466-476,496-497,499-505,551-552,571-572
+SECURITY.md
+  s_b9e5125ebb65db::t_74986dafc3c5ac 9-12
+  s_b9e5125ebb65db::t_90e4ba87a690b6 13
+tests/test_product_review.py
+  s_b9e5125ebb65db::t_7595f135d9023f 7,90-137
+  s_b9e5125ebb65db::t_dc431394b6f04c 138-157
+  s_b9e5125ebb65db::t_f7ec5d9be033ff 1-6,8-89
+src/plainchange/templates/review.js
+  s_b9e5125ebb65db::t_8cff89ecb05bbc 276-277,279
+scripts/verify-system-flow.cjs
+  s_b9e5125ebb65db::t_213829819a4a4d 96-97,99
+  s_b9e5125ebb65db::t_b51bd44ef69de2 6-8,84-95,98,100,108,116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21952b9f355851bd5eeeb59f827724fe89cb5d9d",
+  "prompts": {},
+  "sessions": {
+    "s_b9e5125ebb65db": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0be69-9c2c-71d0-8b6f-3662394367eb",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

@@ -1470,3 +1470,77 @@ Change made: Scope a monkeypatch to the test's command-resolution boundary to ex
 Verification: First merged run had 184 passed and this single failure; final rerun recorded in TASK-042.
 Links: tests/test_pipeline.py, TASK-20260918-042
 Needs curation: no
+
+ID: BUG-20260920-001
+Date: 2026-09-20
+Status: mitigated
+Domain: system-understanding
+Severity: high
+Symptom fingerprint: Source-linked first-pass findings misread request-local properties as shared fields, missed existing failure UI handling and classified explicit design choices as defects.
+Trigger / reproduction: Real fixed-commit DigitalSelf and memdsl product review; original candidates and code packets retained in the TASK-043 evaluation output.
+Impact: A plausible cited report could send an owner toward unnecessary or incorrect fixes.
+Root cause: Citation range validation proves location, not entailment; first-pass source sampling did not seek counterevidence.
+Resolution: Add bounded counterevidence reads and a second semantic review with complete candidate dispositions, no invented IDs, strict code citations and no confirmed-defect status. Preserve raw attempts. Four unsupported/normal-behavior candidates withdrawn and one duplicate merged in the controlled batch.
+Verification: 207 tests pass; real reports and source audit support the observed corrections. Remaining candidate semantics, complete coverage and target runtime behavior are not guaranteed; a later deeper memdsl run found different candidates.
+Links: TASK-20260920-043, TASK-043-product-evaluation.md, src/plainchange/product_review.py
+Needs curation: yes
+
+ID: BUG-20260920-002
+Date: 2026-09-20
+Status: fixed-in-system-understanding-scope
+Domain: source-privacy
+Severity: high
+Symptom fingerprint: Filename filtering alone allows a credential embedded in an otherwise eligible source file to enter an understanding request.
+Root cause: Eligible-source content had no pre-send credential-pattern gate.
+Resolution: Block common credential formats before extracting source text and recheck request packets; retain only a sensitive_source denial reason, never matched values. A denied source cannot justify a claim.
+Verification: Credential-pattern and no-request/no-artifact-leak regressions pass. Real sample packets passed the guard. This is not generic secret detection, does not cover all other analysis routes, and does not close the previously identified local-server Host/DNS rebinding issue.
+Links: TASK-20260920-043, src/plainchange/source_safety.py, tests/test_product_review.py, SECURITY.md
+Needs curation: yes
+
+ID: BUG-20260920-003
+Date: 2026-09-20
+Status: fixed-guided-jobs
+Domain: job-identity
+Severity: high
+Symptom fingerprint: Concurrent guided jobs shared guided-manifest and run-receipt temporary paths; one succeeded with the other's task evidence.
+Root cause: Version-pair directory ownership was mistaken for request identity.
+Resolution: Allocate unique run child directories for both guided job types; URLs bind immutable job output. Add authenticated current-session history for refresh recovery.
+Verification: Real concurrent pipelines preserve alpha/beta independently; subsequent generation leaves original HTML unchanged; real UI refresh/reopen passes.
+Links: TASK-046, tests/test_self_evaluation_regressions.py
+Needs curation: yes
+
+ID: BUG-20260920-004
+Date: 2026-09-20
+Status: fixed-application-host-gate
+Domain: local-access
+Severity: high
+Symptom fingerprint: Foreign Host obtained session HTML and matched foreign Origin passed authorization; malformed output disconnected HTTP.
+Root cause: Origin trusted unvalidated request Host; system-output type lacked validation.
+Resolution: Gate all GET/POST requests by loopback Host and actual server port before serving token; validate output types and return JSON 400 for malformed parameters.
+Verification: Real HTTP foreign Host/port rejection and token non-disclosure checks pass, invalid output returns 400. Not a full remote browser exploit audit.
+Links: TASK-046, SECURITY.md
+Needs curation: yes
+
+ID: BUG-20260920-005
+Date: 2026-09-20
+Status: fixed-read-recovery-and-scope-mitigated
+Domain: system-understanding
+Severity: high
+Symptom fingerprint: Self-analysis failed on excluded onboarding.html; unsupported read terminated work; final map omitted an independent capability.
+Root cause: HTML excluded and out-of-inventory model requests were fatal; source citations lacked entry coverage disclosure.
+Resolution: Include bounded HTML; feed denied requests back within original read limits in both exploration and critique. Add host-computed entry declaration/citation gaps in reports and model input.
+Verification: Recovery and persistent-denial regressions pass without reading outside inventory. Two-entry fixture distinguishes omitted understand entry. Semantic completeness remains unverified; no arbitrary-stage resume.
+Links: TASK-046, tests/test_self_evaluation_regressions.py
+Needs curation: yes
+
+ID: BUG-20260920-006
+Date: 2026-09-20
+Status: fixed
+Domain: owner-experience
+Severity: medium
+Symptom fingerprint: Report without passed verification displayed a green completed-check heading.
+Root cause: Success heading was unconditional.
+Resolution: Empty passed-check set uses neutral icon, title and next-step text in Chinese and English.
+Verification: Real generated basic report displays neutral state and no Already verified heading; existing full suite passes.
+Links: TASK-046, src/plainchange/templates/review.js
+Needs curation: yes

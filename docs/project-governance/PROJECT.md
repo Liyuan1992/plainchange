@@ -1,5 +1,35 @@
 # Project facts
 
+TASK-046 (2026-09-20): guided jobs now have independent run directories, with
+authenticated current-session task history after refresh. Loopback Host/port is
+checked before serving session tokens. Empty verification has neutral labels.
+System understanding accepts bounded HTML sources, feeds denied read requests
+back within existing budgets, and exposes entry declaration/citation gaps.
+213 full-suite checks and 7 final targeted checks passed (six overlap); real GUI
+refresh/reopen and neutral labels verified. Entry semantics, complete coverage,
+arbitrary-stage resume and human comprehension are not guaranteed. See
+tasks/TASK-046-fix-verification.md.
+
+Current product-understanding evaluation (2026-09-20, TASK-043): system maps now
+include a cited ordinary-reader guide, linked user journey, actionable suspected
+risks / evidence gaps and a counterevidence pass that retains, revises or withdraws
+every candidate. Two additional bounded read rounds share the 400 KB source budget.
+Legacy maps and change reports remain readable. Common credential patterns are
+blocked before source enters system-understanding packets; this is not a complete
+privacy audit. Three local projects and a separate full memdsl CLI run produced
+reviewable reports; 207 tests, package builds, desktop/narrow browser interactions
+and 181 excerpt-occurrence checks pass. Runtime reproduction, complete project
+coverage and independent nontechnical comprehension remained unverified in TASK-043. A deeper
+memdsl run found new candidates after the initial sample retained none: quality
+cannot be inferred from one zero-finding report. See TASK-043 product evaluation.
+
+TASK-044 follow-up: three selected hypotheses now reproduced in isolated exact
+commit exports via real MCP stdio and VideoFactory CLI/FFmpeg, with positive
+controls. This is a separate agent-run verification, not an automatic runtime
+guarantee of the model reports. Other findings, whole-project coverage and human
+comprehension remain unverified; user deferred the human test. See
+tasks/TASK-044-verification-results.md.
+
 TASK-20260917-041 adds function-guided excerpts (2 MB file gate, six read rounds, 400 KB source budget), v2 cited cross-flow links, overview navigation and scenario walkthrough. Connections distinguish call/return/next request; scenario steps remain unexecuted. One bounded reference-only correction preserves failed raw output. ChestnutDogAiThink v2: 4 flows, 28 nodes, 41 edges, 8 connections from 40 excerpts including previously excluded parsing/UI implementations. Git source and desktop/narrow browser checks pass; final full suite: 115 passed; detailed verification is recorded in TASK-041. Commit-only and non-exhaustive scope remain explicit.
 
 Current additive capability (2026-09-16, TASK-20260916-039): `plainchange understand`

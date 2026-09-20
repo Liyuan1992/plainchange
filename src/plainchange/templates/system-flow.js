@@ -10,6 +10,17 @@
   byId("summary").textContent = data.summary;
   byId("version").textContent = `${data.project} · ${data.commit.slice(0,12)}`;
   byId("scope").textContent = `读取 ${data.coverage.read_files} / ${data.coverage.eligible_files} 个范围内文件 · ${data.coverage.read_excerpts} 段源码 · ${data.working_tree_excluded ? "项目有未提交修改，本图尚未包含" : "分析范围为所示提交"}`;
+  if (data.entry_coverage) {
+    const box = el("details", undefined, byId("scope").parentElement);
+    const entries = data.entry_coverage.entries, missing = entries.filter(e => !e.flow_ids.length);
+    el("summary", `入口核对：${missing.length} / ${entries.length} 个已读入口声明尚未关联流程`, box);
+    el("p", "仅识别已读片段中的命令和按钮。入口位置被引用不等于功能已讲清，也不代表全部入口都已发现。", box);
+    entries.forEach(entry => {
+      const row = el("div", undefined, box);
+      el("p", `${entry.name}：${entry.flow_ids.length ? "入口位置有流程引用，语义仍需核对" : "尚未关联流程，可能遗漏能力"}`, row);
+      evidence(entry.evidence, row);
+    });
+  }
   byId("interview").textContent = data.interview_summary;
   byId("copy-summary").onclick = async () => { try { await navigator.clipboard.writeText(data.interview_summary); byId("copy-status").textContent = "已复制"; } catch { byId("copy-status").textContent = "浏览器未允许复制，请选中文字复制。"; } };
   byId("coverage").textContent = `共 ${data.coverage.tracked_files} 个受跟踪文件，${data.coverage.excluded_files} 个不在当前源码范围。引用和图连接校验不等于语义正确，也不证明已穷尽所有分支。`;
@@ -209,4 +220,52 @@
   const gaps=el("details",undefined,byId("overview")); el("summary",`还没弄清的环节（${data.unknowns.length}）`,gaps); const gapList=el("ul",undefined,gaps); data.unknowns.forEach(u=>el("li",u,gapList));
   chooseFlow(current);
   byId("overview").open = true;
+  const review = data.product_review;
+  if (review) {
+    byId("summary").textContent = `${review.reader_guide.purpose.text} ${review.reader_guide.result.text}`;
+    byId("reader-review").hidden = false;
+    byId("product-findings").hidden = false;
+    const sourceDisclosure = (item, parent) => {
+      const details = el("details", undefined, parent);
+      el("summary", item.evidence_status === "project_declaration" ? "查看项目自述依据" : "查看解读依据", details);
+      evidence(item.evidence, details);
+    };
+    const labels = {audience:"给谁用",purpose:"解决什么问题",start:"怎么开始",result:"会得到什么",limits:"使用边界"};
+    Object.entries(labels).forEach(([key,label]) => {
+      const item = review.reader_guide[key], card = el("article", undefined, byId("reader-guide"));
+      el("h3", label, card); el("p", item.text, card); sourceDisclosure(item, card);
+    });
+    review.journey.forEach((step,index) => {
+      const card = el("article", undefined, byId("reader-journey"));
+      el("h3", `${index+1}. ${step.title}`, card); el("p", step.action, card); field(card,"结果",step.result);
+      const button = el("button", "查看内部如何完成", card);
+      button.onclick = () => {chooseFlow(flowById.get(step.flow_id));byId("flow-title").scrollIntoView({block:"start"});};
+      sourceDisclosure(step, card);
+    });
+    review.glossary.forEach(item => {field(byId("reader-glossary"), item.term, item.meaning);sourceDisclosure(item,byId("reader-glossary"));});
+    byId("reader-glossary").hidden = !review.glossary.length;
+    const risks = review.findings.filter(f=>f.category==="suspected_risk").length;
+    byId("findings-summary").textContent = review.findings.length
+      ? `${risks} 项疑似风险，${review.findings.length-risks} 项待核查。均未独立验证，不是已确认缺陷。展开查看发生条件、影响和核查办法。`
+      : "本次已读范围内没有提出具体疑点；不代表项目没有问题。";
+    const priorities = {high:"优先核查",medium:"随后核查",low:"较低优先级"};
+    [...review.findings].sort((a,b)=>["high","medium","low"].indexOf(a.priority)-["high","medium","low"].indexOf(b.priority)).forEach(item => {
+      const card = el("details", undefined, byId("finding-list")); card.className="finding";
+      const label = item.category === "suspected_risk" ? "疑似风险" : "待核查";
+      el("summary", `${priorities[item.priority]} · ${label} · ${item.title}`, card);
+      [["读到了什么","observation"],["何时发生","trigger"],["对使用者的影响","impact"],["为什么还不能确定","uncertainty"],["如何核查（未执行）","verification"],["改进建议","recommendation"]].forEach(([label,key])=>field(card,label,item[key]));
+      sourceDisclosure(item,card);
+    });
+    review.not_covered.forEach(text=>el("li",text,byId("review-not-covered")));
+    if(review.challenge) {
+      const detail=el("details",undefined,byId("product-findings"));
+      el("summary",`反证审阅记录：从 ${review.challenge.candidate_count} 项初始疑点保留 ${review.findings.length} 项`,detail);
+      el("p","模型补查了可能推翻疑点的代码；这仍不是独立运行验证。",detail).className="muted";
+      review.challenge.dispositions.forEach(item=>{
+        const row=el("article",undefined,detail);
+        el("h3",`${item.candidate_id} · ${{retained:"保留待核查",revised:"修订后待核查",dismissed:"已撤回"}[item.decision]}`,row);
+        el("p",item.reason,row);sourceDisclosure(item,row);
+      });
+    }
+  }
 })();

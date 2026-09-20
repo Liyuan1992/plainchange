@@ -55,7 +55,16 @@ class FixtureProvider:
 
     def complete(self, system, packet, schema, folder):
         folder.mkdir(parents=True)
+        if "reader_guide" in schema["properties"]:
+            from test_product_review import review_fixture
+            return review_fixture(packet)
+        if "review" in schema["properties"]:
+            candidate = copy.deepcopy(packet["candidate"])
+            return {"review": candidate, "dispositions": [{"candidate_id": f["id"], "decision": "retained",
+                    "reason": "仍需验证调用者是否拦截输入。", "evidence": f["evidence"]} for f in candidate["findings"]]}
         if "reads" in schema["properties"]:
+            if "findings" in packet:
+                return {"reads": []}
             if packet["round"] == 1:
                 assert "secret fixture" not in json.dumps(packet)
                 assert not any(f["path"] == "credentials.py" for f in packet["files"])
@@ -82,7 +91,8 @@ def test_single_commit_cross_file_exploration_and_target_preservation(flow_repo,
     assert "```mermaid" in Path(result["markdown"]).read_text(encoding="utf-8")
     receipt = json.loads((tmp_path / "report/run-receipt.json").read_text(encoding="utf-8"))
     assert receipt["status"] == "succeeded"
-    assert len(receipt["requests"]) == 4
+    assert len(receipt["requests"]) == 7
+    assert report["product_review"]["human_comprehension"] == "not_tested"
 
 
 def test_output_never_overwrites_target_or_prior_result(flow_repo, tmp_path):
@@ -168,10 +178,12 @@ def test_arbitrary_model_file_reads_fail_and_leave_failure_receipt(flow_repo, tm
         def complete(self, *args):
             return {"reads": [{"path": "../auth.json", "start_line": 1}]}
     output = tmp_path / "failure"
-    with pytest.raises(ModelGenerationError, match="清单之外"):
+    with pytest.raises(ModelGenerationError, match="未读取到代码"):
         understand_system(flow_repo, output=output, provider=InvalidProvider())
     receipt = json.loads((output / "run-receipt.json").read_text(encoding="utf-8"))
     assert receipt["status"] == "failed"
+    assert len(receipt["denied_reads"]) == 6
+    assert all(r["reason"] == "outside_source_scope" for r in receipt["denied_reads"])
     assert not (output / "review.html").exists()
 
 
@@ -281,5 +293,5 @@ def test_reference_repair_is_bounded_preserves_claims_and_raw(flow_repo, tmp_pat
     assert json.loads((output/'system-flow.raw.json').read_text(encoding='utf-8'))['flows'][0]['edges'][0]['evidence'][0]['end_line'] == 1
     receipt = json.loads((output/'run-receipt.json').read_text(encoding='utf-8'))
     assert receipt['status'] == 'succeeded' and 'initial_validation_error' in receipt
-    assert receipt['requests'][-1]['stage'] == 'repair-references'
+    assert any(r['stage'] == 'repair-references' for r in receipt['requests'])
     assert (output/'system-flow.repaired.json').exists()

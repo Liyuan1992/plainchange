@@ -15,9 +15,10 @@ from typing import Any
 from .flow_provider import CodexFlowProvider, CompatibleFlowProvider, FlowProvider
 from .model_adapter import ModelGenerationError, _write_json
 from .models import canonical_json_bytes, sha256_bytes
+from .source_safety import SensitiveSourceError, assert_safe_source
 
 SCHEMA_VERSION = "plainchange.system-flow.v2"
-SOURCE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".kt", ".cs", ".go", ".rs", ".swift", ".rb", ".php", ".vue", ".svelte", ".sql"}
+SOURCE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".kt", ".cs", ".go", ".rs", ".swift", ".rb", ".php", ".vue", ".svelte", ".sql", ".html", ".htm"}
 EXCLUDED_PARTS = {"node_modules", ".git", ".venv", "vendor", "dist", "build", "artifacts", "private", "secrets", "__pycache__", "fixtures", "generated"}
 MAX_FILES = 2500
 MAX_FILE_BYTES = 2_000_000
@@ -101,6 +102,8 @@ def inspect_system_repository(repository: str | Path, revision: str = "HEAD") ->
 
 
 def create_flow_output(repository: str | Path, revision: str = "HEAD", output: str | Path | None = None) -> tuple[dict, Path]:
+    if output is not None and not isinstance(output, (str, Path)):
+        raise ModelGenerationError("报告目录格式无效。")
     info = inspect_system_repository(repository, revision)
     repo = Path(info["path"])
     destination = (Path(output).expanduser().resolve() if output else
@@ -140,6 +143,32 @@ def source_inventory(repo: Path, commit: str) -> tuple[list[dict], dict]:
     return files[:MAX_FILES], {"tracked_files": total, "excluded": omitted}
 
 
+def entry_candidates(sources: list[dict]) -> list[dict]:
+    """Declared CLI commands and HTML buttons; not an exhaustive entry index."""
+    entries = {}
+    for source in sources:
+        pattern = r'''\.add_parser\(\s*["']([^"']+)["']'''
+        if source["path"].endswith((".html", ".htm")):
+            pattern = r'''<button\b[^>]*\bid=["']([^"']+)["'][^>]*>'''
+        for match in re.finditer(pattern, source["text"]):
+            line = source["start_line"] + source["text"][:match.start()].count("\n")
+            key = (source["path"], line, match.group(1))
+            entries[key] = {"name": match.group(1), "path": source["path"],
+                            "evidence": [{"source_id": source["id"], "start_line": line, "end_line": line}]}
+    return list(entries.values())[:60]
+
+
+def entry_coverage(document: dict) -> dict:
+    sources = {s["id"]: s for s in document["sources"]}
+    entries = entry_candidates(document["sources"])
+    for entry in entries:
+        line = entry["evidence"][0]["start_line"]
+        entry["flow_ids"] = [flow["id"] for flow in document["flows"] if any(
+            sources[ref["source_id"]]["path"] == entry["path"] and ref["start_line"] <= line <= ref["end_line"]
+            for item in flow["nodes"] + flow["edges"] for ref in item["evidence"])]
+    return {"method": "declarations_in_read_excerpts", "semantic_completeness": "not_verified", "entries": entries}
+
+
 def source_symbols(text: str, path: str) -> list[dict]:
     """Navigation hints, never evidence of a call or execution."""
     if path.endswith(".py"):
@@ -158,6 +187,7 @@ def source_symbols(text: str, path: str) -> list[dict]:
 
 def read_excerpt(repo: Path, record: dict, start: int) -> dict:
     text = _git(repo, ["cat-file", "blob", record["blob"]])
+    assert_safe_source(text)
     if "\0" in text or "\ufffd" in text:
         raise ModelGenerationError("选中的源文件不是可用的 UTF-8 文本。")
     lines = text.splitlines()
@@ -333,6 +363,14 @@ def flow_markdown(document: dict) -> str:
     lines = [f"# {document['title']}", "", document["summary"], "",
              f"版本：{document['commit']}。所有语义连接均为模型解读，运行未验证。", "",
              "## 项目说明", document["interview_summary"], ""]
+    if document.get("product_review"):
+        from .product_review import review_markdown
+        lines += review_markdown(document["product_review"], document["sources"])
+    if document.get("entry_coverage"):
+        lines += ["## 入口核对", "仅识别已读片段中的命令和按钮；位置被引用不等于语义完整，也不代表已发现全部入口。"]
+        for entry in document["entry_coverage"]["entries"]:
+            state = "入口位置有流程引用，语义仍需核对" if entry["flow_ids"] else "尚未关联流程，可能遗漏能力"
+            lines.append(f"- {entry['name']}：{state}（{entry['path']}:{entry['evidence'][0]['start_line']}）")
     if document.get("connections"):
         flows = {f["id"]: f for f in document["flows"]}
         kinds = {"call": "本次调用", "return": "返回上层", "next_request": "等待下一轮请求"}
@@ -386,10 +424,12 @@ def understand_system(repository: str | Path, *, revision: str = "HEAD", focus: 
         print(f"[{percent}%] {label}", file=sys.stderr, flush=True)
 
     def call(label: str, instruction: str, packet: dict, schema: dict) -> dict:
+        assert_safe_source(json.dumps(packet, ensure_ascii=False))
         folder = destination / "model-attempts" / f"{len(receipt['requests']) + 1:02d}-{label}"
         receipt["requests"].append({"stage": label, "packet_sha256": sha256_bytes(canonical_json_bytes(packet)), "attempt": str(folder.relative_to(destination))})
         _write_json(destination / "run-receipt.json", receipt)
         value = provider.complete(instruction, packet, schema, folder)
+        _write_json(folder / "response.raw.json", value)
         validate_shape(value, schema)
         return value
 
@@ -404,6 +444,7 @@ def understand_system(repository: str | Path, *, revision: str = "HEAD", focus: 
         visited: set[tuple[str, int]] = set()
         used_bytes = 0
         denied: list[dict] = []
+        receipt["denied_reads"] = denied
         goal = focus.strip() or "找出软件的主要用户入口和核心业务流程，深入关键条件、错误分支、状态变化及边界。"
         for round_number in range(MAX_READ_ROUNDS):
             progress(f"Codex 正在追查流程代码（第 {round_number + 1} 轮，共最多 {MAX_READ_ROUNDS} 轮）" if provider.name == "codex-chatgpt" else f"模型正在追查流程代码（第 {round_number + 1} 轮）", 10 + round_number * 10)
@@ -423,12 +464,16 @@ def understand_system(repository: str | Path, *, revision: str = "HEAD", focus: 
             for request in choice["reads"]:
                 path, start = request["path"], request["start_line"]
                 if path not in records:
-                    raise ModelGenerationError("模型请求读取清单之外的文件。")
+                    denied.append({**request, "reason": "outside_source_scope"})
+                    continue
                 if (path, start) in visited:
                     continue
                 visited.add((path, start))
                 try:
                     source = read_excerpt(repo, records[path], start)
+                except SensitiveSourceError:
+                    denied.append({**request, "reason": "sensitive_source"})
+                    continue
                 except ModelGenerationError:
                     denied.append({**request, "reason": "invalid_line_or_text"})
                     continue
@@ -442,15 +487,17 @@ def understand_system(repository: str | Path, *, revision: str = "HEAD", focus: 
                 sources.append(source)
                 used_bytes += size
                 new_count += 1
-            if not new_count:
+            if not new_count and all(item["path"] in records for item in choice["reads"]):
                 break
         if not any(s["kind"] == "code" for s in sources):
             raise ModelGenerationError("模型未读取到代码，无法生成有依据的系统流程。")
         source_packet = {"commit": info["commit"], "goal": goal, "sources": sources,
-                         "denied_reads": denied, "read_round_limit": MAX_READ_ROUNDS}
+                         "denied_reads": denied, "read_round_limit": MAX_READ_ROUNDS,
+                         "entry_candidates": entry_candidates(sources)}
         _write_json(destination / "system-source-packet.json", source_packet)
         progress("整理系统流程、判断条件和待测场景", 75)
         raw = call("map", "你是系统分析师。仅根据代码证据生成详细系统流程图 JSON，所有说明用简体中文。"
+                   "对照entry_candidates入口声明，区分独立用户能力；未覆盖的主要入口在unknowns中明确列出。不要把独立功能混为一种模式。"
                    "围绕目标深入1到6条主要流程，避免重复画出同一逻辑。每条有入口和可达的步骤/判断/结束/外部节点。"
                    "说明简洁，单个字段一到两句；顺序和分支必须有代码依据。"
                    "每个步骤解释输入、输出、状态变化，每条边解释触发条件及处理结果，并给出具体测试输入和预期。"
@@ -485,6 +532,15 @@ def understand_system(repository: str | Path, *, revision: str = "HEAD", focus: 
                                   "complete": False, "semantic_validation": "references_and_graph_only"})
         document["unknowns"] += ["代码引用和图连接已校验，但语义正确性、分支穷尽性和真实运行行为尚未独立验证。",
                                  "仅分析该提交；未提交修改、外部服务内部逻辑和动态运行配置不在本次证据内。"]
+        # Preserve the useful map even if the additional assessment fails.
+        _write_json(destination / "system-map.validated.json", document)
+        progress("解释如何使用项目，核查有代码依据的疑点", 95)
+        from .product_review import assess_product
+        document["product_review"] = assess_product(document, call, repository=repo, inventory=inventory)
+        document["entry_coverage"] = entry_coverage(document)
+        missing_entries = [e["name"] for e in document["entry_coverage"]["entries"] if not e["flow_ids"]]
+        if missing_entries:
+            document["unknowns"].append("入口声明尚未关联到流程引用，需核对是否遗漏能力：" + "、".join(missing_entries))
         _write_json(destination / "system-flow.json", document)
         (destination / "system-flow.md").write_text(flow_markdown(document), encoding="utf-8")
         (destination / "review.html").write_text(render_flow(document), encoding="utf-8")

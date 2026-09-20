@@ -272,11 +272,11 @@
       : String(value || "");
     const verificationGrid = make("div", "owner-verification-grid");
     const donePanel = make("section", "owner-control-panel owner-verified-panel");
-    const doneHeading = append(make("div", "owner-control-heading"), make("span", "owner-control-icon verified", "✓"), append(make("div", ""), make("p", "eyebrow", english ? "Completed checks" : "已完成检查"), make("h3", "", english ? "Already verified for you" : "已经替你验证")));
-    donePanel.appendChild(doneHeading);
     const passed = verification.passed_checks || [];
+    const doneHeading = append(make("div", "owner-control-heading"), make("span", passed.length ? "owner-control-icon verified" : "owner-control-icon gap", passed.length ? "✓" : "?"), append(make("div", ""), make("p", "eyebrow", passed.length ? (english ? "Completed checks" : "已完成检查") : (english ? "Verification pending" : "尚无通过记录")), make("h3", "", passed.length ? (english ? "Already verified for you" : "已经替你验证") : (english ? "No passed checks recorded" : "还没有已通过的验证"))));
+    donePanel.appendChild(doneHeading);
     if (!passed.length) {
-      donePanel.appendChild(make("p", "owner-empty-verification", english ? "No structured verification receipt was provided. This does not mean a check failed." : "这份报告没有收到结构化验证收据；这不代表检查失败。"));
+      donePanel.appendChild(make("p", "owner-empty-verification", english ? "No passed checks are recorded. Review the remaining verification items below." : "这份报告没有记录已通过的检查，请查看下方待验证事项。"));
     } else {
       const list = make("div", "owner-verification-list");
       passed.forEach((check) => {

@@ -1129,3 +1129,58 @@ Authorization: Owner explicitly requested merge, commit and push to the reposito
 Verification: Merged suite 185 passed in 174.88 seconds; real Edge 1440/390 map/entry/scenario/next-request checks pass; CLI and staged whitespace checks pass. Generated source reports and provider artifacts are excluded. Normal GitHub main push follows the merge commit; no release or deployment.
 Links: TASK-20260918-042, BUG-20260918-001
 Needs curation: no
+
+ID: EVO-20260920-001
+Date: 2026-09-20
+Domain: product-understanding
+Type: approved-increment
+What changed: Added an ordinary-reader guide, cited usage journey, actionable issue cards and visible counterevidence dispositions to system maps. Preserved change reporting and legacy maps. Clarified model/source privacy boundaries and included a five-question reader test kit.
+Authorization: Owner approved the explicit three-project evaluation and implementation scope with “好 批准”.
+Verification: 207 tests in 181.23 seconds; wheel/sdist builds; four real model reports and real Edge 1440/390 interactions; guided old/new mode switching; 181 excerpt occurrences rechecked against immutable Git. All target fingerprints unchanged. Full memdsl CLI completed 11 provider requests; target runtime tests and human comprehension not claimed.
+Outcome: Controlled batch reduced 11 candidates to 6; separate deeper memdsl run retained 3 new candidates. Evidence shows actionable hypotheses and useful counterevidence, not exhaustive understanding, accuracy/recall, production certification or human acceptance.
+Links: TASK-20260920-043, TASK-043-product-evaluation.md, TASK-043-reader-test.md
+Needs curation: yes
+
+ID: EVO-20260920-002
+Date: 2026-09-20
+Domain: product-understanding
+Type: runtime-verification
+What changed: Added separate evidence receipts for three selected source-review hypotheses; preserved original model reports and linked the follow-up from the local evaluation index.
+Authorization: Owner requested verification and explicitly deferred human-reader testing in favor of automated checks.
+Verification: Actual MCP stdio reproduces memdsl R3; actual synthesize CLI reproduces VideoFactory F1 for locked-audio same-path replacement; actual FFmpeg render then QA reproduces F4. Positive controls pass, including full build with 10/10 QA. Three reports pass Edge 1440/390 interactions. Original target Git fingerprints unchanged; exported source bytes match archives.
+Boundary: Selected sample, not precision/recall; no independent human comprehension or production-media acceptance. No target fixes, paid calls, commit or publication. Two corrected harness-fixture failures retained; ds unavailable.
+Links: TASK-20260920-044, TASK-044-verification-results.md
+Needs curation: yes
+
+ID: EVO-20260920-003
+Date: 2026-09-20
+Domain: product-understanding
+Type: self-evaluation
+What changed: Diagnosed current PlainChange implementation using a hash-recorded isolated working-tree snapshot and real UI/HTTP/model runs. No product code changes.
+Authorization: Owner requested testing this product itself after external-project reproduction.
+Verification: 207 passed in 193.45s; first self-understand failed on excluded HTML read; second succeeded after reference repair with 44 Git-verified excerpts, 18/76 eligible files and 2 retained findings. Actual concurrent jobs reproduced the report's concurrent_output hypothesis: temp-file collision and successful job sharing the other request's task evidence. HTTP tests also reproduced foreign Host/Origin acceptance and malformed-output disconnect; actual UI confirmed refresh loses report entry and empty verification uses positive headings.
+Boundary: No human comprehension, production acceptance or remote exploit proof. New self-report file URL browser test was blocked by browser policy; no bypass. Model map omitted the standalone understanding workflow despite partial source coverage. Source/tests/scripts unchanged; synthetic snapshot commit only; no publication; ds unavailable.
+Links: TASK-20260920-045, TASK-045-self-evaluation-results.md
+Needs curation: yes
+
+ID: EVO-20260920-004
+Date: 2026-09-20
+Domain: product-understanding
+Type: approved-self-evaluation-fixes
+What changed: Isolated guided job outputs; authenticated in-session history; Host/port validation; JSON input errors; neutral empty verification; bounded HTML reads and denial recovery; visible entry citation gaps.
+Authorization: Owner explicitly requested repair after self-evaluation.
+Verification: 213 full tests; 7 final targeted tests (six overlapping); actual browser refresh/reopen and neutral report state; real concurrent pipelines/HTTP; JS syntax and wheel/sdist builds.
+Boundary: No arbitrary-stage resume, complete semantic coverage, human comprehension, release or comprehensive exploit claim. Existing work preserved; no commit/push; ds unavailable.
+Links: TASK-20260920-046, TASK-046-fix-verification.md, BUG-20260920-003 through BUG-20260920-006
+Needs curation: yes
+
+ID: EVO-20260920-005
+Date: 2026-09-20
+Domain: source-integration
+Type: authorized-commit-and-push
+Authorization: Owner explicitly requested committing and pushing the completed work.
+Scope: TASK-043 product understanding, TASK-044/045 verification records, TASK-046 repairs and regression tests. Generated reports, source exports, model requests and build artifacts remain ignored.
+Target: Actual upstream https://github.com/Liyuan1992/plainchange.git main, resolved through the local origin repository and prior TASK-042. Remote main was verified at local parent addb7bac before publication; use normal fast-forward push only.
+Verification: Previously completed 213-test full suite, final 7-test targeted suite (six overlapping), real GUI/HTTP/concurrent checks, JS syntax, package builds and current diff whitespace check. No product changes since those checks. ds unavailable. Commit/push verification follows this record; no release publication.
+Links: TASK-20260920-043, TASK-20260920-044, TASK-20260920-045, TASK-20260920-046
+Needs curation: no

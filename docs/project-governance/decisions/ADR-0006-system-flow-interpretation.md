@@ -37,3 +37,16 @@ unchanged.
 
 ## 2026-09-17 approved incremental extension
 TASK-041 extends the artifact to v2 with explicit cited cross-flow node connections and call/return/next-request kinds. Legacy v1 maps remain readable without invented links. Function indexes guide bounded reads of larger files; indexes are navigation hints, not call evidence. Scenario traversal follows user-selected conditions on the validated graph and does not execute business code or prove path feasibility. A single reference-only model repair may follow an invalid citation; original raw output is retained, semantic claims cannot be changed by the repair contract, and full validation still applies.
+
+## 2026-09-20 approved product assessment
+
+TASK-043 adds optional `product_review` (`plainchange.product-review.v1`) to the
+flow document without removing legacy fields. Reader statements carry citations;
+journey steps and findings require code evidence. Findings can be suspected risks
+or verification gaps, never model-certified defects. A separate critique may
+revise semantic claims, seek counterevidence in two bounded rounds and withdraw
+candidates; it is explicitly distinct from reference-only flow repair. Every
+original finding ID has a cited disposition, and critique cannot invent new IDs.
+All exploration shares the original source budget. Raw responses and a validated
+pre-assessment map survive failure; success requires a valid final assessment.
+Model critique is not independent semantic, runtime or human acceptance evidence.

@@ -254,6 +254,7 @@ class GuidedJob:
     error: str | None = None
     result: dict[str, Any] | None = None
     analysis_mode: str = "basic_evidence"
+    project: str = ""
 
     def public(self) -> dict[str, Any]:
         receipt: dict[str, Any] | None = None
@@ -269,6 +270,7 @@ class GuidedJob:
             "error": self.error,
             "receipt": receipt,
             "analysis_mode": self.analysis_mode,
+            "project": self.project,
         }
         if self.status == "succeeded":
             value["report_url"] = f"/reports/{self.job_id}/review.html"
@@ -281,6 +283,26 @@ class OnboardingState:
     token: str = field(default_factory=lambda: secrets.token_urlsafe(32))
     jobs: dict[str, GuidedJob] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
+
+    def job_output(self, payload: dict[str, Any], job_id: str, *, system: bool = False) -> tuple[Path, Path]:
+        """Allocate a fresh child per request; old jobs never change identity."""
+        repo = resolve_repository(payload.get("repository", ""))
+        value = payload.get("output")
+        if value is not None and not isinstance(value, str):
+            raise OnboardingError("报告目录格式无效。")
+        if value and value.strip():
+            root = Path(value).expanduser().resolve()
+        elif system:
+            root = repo.parent / "plainchange-reports" / f"{repo.name}-system"
+        else:
+            base = _verified_oid(repo, payload.get("base", ""), "较早版本")
+            head = _verified_oid(repo, payload.get("head", ""), "较新版本")
+            root = _default_output(repo, base, head)
+        if root == Path(root.anchor) or root == repo or root.is_relative_to(repo):
+            raise OnboardingError("报告必须保存在被分析项目之外，且不能使用磁盘根目录。")
+        destination = root / f"run-{job_id}"
+        destination.mkdir(parents=True, exist_ok=False)
+        return repo, destination
 
     def start_system_job(self, payload: dict[str, Any]) -> GuidedJob:
         from .flow_provider import codex_status
@@ -295,8 +317,12 @@ class OnboardingState:
             status = codex_status()
             if not status["chatgpt"]:
                 raise OnboardingError(status["message"])
-        prepared = create_flow_output(payload.get("repository", ""), payload.get("revision", "HEAD"), payload.get("output"))
-        job = GuidedJob(secrets.token_hex(12), prepared[1])
+        from .system_flow import inspect_system_repository
+        inspect_system_repository(payload.get("repository", ""), payload.get("revision", "HEAD"))
+        job_id = secrets.token_hex(12)
+        repo, destination = self.job_output(payload, job_id, system=True)
+        prepared = create_flow_output(repo, payload.get("revision", "HEAD"), destination)
+        job = GuidedJob(job_id, prepared[1], analysis_mode="system", project=repo.name)
         with self.lock:
             self.jobs[job.job_id] = job
 
@@ -313,22 +339,15 @@ class OnboardingState:
         return job
 
     def start_job(self, payload: dict[str, Any]) -> GuidedJob:
-        manifest_path, output, _manifest = build_guided_manifest(
-            payload.get("repository", ""),
-            payload.get("base", ""),
-            payload.get("head", ""),
-            task=payload.get("task", ""),
-            output=payload.get("output"),
-        )
         # Older API clients did not send a mode; keep those requests local and
         # conservative. The packaged browser explicitly selects full_model.
         requested_mode = payload.get("analysis_mode", "basic_evidence")
-        if requested_mode not in {"full_model", "basic_evidence"}:
+        if not isinstance(requested_mode, str) or requested_mode not in {"full_model", "basic_evidence"}:
             raise OnboardingError("分析方式无效。")
         provider_config = payload.get("model_config")
         model_api_key = payload.get("model_api_key")
         human_language = payload.get("human_language", "zh-CN")
-        if human_language not in {"zh-CN", "en"}:
+        if not isinstance(human_language, str) or human_language not in {"zh-CN", "en"}:
             raise OnboardingError("模型说明语言只能是中文或英文。")
         if requested_mode == "full_model" and not isinstance(provider_config, dict):
             raise OnboardingError("完整理解需要先填写模型接口设置。")
@@ -340,10 +359,17 @@ class OnboardingState:
         if requested_mode == "basic_evidence":
             provider_config = None
             model_api_key = None
+        job_id = secrets.token_hex(12)
+        repo, output = self.job_output(payload, job_id)
+        manifest_path, output, _manifest = build_guided_manifest(
+            repo, payload.get("base", ""), payload.get("head", ""),
+            task=payload.get("task", ""), output=output,
+        )
         job = GuidedJob(
-            secrets.token_hex(12),
+            job_id,
             output,
             analysis_mode=requested_mode,
+            project=repo.name,
         )
         with self.lock:
             self.jobs[job.job_id] = job
@@ -437,6 +463,17 @@ class OnboardingHandler(BaseHTTPRequestHandler):
                 return False
         return True
 
+    def _trusted_host(self) -> bool:
+        port = self.server.server_address[1]
+        allowed = {f"{host}:{port}" for host in LOOPBACK_HOSTS}
+        if port == 80:
+            allowed.update(LOOPBACK_HOSTS)
+        hosts = self.headers.get_all("Host", [])
+        if len(hosts) != 1 or hosts[0].lower() not in allowed:
+            self._json({"ok": False, "error": "拒绝非本机地址的请求。"}, HTTPStatus.FORBIDDEN)
+            return False
+        return True
+
     def _read_json(self) -> dict[str, Any]:
         if self.headers.get_content_type() != "application/json":
             raise OnboardingError("请求必须使用 JSON。")
@@ -456,7 +493,16 @@ class OnboardingHandler(BaseHTTPRequestHandler):
         return value
 
     def do_GET(self) -> None:
+        if not self._trusted_host():
+            return
         parsed = urlparse(self.path)
+        if parsed.path == "/api/jobs":
+            if not self._authorized():
+                return
+            with self.server.state.lock:
+                jobs = list(self.server.state.jobs.values())[-50:]
+            self._json({"ok": True, "jobs": [job.public() for job in reversed(jobs)]})
+            return
         if parsed.path == "/api/codex-status":
             if not self._authorized():
                 return
@@ -502,6 +548,8 @@ class OnboardingHandler(BaseHTTPRequestHandler):
         self._json({"ok": False, "error": "页面不存在。"}, HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:
+        if not self._trusted_host():
+            return
         if not self._authorized():
             return
         try:
@@ -520,6 +568,8 @@ class OnboardingHandler(BaseHTTPRequestHandler):
                 self._json({"ok": False, "error": "接口不存在。"}, HTTPStatus.NOT_FOUND)
         except (OnboardingError, ManifestError, OSError) as exc:
             self._json({"ok": False, "error": str(exc)}, HTTPStatus.BAD_REQUEST)
+        except (TypeError, ValueError):
+            self._json({"ok": False, "error": "请求参数格式无效，请检查项目、版本和输出目录。"}, HTTPStatus.BAD_REQUEST)
 
 
 def serve_onboarding(host: str = "127.0.0.1", port: int = 8765, *, open_browser: bool = True) -> None:

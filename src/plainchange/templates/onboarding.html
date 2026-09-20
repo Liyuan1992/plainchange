@@ -18,13 +18,14 @@
   </header>
 
   <main class="shell">
+    <section class="panel" id="recent-jobs" hidden aria-labelledby="recent-heading"><h2 id="recent-heading">本次使用的任务与报告</h2><p>刷新页面后可在这里继续查看。关闭服务后，请从保存目录打开离线报告。</p><div id="recent-job-list"></div></section>
     <nav class="mode-picker" aria-label="选择能力">
       <button id="change-mode" class="primary" type="button" aria-pressed="true">查看变化</button>
       <button id="system-mode" class="secondary" type="button" aria-pressed="false">理解系统 · 新功能</button>
     </nav>
     <section id="system-workspace" hidden>
       <div class="hero"><p class="eyebrow">从效果走进实现</p><h1>看清系统怎样处理，换个条件会怎样</h1>
-      <p>Codex 自动沿代码追查核心流程，整理步骤、判断、异常走向与待测场景。无需逐个匹配文件。</p></div>
+      <p>先解释软件给谁用、怎样使用，再沿代码追查流程和疑点。每个问题附上依据与核查办法，并补查可能推翻它的代码。</p></div>
       <div class="panel"><section class="section">
         <h2>你想理解哪个软件？</h2><p class="hint system-hint">分析最新提交，不需要选择前后版本。未提交修改暂不包含，也不会冻结或修改项目。</p>
         <div class="system-path-row"><input id="system-path" aria-label="系统项目路径" placeholder="粘贴本机 Git 项目路径"><button id="system-pick" class="secondary" type="button">选择文件夹</button></div>

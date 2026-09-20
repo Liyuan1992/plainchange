@@ -81,6 +81,50 @@
     return data;
   }
 
+  // The server owns job identity. Do not persist API keys, tokens or form data.
+  let jobsSignature = "";
+  async function refreshJobs() {
+    try {
+      const data = await api("/api/jobs", null, "GET");
+      const signature = JSON.stringify(data.jobs);
+      if (signature === jobsSignature) return;
+      jobsSignature = signature;
+      const list = byId("recent-job-list");
+      list.replaceChildren();
+      byId("recent-jobs").hidden = !data.jobs.length;
+      for (const job of data.jobs) {
+        const row = document.createElement("p");
+        const kind = job.analysis_mode === "system" ? "理解系统" : "查看变化";
+        const status = {queued:"等待中",running:"分析中",succeeded:"已生成",failed:"失败"}[job.status] || job.status;
+        row.textContent = `${job.project || "项目"} · ${kind} · ${status} · ${job.id.slice(0,8)}`;
+        if (job.status === "succeeded") {
+          const link = document.createElement("a");
+          link.textContent = " 打开报告";
+          link.href = `${job.report_url}?token=${encodeURIComponent(token)}`;
+          row.appendChild(link);
+          const location = document.createElement("small");
+          location.textContent = ` 保存位置：${job.output}`;
+          location.style.overflowWrap = "anywhere";
+          row.appendChild(location);
+        } else if (job.status === "failed") {
+          const detail = document.createElement("span");
+          detail.textContent = `：${job.error || "请检查输入后重新生成"}`;
+          row.appendChild(detail);
+        } else {
+          const detail = document.createElement("span");
+          detail.textContent = `：${job.receipt?.latest_progress?.message || "正在准备"}`;
+          row.appendChild(detail);
+        }
+        list.appendChild(row);
+      }
+    } catch (_) {
+      // Existing task polling handles actionable connection errors.
+    } finally {
+      window.setTimeout(refreshJobs, 2000);
+    }
+  }
+  refreshJobs();
+
   let systemBusy = false;
   async function switchMode(system) {
     byId("system-workspace").hidden = !system;

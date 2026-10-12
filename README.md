@@ -1,5 +1,7 @@
 # PlainChange
 
+**Archify pilot:** generate an interactive diagram with companion source evidence using the [portable setup and synthetic demo](docs/ARCHIFY.md). This is an optional script, not a replacement for the default UI.
+
 English | [简体中文](README.zh-CN.md)
 
 **Understand what changed — and where the code came from.**

@@ -1,0 +1,306 @@
+{
+  "schema_version": "plainchange.system-flow.v2",
+  "title": "合成演示 · 非真实系统分析",
+  "commit": "synthetic-demo-not-a-git-commit",
+  "working_tree_excluded": true,
+  "flows": [
+    {
+      "id": "online_index",
+      "title": "在线索引维护（合成示例）",
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "启动单条在线索引",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "prepare",
+          "title": "核验权威并准备投影",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "matches",
+          "title": "现有向量是否一致",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "upsert",
+          "title": "编码并更新向量",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "verify",
+          "title": "回读验证",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "failed",
+          "title": "记录可重试失败",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        },
+        {
+          "id": "result",
+          "title": "返回在线索引状态",
+          "description": "演示步骤，不代表真实实现。",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ],
+          "runtime_status": "not_verified"
+        }
+      ],
+      "edges": [
+        {
+          "id": "i1",
+          "from": "start",
+          "to": "prepare",
+          "condition": "任务操作成功",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i2",
+          "from": "prepare",
+          "to": "matches",
+          "condition": "服务、权威与投影就绪",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i3",
+          "from": "prepare",
+          "to": "failed",
+          "condition": "准备异常",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i4",
+          "from": "matches",
+          "to": "verify",
+          "condition": "全部匹配 · 跳过写入",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i5",
+          "from": "matches",
+          "to": "upsert",
+          "condition": "缺失或不匹配",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i6",
+          "from": "upsert",
+          "to": "verify",
+          "condition": "非降级编码与写入成功",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i7",
+          "from": "upsert",
+          "to": "failed",
+          "condition": "编码降级或写入失败",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i8",
+          "from": "verify",
+          "to": "result",
+          "condition": "回读匹配 · ready",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i9",
+          "from": "verify",
+          "to": "failed",
+          "condition": "回读缺失或不一致",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        },
+        {
+          "id": "i10",
+          "from": "failed",
+          "to": "result",
+          "condition": "失败状态保存成功",
+          "explanation": "仅用于演示条件与图的对应关系。",
+          "test_input": "合成输入，未执行",
+          "expected_result": "演示中的候选结果",
+          "test_status": "not_run",
+          "runtime_status": "not_verified",
+          "evidence": [
+            {
+              "source_id": "demo-source",
+              "start_line": 1,
+              "end_line": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "demo-source",
+      "path": "synthetic-example.txt",
+      "start_line": 1,
+      "end_line": 2,
+      "text": "# Synthetic demonstration only.\n# No production source code or runtime evidence."
+    }
+  ],
+  "connections": [],
+  "coverage": {
+    "read_files": 1,
+    "eligible_files": 1
+  },
+  "unknowns": [
+    "所有节点与分支均为合成演示，不证明实际项目行为。"
+  ],
+  "product_review": {}
+}

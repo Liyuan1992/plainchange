@@ -1,0 +1,26 @@
+{
+  "flow_id": "online_index",
+  "lanes": [{"id":"main","label":"准备与判断"},{"id":"write","label":"写入、回读与返回"},{"id":"failure","label":"异常与退避","variant":"exception"}],
+  "mainPath": ["start","prepare","matches","upsert","verify","result"],
+  "nodes": {
+    "start":{"lane":"main","col":0,"type":"backend","width":154},
+    "prepare":{"lane":"main","col":1,"type":"backend","width":154},
+    "matches":{"lane":"main","col":2,"type":"backend","width":154},
+    "upsert":{"lane":"write","col":2,"type":"backend","width":154},
+    "verify":{"lane":"write","col":3,"type":"backend","width":154},
+    "failed":{"lane":"failure","col":2,"type":"backend","width":154},
+    "result":{"lane":"write","col":4,"type":"backend","width":154}
+  },
+  "edges": {
+    "i1":{"label":"任务操作成功","role":"main"},
+    "i2":{"label":"服务、权威与投影就绪","role":"main"},
+    "i3":{"label":"准备异常","role":"error","variant":"security","fromSide":"bottom","toSide":"left"},
+    "i4":{"label":"全部匹配 · 跳过写入","role":"branch"},
+    "i5":{"label":"缺失或不匹配","role":"main"},
+    "i6":{"label":"非降级编码与写入成功","role":"main"},
+    "i7":{"label":"编码降级或写入失败","role":"error","variant":"security"},
+    "i8":{"label":"回读匹配 · ready","role":"main"},
+    "i9":{"label":"回读缺失或不一致","role":"error","variant":"security"},
+    "i10":{"label":"失败状态保存成功","role":"return","variant":"dashed"}
+  }
+}

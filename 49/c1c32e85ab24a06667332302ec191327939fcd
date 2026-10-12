@@ -1,0 +1,52 @@
+src/plainchange/system_flow.py
+  s_f12a73f9929133::t_acc9f8d26298ea 7,360-369
+docs/ARCHIFY.md
+  s_f12a73f9929133::t_d6a4a4b0799537 1,3-18,46-47,54
+scripts/test_archify_dom.cjs
+  s_f12a73f9929133::t_29725a2fb231d9 1-42
+MANIFEST.in
+  s_f12a73f9929133::t_29725a2fb231d9 12-13
+README.zh-CN.md
+  s_f12a73f9929133::t_d6a4a4b0799537 3
+pyproject.toml
+  s_f12a73f9929133::t_acc9f8d26298ea 25
+src/plainchange/assets/archify-viewer.json
+  s_f12a73f9929133::t_ce8237ea80a51e 1-6
+docs/project-governance/tasks/TASK-20261012-050-bundled-archify.md
+  s_f12a73f9929133::t_853152f9b258b7 1-23
+README.md
+  s_f12a73f9929133::t_d6a4a4b0799537 3
+src/plainchange/templates/system-flow.html
+  s_f12a73f9929133::t_acc9f8d26298ea 3,12,15-17,21-22
+scripts/build_archify_viewer.mjs
+  s_f12a73f9929133::t_64a935a0dd3513 1-23
+src/plainchange/templates/system-flow.css
+  s_f12a73f9929133::t_40f513eb85adb9 12
+docs/project-governance/EVOLUTION.md
+  s_f12a73f9929133::t_7d1d486629589c 1209-1218
+  s_f12a73f9929133::t_31cb0cc0f1b508 1219
+tests/test_archify_bundled.py
+  s_f12a73f9929133::t_d6a4a4b0799537 1-32
+src/plainchange/templates/system-flow.js
+  s_f12a73f9929133::t_57e1a44ac81b55 24
+  s_f12a73f9929133::t_f2dedc96b1ab9b 9-23,25-44,47-74,106,122,164,170,175,180,277,283,291
+  s_f12a73f9929133::t_40f513eb85adb9 45-46
+src/plainchange/assets/ARCHIFY-LICENSE.txt
+  s_f12a73f9929133::t_ef3103ad9df4cc 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "49c1c32e85ab24a06667332302ec191327939fcd",
+  "prompts": {},
+  "sessions": {
+    "s_f12a73f9929133": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ce1b-1064-7771-ac6e-a104128324be",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

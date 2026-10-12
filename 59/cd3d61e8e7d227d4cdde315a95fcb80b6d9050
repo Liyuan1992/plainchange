@@ -1,0 +1,53 @@
+docs/project-governance/tasks/TASK-20260923-049-archify-pilot.md
+  s_f12a73f9929133::t_0441f5ba7be026 1-29,34-42
+  s_f12a73f9929133::t_160d156307f796 30-33
+  s_f12a73f9929133::t_abb632a7945419 43-50
+  s_f12a73f9929133::t_8c0284ea8d5dc9 51-52
+docs/ARCHIFY.md
+  s_f12a73f9929133::t_6b2d243256c404 1-39
+README.md
+  s_f12a73f9929133::t_6b2d243256c404 3-4
+docs/project-governance/EVOLUTION.md
+  s_90c442dc5848c6::t_9dc78d71bc6a08 1187
+  s_f12a73f9929133::t_366efe54e12347 1188-1197
+  s_f12a73f9929133::t_0b84d1703b0cde 1198-1208
+README.zh-CN.md
+  s_f12a73f9929133::t_6b2d243256c404 3-4
+scripts/archify_pilot.py
+  s_f12a73f9929133::t_1958421854bdc4 70,92,164,174-175,204-206,208
+  s_f12a73f9929133::t_798f49949bd2e0 93
+  s_f12a73f9929133::t_c36977b88afbfd 1-69,71-91,94-163,165-173,176-203,207,209-224
+examples/archify-demo.system-flow.json
+  s_f12a73f9929133::t_20c7a81a4fe9e2 1-306
+examples/archify-online-index.profile.json
+  s_f12a73f9929133::t_c36977b88afbfd 1-2,4-5,13-25
+  s_f12a73f9929133::t_cf8cb6345d6552 26
+  s_f12a73f9929133::t_798f49949bd2e0 3,9-12
+  s_f12a73f9929133::t_1ad8c6ef35206b 6-8
+tests/test_archify_pilot.py
+  s_f12a73f9929133::t_0441f5ba7be026 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59cd3d61e8e7d227d4cdde315a95fcb80b6d9050",
+  "prompts": {},
+  "sessions": {
+    "s_90c442dc5848c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0bf35-9b87-79d0-8535-24070b18f62a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    },
+    "s_f12a73f9929133": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ce1b-1064-7771-ac6e-a104128324be",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "liyuan199289 <liyuan199289@gmail.com>"
+    }
+  }
+}

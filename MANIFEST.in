@@ -9,7 +9,8 @@ include docs/RELEASE_CHECKLIST.md
 include examples/model-provider.template.json
 include examples/sample-manifest.json
 recursive-include src/plainchange/templates *.html *.css *.js
-recursive-include src/plainchange/assets *.json
+recursive-include src/plainchange/assets *.json *.gz *LICENSE.txt
+include docs/ARCHIFY.md
 prune artifacts
 prune build
 prune design

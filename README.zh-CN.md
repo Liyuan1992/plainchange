@@ -1,6 +1,6 @@
 # PlainChange
 
-**Archify 接入试验：**可用[跨电脑运行说明与合成示例](docs/ARCHIFY.md)生成交互图和配套源码证据页。当前为独立脚本入口，尚未替换默认界面。
+**已内置 Archify：**“理解系统”生成的报告默认使用 Archify 交互查看器展示总览与各条流程，点击节点或分支可联动源码面板。无需另装 Archify 或 Node.js，详见[使用说明与范围](docs/ARCHIFY.md)。
 
 [English](README.md) | 简体中文
 

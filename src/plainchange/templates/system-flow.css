@@ -9,3 +9,4 @@
 #overview-map{max-height:480px} #overview-map svg{width:760px;max-width:none;max-height:none;min-width:650px} .intro h1{font-size:27px} main{padding-top:20px}
 
 .overview-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px}#overview-links{display:grid;align-content:start;max-height:480px;overflow:auto}#overview-map svg{width:100%;min-width:600px} @media(max-width:1000px){.overview-layout{grid-template-columns:minmax(0,1fr)}}
+#archify-flow,#archify-overview{display:block;width:100%;height:740px;border:0;border-radius:10px;background:#0b1220}#archify-overview{height:560px}.overview-layout{grid-template-columns:minmax(0,1fr)}

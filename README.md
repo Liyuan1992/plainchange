@@ -1,6 +1,6 @@
 # PlainChange
 
-**Archify pilot:** generate an interactive diagram with companion source evidence using the [portable setup and synthetic demo](docs/ARCHIFY.md). This is an optional script, not a replacement for the default UI.
+**Archify is built in:** the system-understanding report now opens its overview and flows in the bundled interactive viewer, linked to the source-evidence panel. No separate Archify or Node.js installation is required. See [usage and scope](docs/ARCHIFY.md).
 
 English | [简体中文](README.zh-CN.md)
 

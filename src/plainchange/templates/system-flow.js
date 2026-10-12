@@ -6,6 +6,72 @@
   const svgEl = (tag, attrs, parent) => { const item = document.createElementNS("http://www.w3.org/2000/svg", tag); Object.entries(attrs).forEach(([k,v]) => item.setAttribute(k, String(v))); if(parent) parent.append(item); return item; };
   const sources = new Map(data.sources.map(s => [s.id, s]));
   let current = data.flows[0], selectedNode = current.entry_node, selectedEdge = null, zoom = 1, baseWidth = 800;
+  const archifyTemplate = JSON.parse(byId("archify-template").textContent);
+  let mountedFlow = null, mountSerial = 0;
+  const frameTokens = new Map();
+  const escapeMarkup = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  function mountViewer(frame, svg, title) {
+    const token = String(++mountSerial);
+    frameTokens.set(frame, token);
+    const clone = svg.cloneNode(true);
+    clone.removeAttribute("style"); clone.removeAttribute("id");
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("data-preset", "classic");
+    clone.setAttribute("data-quality-gates", "plainchange-not-showcase-validated");
+    clone.setAttribute("aria-label", title);
+    clone.querySelectorAll('.selected,.edge-selected,.edge-walked').forEach(n => n.classList.remove('selected','edge-selected','edge-walked'));
+    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `.node rect{fill:var(--mask,#10243a);stroke:var(--backend-stroke,#49c5dd);stroke-width:1.5}.node.decision rect{stroke:#d9a34c}.node.external rect{stroke-dasharray:5 3}.node text{fill:var(--text,#dce8f7);font-size:13px}.node .kind{fill:var(--text-muted,#8ca1bd);font-size:11px}.edge-path{fill:none;stroke:var(--text-muted,#8ca1bd);stroke-width:1.6}.edge-label rect{fill:var(--mask,#10243a);stroke:var(--panel-border,#42556e)}.edge-label text{fill:var(--text,#dce8f7);font-size:11px}.node,.edge-label{cursor:pointer}`;
+    clone.prepend(style);
+    const bridge = `(() => {
+      const token=${JSON.stringify(token)};
+      function send(event){
+        if(event.type==='keydown' && event.key!=='Enter' && event.key!==' ')return;
+        const node=event.target.closest?.('[data-node-id]');
+        const edge=event.target.closest?.('[data-edge-id]');
+        const selected=node||edge;
+        if(selected)parent.postMessage({channel:'plainchange-archify',token,kind:node?'node':'edge',id:node?node.dataset.nodeId:edge.dataset.edgeId},'*');
+      }
+      document.addEventListener('click',send,true);document.addEventListener('keydown',send,true);
+      window.addEventListener('message',event=>{
+        if(event.source!==parent || event.data?.channel!=='plainchange-focus' || event.data.token!==token)return;
+        const id=event.data.id,kind=event.data.kind;
+        const key=kind==='node'?'data-node-id':kind==='edge'?'data-edge-id':null;
+        if(!key || !Array.from(document.querySelectorAll('['+key+']')).some(n=>n.getAttribute(key)===id))return;
+        location.hash=(kind==='node'?'focus=':'relation=')+encodeURIComponent(id);
+      });
+      parent.postMessage({channel:'plainchange-archify',token,kind:'ready'},'*');
+    })();`;
+    const slots = {TITLE:escapeMarkup(title), SUBTITLE:'模型解读 · 运行未验证 · 点击查看配套源码', SVG:clone.outerHTML};
+    const result = archifyTemplate.replace(/__PC_(TITLE|SUBTITLE|SVG)__/g, (_, key) => slots[key]);
+    frame.srcdoc = result.replace('</body>', () => '<scr'+'ipt>'+bridge+'</scr'+'ipt></body>');
+  }
+  function focusViewer(kind, id) {
+    const frame = byId('archify-flow');
+    frame.contentWindow?.postMessage({channel:'plainchange-focus',token:frameTokens.get(frame),kind,id}, '*');
+  }
+  window.addEventListener('message', event => {
+    const message=event.data;
+    if(!message || message.channel!=='plainchange-archify')return;
+    const frame=[byId('archify-flow'),byId('archify-overview')].find(f=>event.source===f.contentWindow);
+    if(!frame || message.token!==frameTokens.get(frame))return;
+    if(message.kind==='ready') {
+      if(frame.id==='archify-flow')focusViewer(selectedEdge?'edge':'node',selectedEdge||selectedNode);
+      return;
+    }
+    if(frame.id==='archify-overview') {
+      if(message.kind==='node' && flowById.has(message.id)) {
+        chooseFlow(flowById.get(message.id));byId('flow-title').scrollIntoView({block:'start'});
+      } else if(message.kind==='edge') {const link=links.find(c=>c.id===message.id);if(link)connectionDetail(link);}
+    } else if(message.kind==='node' && current.nodes.some(n=>n.id===message.id))inspectNode(message.id);
+    else if(message.kind==='edge' && current.edges.some(e=>e.id===message.id))inspectEdge(message.id);
+  });
+  byId('basic-view').onclick = () => {
+    const basic=byId('graph-scroll').hidden;
+    byId('graph-scroll').hidden=!basic;byId('basic-zoom').hidden=!basic;byId('archify-flow').hidden=basic;
+    byId('basic-view').textContent=basic?'切换 Archify 视图':'切换基础视图';
+    byId('basic-view').setAttribute('aria-pressed',String(basic));
+  };
   byId("title").textContent = data.title;
   byId("summary").textContent = data.summary;
   byId("version").textContent = `${data.project} · ${data.commit.slice(0,12)}`;
@@ -37,6 +103,7 @@
   function field(parent, label, value) { const dl = el("dl", undefined, parent); el("dt", label, dl); el("dd", value, dl); }
   function inspectNode(id) {
     selectedNode = id; selectedEdge = null; draw();
+    focusViewer('node', id);
     const node = current.nodes.find(n=>n.id===id), panel = byId("inspector"); panel.replaceChildren();
     el("span", "模型解读 · 运行未验证", panel).className = "badge";
     el("h2", node.title, panel); el("p", node.description, panel);
@@ -52,6 +119,7 @@
   }
   function inspectEdge(id) {
     selectedEdge=id; selectedNode=null; draw();
+    focusViewer('edge', id);
     const edge=current.edges.find(e=>e.id===id), panel=byId("inspector"); panel.replaceChildren();
     el("span", "候选分支 · 测试未执行", panel).className="badge";
     el("h2", edge.condition, panel); el("p", edge.explanation, panel);
@@ -93,22 +161,23 @@
         const fan=current.edges.filter(e=>e.from===edge.from).length>1;
         lx=(fan ? a.x*.2+b.x*.8 : a.x*.8+b.x*.2)+110;ly=sy+(ty-sy)*(fan?.65:.35);
       }
-      svgEl("path",{d:path,class:`edge-path ${selectedEdge===edge.id?"edge-selected":""} ${trail.some(s=>s.flow===current.id&&s.via?.edge===edge.id)?"edge-walked":""}`,"marker-end":"url(#arrow)"},graph);
+      svgEl("path",{d:path,'data-edge-from':edge.from,'data-edge-to':edge.to,'data-edge-id':edge.id,'data-edge-key':index,'data-edge-label':edge.condition,class:`edge-path ${selectedEdge===edge.id?"edge-selected":""} ${trail.some(s=>s.flow===current.id&&s.via?.edge===edge.id)?"edge-walked":""}`,"marker-end":"url(#arrow)"},graph);
       const label=edge.condition.length>13?edge.condition.slice(0,12)+"…":edge.condition;const width=Math.max(64,label.length*11+16);
       lx=Math.max(width/2+4,Math.min(baseWidth-width/2-4,lx));
       const overlaps=(x,y)=>labelBoxes.some(r=>Math.abs(r.x-x)<(r.w+width)/2+5&&Math.abs(r.y-y)<30)||[...positions.values()].some(p=>x+width/2>p.x-4&&x-width/2<p.x+224&&y+13>p.y-4&&y-13<p.y+89);
       const originY=ly;for(const offset of [0,32,-32,64,-64,96,-96]){if(!overlaps(lx,originY+offset)){ly=originY+offset;break;}}
       labelBoxes.push({x:lx,y:ly,w:width});
-      const group=svgEl("g",{class:"edge-label",transform:`translate(${lx},${ly})`},graph);svgEl("title",{},group).textContent=edge.condition;
+      const group=svgEl("g",{class:"edge-label",'data-edge-id':edge.id,'data-edge-from':edge.from,'data-edge-to':edge.to,'data-edge-key':index,'data-edge-label':edge.condition,transform:`translate(${lx},${ly})`},graph);svgEl("title",{},group).textContent=edge.condition;
       svgEl("rect",{x:-width/2,y:-13,width,height:26,rx:5},group);svgEl("text",{"text-anchor":"middle",y:4},group).textContent=label;
       accessibleClick(group,()=>inspectEdge(edge.id),`分支：${edge.condition}`);
     });
     const kinds={step:"处理步骤",decision:"条件判断",end:"流程结束",external:"外部边界"};
-    current.nodes.forEach(node=>{const p=positions.get(node.id),group=svgEl("g",{class:`node ${node.kind} ${selectedNode===node.id?"selected":""}`,transform:`translate(${p.x},${p.y})`},graph);
+    current.nodes.forEach(node=>{const p=positions.get(node.id),group=svgEl("g",{id:`node-${node.id}`,'data-node-id':node.id,'data-node-label':node.title,'data-node-kind':node.kind,'data-node-context':node.description,class:`node ${node.kind} ${selectedNode===node.id?"selected":""}`,transform:`translate(${p.x},${p.y})`},graph);
       svgEl("rect",{width:220,height:85,rx:node.kind==="decision"?22:10},group);svgEl("text",{x:14,y:21,class:"kind"},group).textContent=kinds[node.kind];
       const title=node.title;[title.slice(0,15),title.slice(15,30)].filter(Boolean).forEach((t,i)=>svgEl("text",{x:14,y:44+i*20},group).textContent=t+(i===1&&title.length>30?"…":""));
       svgEl("title",{},group).textContent=node.title;accessibleClick(group,()=>inspectNode(node.id),`步骤：${node.title}`);
     });
+    if(mountedFlow!==current.id){mountedFlow=current.id;mountViewer(byId('archify-flow'),graph,current.title);}
   }
   function chooseFlow(flow, keepWalk = false) {
     if (!keepWalk) { trail = []; renderWalk(); }
@@ -205,13 +274,13 @@
   const pos=new Map(data.flows.map((f,i)=>[f.id,{x:20,y:15+i*105}]));
   links.forEach((c,i)=>{
     const a=pos.get(c.from_flow),b=pos.get(c.to_flow), rail=390+i*22;
-    svgEl("path",{d:`M ${a.x+340} ${a.y+25} H ${rail} V ${b.y+50} H ${b.x+344}`,fill:"none",stroke:c.kind==="next_request"?"#b17713":"#9aafca","stroke-dasharray":c.kind==="next_request"?"5 4":"none"},overview);
+    svgEl("path",{d:`M ${a.x+340} ${a.y+25} H ${rail} V ${b.y+50} H ${b.x+344}`,'data-edge-id':c.id,'data-edge-from':c.from_flow,'data-edge-to':c.to_flow,'data-edge-key':i,'data-edge-label':`${connectionKind(c)}：${c.condition}`,fill:"none",stroke:c.kind==="next_request"?"#b17713":"#9aafca","stroke-dasharray":c.kind==="next_request"?"5 4":"none"},overview);
     svgEl("text",{x:b.x+339,y:b.y+55,fill:"#34527a"},overview).textContent="◀";
     const button=el("button",`${i+1}. ${flowById.get(c.from_flow).title} → ${flowById.get(c.to_flow).title} · ${connectionKind(c)} · ${c.condition}`,byId("overview-links"));
     button.onclick=()=>connectionDetail(c);
   });
   data.flows.forEach(flow=>{
-    const p=pos.get(flow.id),group=svgEl("g",{transform:`translate(${p.x},${p.y})`},overview);
+    const p=pos.get(flow.id),group=svgEl("g",{id:`node-${flow.id}`,'data-node-id':flow.id,'data-node-label':flow.title,'data-node-kind':'backend',class:'node',transform:`translate(${p.x},${p.y})`},overview);
     svgEl("rect",{width:340,height:70,rx:10,fill:"#edf3ff",stroke:"#7893b5"},group);
     [flow.title.slice(0,21),flow.title.slice(21)].filter(Boolean).forEach((text,i)=>svgEl("text",{x:12,y:29+i*23,fill:"#182c44","font-size":15},group).textContent=text);
     accessibleClick(group,()=>{chooseFlow(flow);byId("flow-title").scrollIntoView({block:"start"});},`展开流程：${flow.title}`);
@@ -219,6 +288,7 @@
   if(!links.length) el("p","这份报告尚无已建立的跨流程连接；模块排列不表示执行顺序。",byId("overview-links"));
   const gaps=el("details",undefined,byId("overview")); el("summary",`还没弄清的环节（${data.unknowns.length}）`,gaps); const gapList=el("ul",undefined,gaps); data.unknowns.forEach(u=>el("li",u,gapList));
   chooseFlow(current);
+  mountViewer(byId('archify-overview'),overview,'系统总览');
   byId("overview").open = true;
   const review = data.product_review;
   if (review) {

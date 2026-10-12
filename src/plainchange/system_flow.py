@@ -4,6 +4,7 @@ from __future__ import annotations
 import ast
 import copy
 import html
+import gzip
 import json
 import re
 import sys
@@ -356,7 +357,16 @@ def render_flow(document: dict) -> str:
     css = resources.files("plainchange").joinpath("templates", "system-flow.css").read_text(encoding="utf-8")
     script = resources.files("plainchange").joinpath("templates", "system-flow.js").read_text(encoding="utf-8")
     data = json.dumps(document, ensure_ascii=False).replace("<", "\\u003c").replace("&", "\\u0026").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-    return template.replace("__TITLE__", html.escape(document["title"])).replace("__STYLE__", css).replace("__DATA__", data).replace("__SCRIPT__", script)
+    viewer_bytes = resources.files("plainchange").joinpath("assets", "archify-viewer.html.gz").read_bytes()
+    manifest = json.loads(resources.files("plainchange").joinpath("assets", "archify-viewer.json").read_text(encoding="utf-8"))
+    if sha256_bytes(viewer_bytes) != manifest["sha256"]:
+        raise ModelGenerationError("内置 Archify 查看器校验失败，请重新安装 PlainChange。")
+    viewer = gzip.decompress(viewer_bytes).decode("utf-8")
+    license_text = resources.files("plainchange").joinpath("assets", "ARCHIFY-LICENSE.txt").read_text(encoding="utf-8")
+    viewer_data = json.dumps(viewer, ensure_ascii=False).replace("<", "\\u003c").replace("&", "\\u0026").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+    return (template.replace("__TITLE__", html.escape(document["title"])).replace("__STYLE__", css)
+            .replace("__DATA__", data).replace("__SCRIPT__", script)
+            .replace("__ARCHIFY_LICENSE__", html.escape(license_text)).replace("__ARCHIFY_VIEWER__", viewer_data))
 
 
 def flow_markdown(document: dict) -> str:

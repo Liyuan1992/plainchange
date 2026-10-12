@@ -1,6 +1,21 @@
-# Archify 接入试验 / Archify pilot
+# 内置 Archify / Bundled Archify
 
-这次接入提供一个独立的 Python 适配脚本：把 PlainChange 的 `system-flow.json` 中一条流程转换为 Archify 交互图，同时保留完整条件、源码引用、疑点和未知项。尚未接入默认 GUI，也不是任意项目的自动布局器。
+## 正常使用：无需单独安装
+
+更新 PlainChange 并安装依赖后，启动 `uv run plainchange serve`，选择“理解系统”，按原流程选择项目和模型，生成后打开系统报告即可。CLI 的 `plainchange understand` 使用同一个生成入口。
+
+- 总览和所有已分析流程默认使用内置 Archify 交互查看器；点击总览节点可进入流程，点击步骤或分支可在右侧查看完整条件、源码引用和候选测试。
+- 可直接使用查看器的主题、搜索、路径探索、缩放和导出入口；需要时可切换基础视图。
+- 查看器已打包在源码及 wheel 内，无需 Node.js、额外仓库或手工 profile，也不会联网安装第三方代码。生成报告是自包含 HTML，可以离线复制。
+- 分析部分仍需按 PlainChange 原要求配置模型或本地 Codex。已有 HTML 不会自行更新，须用新版重新生成报告。
+
+内置的是固定版本 Archify **查看器**。PlainChange 负责通用流程布局、原始拓扑与证据联动；此路径没有调用 Archify CLI 的布局编译器，不宣称通过其 showcase 校验，也不保证任意复杂图无交叉。原条件和连线不会因展示而删除。当前改动针对“理解系统”，不是旧变更报告入口的全面替换。
+
+维护者可用 `node scripts/build_archify_viewer.mjs <固定版本 Archify 仓库>` 重建内置资源。资源绑定上游提交和 SHA-256，保留 MIT 声明；普通使用者不运行此命令。
+
+## 保留的独立渲染试验
+
+下面是上一阶段的可选 Python 脚本，用于调用 Archify CLI 渲染器和 showcase 校验。它与上面的默认内置查看器是两个入口；只有这个试验脚本需要 Node.js、Archify 检出和人工编写的 profile。
 
 ## 在另一台电脑运行
 
@@ -28,12 +43,12 @@ python scripts/archify_pilot.py --report examples/archify-demo.system-flow.json 
 
 ## 限制与许可
 
-- 这是源码仓库内的脚本入口，不是 wheel 中新增的命令，也不是 Windows 便携包的新版本。
-- 图和证据页分开，通过定位链接连接；点击图中节点尚不会自动打开对应源码面板。
+- 以下限制仅适用于独立试验脚本：它是源码仓库内的入口，不是 wheel 中新增命令。
+- 试验脚本的图和证据页分开；默认内置报告已实现节点/分支与源码面板联动。
 - 图形校验不代表业务正确、测试执行或运行时验证。
 - 保持 Archify 固定提交且已跟踪文件干净；不要直接用最新上游替代本版本。
 - Archify 使用 MIT 许可，输出目录保留其版权与许可声明。
 
 ## English quick reference
 
-Run the commands above from the repository root with Git, Python 3.12+ and Node.js 18+. The bundled input is synthetic, not a real DigitalSelf analysis. Open the generated `index.html`, or copy the complete output directory for offline reading. Custom reports need a matching, explicitly authored profile; this pilot is not a generic automatic converter. Existing private reports are not included in Git.
+For normal use, generate a new report through the System Understanding UI or `plainchange understand`. The bundled Archify viewer is the default for overview and flow diagrams; no Node.js, extra checkout or manual profile is needed. Evidence stays in the report's side panel. PlainChange supplies layout/topology; this path does not claim Archify CLI showcase validation. The older optional CLI-renderer pilot above still requires Node.js and a matching manual profile. Existing private reports are not included in Git.

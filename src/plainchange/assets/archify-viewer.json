@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/tt-a1i/archify",
+  "revision": "9e35d2b0b39b155553ba9fcfe0b4f2a5198dd993",
+  "sha256": "2dad8e911133ce889e9ed98c615618812ee33844c57a76f6dca25366ddc20223",
+  "integration": "Compiled upstream viewer; PlainChange supplies SVG topology and evidence bridge. Not upstream renderer/showcase validation."
+}
